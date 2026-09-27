@@ -1,12 +1,140 @@
--- plimsoll: Kubernetes objects as typed wand values.
---
--- The generated modules under k8s/ refer to the types in this file. The
--- runtime API (apply, check, get, list, delete, manifest) comes later.
+uses {Shell(kubectl)}
 
--- A value that is an integer or a string. Kubernetes uses it for ports and
--- for rollout limits, such as `maxSurge: 1` or `maxSurge: "25%"`.
+-- The types and the functions that generated modules and scripts share.
+--
+-- A script builds an object from the generated types, which is pure, and
+-- hands it to one of the functions below, which reach the cluster through
+-- kubectl. Each function takes the encoder or the decoder of the type it
+-- works on (`apps.Deployment.encoder`), so it works with every generated
+-- kind.
+
+import Decode
+import JSON
+import List
+import Regex
+import Result
+import Shell
+import String
+
+-- A value that Kubernetes writes as a number or as a string: `maxSurge` is
+-- `1` or `"25%"`.
 type IntOrString = I Int | S String
 
--- A Kubernetes quantity, such as "500m" or "128Mi". It is text: wand's Size
--- has no binary units and no millicores.
+-- A resource quantity as Kubernetes writes it: "500m", "128Mi", "2".
 type Quantity = String
+
+-- ── Quantities ────────────────────────────────────────────────────────────
+
+let pow10 n = if n <= 0 then 1 else 10 * pow10 (n - 1)
+
+-- What a suffix multiplies by, as a fraction: `m` is 1/1000, `Ki` is 1024,
+-- `e3` is 1000.
+let scale suffix =
+  match suffix with
+  | "" -> Ok (1, 1)
+  | "m" -> Ok (1, 1000)
+  | "k" -> Ok (pow10 3, 1)
+  | "M" -> Ok (pow10 6, 1)
+  | "G" -> Ok (pow10 9, 1)
+  | "T" -> Ok (pow10 12, 1)
+  | "P" -> Ok (pow10 15, 1)
+  | "E" -> Ok (pow10 18, 1)
+  | "Ki" -> Ok (1024, 1)
+  | "Mi" -> Ok (1048576, 1)
+  | "Gi" -> Ok (1073741824, 1)
+  | "Ti" -> Ok (1099511627776, 1)
+  | "Pi" -> Ok (1125899906842624, 1)
+  | "Ei" -> Ok (1152921504606846976, 1)
+  | s ->
+    match Regex.capture r/^[eE]([+-]?[0-9]+)$/ s with
+    | [_, e] ->
+      String.to_int e
+      |> Result.map (fn n -> if n >= 0 then (pow10 n, 1) else (1, pow10 (0 - n)))
+    | _ -> Error "'%{s}' is not a quantity suffix"
+
+-- A quantity as a fraction (numerator, denominator), counted exactly: a
+-- float reads "0.1" as a little more than a tenth.
+let amount (q: Quantity) =
+  let text = String.trim q;
+  match Regex.capture r/^([+-]?)([0-9]*)\.?([0-9]*)([a-zA-Z]*|[eE][+-]?[0-9]+)$/ text with
+  | [_, sign, whole, frac, suffix] when !(String.empty? (whole ++ frac)) ->
+    String.to_int (whole ++ frac)
+    |> Result.and_then (fn digits ->
+      scale suffix
+      |> Result.map (fn (num, den) ->
+        let n = if sign == "-" then 0 - digits * num else digits * num;
+        (n, pow10 (String.length frac) * den)))
+  | _ -> Error "'%{q}' is not a quantity"
+
+-- Rounded up, as Kubernetes rounds a quantity it has to count in whole
+-- units.
+let ceil_div a b = if a >= 0 then (a + b - 1) / b else 0 - ((0 - a) / b)
+
+-- A CPU quantity in millicores: "500m" is 500, "2" is 2000, "0.1" is 100.
+-- A quantity too large to count in an Int is an `Error`.
+--
+-- >> millicores "250m"
+-- Ok(250) : Result String Int
+let millicores (q: Quantity) =
+  amount q |> Result.and_then (fn (n, d) -> try ceil_div (n * 1000) d)
+
+-- A memory or storage quantity in bytes: "128Mi" is 134217728, "1G" is
+-- 1000000000.
+--
+-- >> bytes "1Ki"
+-- Ok(1024) : Result String Int
+let bytes (q: Quantity) = amount q |> Result.and_then (fn (n, d) -> try ceil_div n d)
+
+-- ── The cluster ───────────────────────────────────────────────────────────
+
+-- Server-side apply of `obj`, which `enc` writes as JSON. The field manager
+-- is `plimsoll`, so the server merges the fields this script owns and
+-- leaves the rest. Gives kubectl's line, such as
+-- "deployment.apps/web serverside-applied".
+let apply! enc obj =
+  JSON.stringify (enc obj) |> $(kubectl apply --server-side --field-manager=plimsoll -f -)
+
+-- `apply!`, giving an `Error` where it raises.
+let apply enc obj = try apply! enc obj
+
+-- Ask the API server to take `obj` as `apply!` would, and store nothing.
+-- Admission, webhooks and defaults run. Gives the object the server would
+-- store, as JSON; decode it with the type's decoder to read it.
+--
+-- `wand --dry-run` withholds it, as it withholds `apply!`: wand cannot see
+-- that `--dry-run=server` changes nothing.
+let check! enc obj =
+  JSON.parse!
+    (JSON.stringify (enc obj)
+    |> $(kubectl apply --server-side --field-manager=plimsoll --dry-run=server -o json -f -))
+
+-- `check!`, giving an `Error` where it raises.
+let check enc obj = try check! enc obj
+
+-- One object, read from the cluster and decoded: `get! apps.Deployment.decoder
+-- "deployment" "web"`. It only reads, so a rehearsal runs it.
+let get! dec kind name =
+  let doc = JSON.parse! (Shell.inspect! $*(kubectl get %{kind} %{name} -o json));
+  Result.get! (JSON.decode dec doc)
+
+-- `get!`, giving an `Error` where it raises.
+let get dec kind name = try get! dec kind name
+
+-- Every object of a kind in the current namespace, decoded. It only reads,
+-- so a rehearsal runs it.
+let list! dec kind =
+  let doc = JSON.parse! (Shell.inspect! $*(kubectl get %{kind} -o json));
+  Result.get! (JSON.decode (Decode.list dec) (JSON.field! "items" doc))
+
+-- `list!`, giving an `Error` where it raises.
+let list dec kind = try list! dec kind
+
+-- Delete one object. Gives kubectl's line, such as
+-- "deployment.apps "web" deleted".
+let delete! kind name = $(kubectl delete %{kind} %{name})
+
+-- `delete!`, giving an `Error` where it raises.
+let delete kind name = try delete! kind name
+
+-- Objects as one JSON list, for a file or for a review. It reaches nothing.
+let manifest enc objs = JSON.stringify (JSON.of_list (List.map enc objs))

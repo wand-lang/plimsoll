@@ -1,0 +1,109 @@
+uses {Shell}
+
+-- Tests for plimsoll.wand. No cluster is needed: a handler answers each
+-- kubectl command, and a `Shell!command` case that does not resume gives
+-- the command line itself.
+
+import JSON
+import List
+import Map
+import Option
+import Result
+import String
+
+let {test, group} = import Test
+let plimsoll = import ./plimsoll
+let apps = import ./k8s/apps/v1
+let core = import ./k8s/core/v1
+let meta = import ./k8s/meta/v1
+
+let labels = Map.from_list [("app", "web")]
+
+let web =
+  apps.Deployment(
+    metadata = Some meta.ObjectMeta(name = Some "web"),
+    spec = apps.DeploymentSpec(
+      selector = meta.LabelSelector(matchLabels = Some labels),
+      template = core.PodTemplateSpec(
+        spec = Some core.PodSpec(containers = [core.Container(name = "web")])
+      )
+    )
+  )
+
+let enc = apps.Deployment.encoder
+let dec = apps.Deployment.decoder
+
+-- The command line a call would run.
+let command_of thunk =
+  handle thunk () with
+  | Shell!command c _ -> c
+
+-- What the server holds for `web`, as `kubectl get -o json` writes it.
+let stored =
+  `{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"web","namespace":"default"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"web"}},"template":{"spec":{"containers":[{"name":"web","imagePullPolicy":"Always"}]}}}}`
+
+group "quantities" (fn () -> [
+  test "millicores" (fn t ->
+    t.eq
+      [Ok 500, Ok 2000, Ok 100, Ok 1500]
+      (List.map plimsoll.millicores ["500m", "2", "0.1", "1.5"])),
+  test "bytes" (fn t ->
+    t.eq
+      [Ok 134217728, Ok 1000000000, Ok 1024, Ok 1000, Ok 1610612736]
+      (List.map plimsoll.bytes ["128Mi", "1G", "1Ki", "1e3", "1.5Gi"])),
+  test "a part of a unit is rounded up" (fn t -> t.eq (Ok 1) (plimsoll.bytes "500m")),
+  test "a suffix Kubernetes does not have" (fn t ->
+    t.eq (Error "'MB' is not a quantity suffix") (plimsoll.bytes "128MB")),
+  test "text that is not a quantity" (fn t ->
+    t.eq (Error "'lots' is not a quantity") (plimsoll.bytes "lots")),
+  test "a quantity too large for an Int is an Error" (fn t ->
+    t.ok (Result.error? (plimsoll.millicores "1Ei")))
+])
+
+group "the cluster" (fn () -> [
+  test "apply is a server-side apply" (fn t ->
+    t.eq
+      "kubectl apply --server-side --field-manager=plimsoll -f -"
+      (command_of (fn () -> plimsoll.apply! enc web))),
+  test "and sends the object as JSON" (fn t ->
+    let sent =
+      handle plimsoll.apply! enc web with
+      | Shell!run (_, input) _ -> input;
+    t.eq (JSON.stringify (enc web)) sent),
+  test "check asks the server and changes nothing" (fn t ->
+    t.eq
+      "kubectl apply --server-side --field-manager=plimsoll --dry-run=server -o json -f -"
+      (command_of (fn () -> JSON.stringify (plimsoll.check! enc web)))),
+  test "and gives the object the server would store" (fn t ->
+    let doc =
+      handle plimsoll.check! enc web with
+      | Shell!run _ k -> k stored;
+    t.eq (Ok (Some 1)) (JSON.decode dec doc |> Result.map (fn (d: apps.Deployment) -> d.spec.replicas))),
+  test "get reads one object and decodes it" (fn t ->
+    let d =
+      handle plimsoll.get! dec "deployment" "web" with
+      | Shell!run _ k -> k stored;
+    t.eq (Some "web") (d.metadata |> Option.and_then (fn (m: meta.ObjectMeta) -> m.name))),
+  test "with kubectl get" (fn t ->
+    t.eq
+      "kubectl get 'deployment' 'web' -o json"
+      (command_of (fn () -> (let _ = plimsoll.get dec "deployment" "web"; "")))),
+  test "list reads the items" (fn t ->
+    let ds =
+      handle plimsoll.list! dec "deployment" with
+      | Shell!run _ k -> k "{\"items\":[%{stored},%{stored}]}";
+    t.eq 2 (List.length ds)),
+  test "a document that is not the type is an Error" (fn t ->
+    let r =
+      handle plimsoll.get dec "deployment" "web" with
+      | Shell!run _ k -> k `{"kind":"Deployment"}`;
+    t.ok (Result.error? r)),
+  test "delete" (fn t ->
+    t.eq
+      "kubectl delete 'deployment' 'web'"
+      (command_of (fn () -> plimsoll.delete! "deployment" "web"))),
+  test "manifest writes one JSON list and reaches nothing" (fn t ->
+    t.eq
+      "[%{JSON.stringify (enc web)},%{JSON.stringify (enc web)}]"
+      (plimsoll.manifest enc [web, web]))
+])

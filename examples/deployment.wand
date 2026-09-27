@@ -1,13 +1,13 @@
-uses {IO, Shell(kubectl)}
+uses {IO, Shell}
 
 -- A Deployment built from the generated types, and checked by the API
 -- server of the cluster that kubectl points at.
 --
 -- It encodes the Deployment with its derived encoder, asks the server to
--- validate it with `kubectl apply --dry-run=server`, decodes the object the
--- server would store, and compares the fields it set. Nothing on the
--- cluster changes. `wand --dry-run` withholds the apply, since wand cannot
--- see that `--dry-run=server` changes nothing.
+-- validate it with `plimsoll.check!` (a server-side dry run), decodes the
+-- object the server would store, and compares the fields it set. Nothing on
+-- the cluster changes. `wand --dry-run` withholds the check, since wand
+-- cannot see that a server-side dry run changes nothing.
 import IO
 import JSON
 import Map
@@ -49,10 +49,9 @@ let web =
 
 let sent = JSON.stringify (apps.Deployment.encoder web)
 
-let stored =
-  sent |> $(kubectl apply --server-side --dry-run=server -o json -f -)
+let stored = plimsoll.check! apps.Deployment.encoder web
 
-let back = JSON.decode apps.Deployment.decoder (JSON.parse! stored)
+let back = JSON.decode apps.Deployment.decoder stored
 
 let pull (d: apps.Deployment) =
   match d.spec.template.spec with

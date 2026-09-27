@@ -144,3 +144,66 @@ Commit: not committed yet.
 | Item | Code | Did it say what to do? |
 |---|---|---|
 | missing `import Option` | E-TYPE | yes, with a fix |
+
+## 2026-09-27 — The runtime API and the quantity helpers
+
+**Task.** Wrote the runtime API in `plimsoll.wand`: `apply!`, `check!`,
+`get!`, `list!`, `delete!`, each with a plain form that gives a `Result`,
+and `manifest`. Wrote `millicores` and `bytes` for `Quantity`. Wrote
+`test_plimsoll.wand` (16 tests, no cluster). Changed
+`examples/deployment.wand` to use `check!`. Ran apply, get, list and delete
+against the kind cluster (Kubernetes v1.37.0). wand 0.88.1.
+
+### Easy
+
+- **`plimsoll.wand` typechecked on the first attempt.** The only finding
+  was the manifest (V-USES2), and `wand t --fix` wrote it: `uses
+  {Shell(kubectl)}`.
+- **Mocking needed no library.** A `Shell!command c _ -> c` case that does
+  not resume gives the command line, so a test reads exactly what would
+  run. A `Shell!run (_, input) _ -> input` case gives what was piped to it,
+  so a test reads the JSON that `apply!` sends. Both worked on the first
+  try.
+- **The `!` and `Result` pair is one line.** `let apply enc obj = try apply!
+  enc obj`, the same shape as `Shell.run` in the standard library.
+- **Derived decoders made `get!` and `list!` two lines each.**
+  `JSON.decode (Decode.list dec) (JSON.field! "items" doc)` read a
+  `kubectl get -o json` list on the first run.
+- **Overflow is not silent.** `millicores "1Ei"` raised "integer overflow in
+  '*': Int holds -4611686018427387904 to 4611686018427387903" on the first
+  run, with the line and column.
+
+### Hard
+
+1. **A function that gives a `Result` raised.** `millicores` computed
+   `n * 1000` outside a `try`, so an overflow raised instead of giving an
+   `Error`. Fixed with `Result.and_then (fn (n, d) -> try ...)`. Cause: the
+   LLM's own mistake.
+2. **Three wrong test expectations.** The LLM expected `kubectl get
+   deployment web -o json`; wand writes `kubectl get 'deployment' 'web' -o
+   json`, since `%{x}` in a command is quoted as one argument. And it
+   expected "'128MB' is not a quantity" where the code says "'MB' is not a
+   quantity suffix". Cause: the LLM's own mistake.
+3. **A script that uses the API is told to widen its manifest.** The
+   example declared `uses {IO, Shell(kubectl)}`. `wand t` gave A-USES1:
+   "the manifest allows 'kubectl', which no command here runs; it could be
+   "uses {IO, Shell}"". The command words are in `plimsoll.wand`, whose own
+   manifest bounds them, so the script is told to declare `Shell` with no
+   list. That is wand's rule, but the design wants a script's first line to
+   say `Shell(kubectl)`. Cause: effect or manifest.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `plimsoll.wand` | 1, then 1 fix after a run | 1 (manifest) | 1 |
+| `test_plimsoll.wand` | 2, then 2 runs of `wand s` (3 failures, then 0) | 3 (two imports, manifest) | 3 |
+| `examples/deployment.wand` | 1 | 1 (manifest) | 1 |
+
+### Diagnostics
+
+| Item | Code | Did it say what to do? |
+|---|---|---|
+| overflow | runtime error | yes: it named the limits and the place |
+| missing `import Result` | E-TYPE | yes, with a fix |
+| 3 wider manifest | A-USES1 | yes, with a fix |

@@ -146,26 +146,35 @@ because two Kubernetes enums can have the same value names.
 ```ocaml
 uses {Shell(kubectl)}
 
-import Plimsoll
+import github.com/wand-lang/plimsoll
 
--- The API server validates the object and stores nothing.
-Plimsoll.check apps.Deployment.encoder web
+-- The API server validates the object and stores nothing. It gives the
+-- object the server would store.
+let stored = plimsoll.check! apps.Deployment.encoder web
 
 -- Server-side apply.
-Plimsoll.apply apps.Deployment.encoder web
+plimsoll.apply! apps.Deployment.encoder web
 ```
 
 Each function takes the encoder or the decoder of the type it works on, so
-it works with every generated kind:
+it works with every generated kind. Each one that can fail has a `!` form
+that raises, and a plain form that gives a `Result`:
 
 | Function | What it does |
 |---|---|
-| `Plimsoll.apply enc obj` | Server-side apply of `obj` |
-| `Plimsoll.check enc obj` | The same with `--dry-run=server`; changes nothing |
-| `Plimsoll.get dec kind name` | Reads one object and decodes it |
-| `Plimsoll.list dec kind` | Reads every object of a kind and decodes them |
-| `Plimsoll.delete kind name` | Deletes one object |
-| `Plimsoll.manifest enc objs` | Writes objects as one JSON list, for a file or a review |
+| `plimsoll.apply! enc obj` | Server-side apply of `obj` |
+| `plimsoll.check! enc obj` | The same as a server-side dry run: the server validates `obj`, stores nothing, and gives the object it would store |
+| `plimsoll.get! dec kind name` | Reads one object and decodes it |
+| `plimsoll.list! dec kind` | Reads every object of a kind and decodes them |
+| `plimsoll.delete! kind name` | Deletes one object |
+| `plimsoll.manifest enc objs` | Writes objects as one JSON list, for a file or a review |
+
+`get!` and `list!` only read, so a rehearsal (`wand --dry-run`) runs them,
+and a script that reads the cluster before it changes it rehearses the
+path a real run takes. `apply!`, `check!` and `delete!` are withheld.
+
+`plimsoll.millicores` and `plimsoll.bytes` read a `Quantity`: "500m" is 500
+millicores, and "128Mi" is 134217728 bytes.
 
 ### 5. Keep the types in step with your clusters
 

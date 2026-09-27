@@ -7,8 +7,10 @@ Obey them here.
 
 ## Layout
 
-- `plimsoll.wand` — the hand-written types that generated modules use:
-  `IntOrString`, `Quantity`. The runtime API comes here later.
+- `plimsoll.wand` — the hand-written types that generated modules use
+  (`IntOrString`, `Quantity`), the quantity helpers, and the runtime API:
+  `apply!`, `check!`, `get!`, `list!`, `delete!`, `manifest`. It reaches the
+  cluster only through kubectl.
 - `_gen.wand` — the generator. It is pure: OpenAPI documents in, file texts
   and notes out. It is private to this package.
 - `cli.wand` — the command: `wand github.com/wand-lang/plimsoll/cli gen
