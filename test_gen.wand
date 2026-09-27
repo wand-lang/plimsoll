@@ -13,7 +13,7 @@ let {test, group} = import Test
 let gen = import ./_gen
 
 let doc = JSON.read_file! ./testdata/apps_v1_cut.json
-let out = gen.generate "../../plimsoll" [doc]
+let out = gen.generate "../../plimsoll" ["apis/apps/v1"] [doc]
 
 let text_of path =
   List.find (fn (f: gen.File) -> f.path == path) out.files
@@ -48,12 +48,13 @@ group "files" (fn () -> [
     t.eq
       ["k8s/apps/v1.wand", "k8s/meta/v1.wand"]
       (List.map (fn (f: gen.File) -> f.path) out.files)),
-  test "the header" (fn t ->
-    t.ok (String.starts_with? "-- DO NOT EDIT: written by plimsoll gen\n" apps)),
+  test "the header names the group-versions read" (fn t ->
+    t.ok (String.starts_with? "-- DO NOT EDIT: written by plimsoll gen from apis/apps/v1\n" apps)),
+  test "and can be read back" (fn t -> t.eq ["apis/apps/v1"] (gen.sources_of apps)),
   test "the same input gives the same output" (fn t ->
     t.eq
       (List.map (fn (f: gen.File) -> f.text) out.files)
-      (List.map (fn (f: gen.File) -> f.text) (gen.generate "../../plimsoll" [doc]).files))
+      (List.map (fn (f: gen.File) -> f.text) (gen.generate "../../plimsoll" ["apis/apps/v1"] [doc]).files))
 ])
 
 group "fields" (fn () -> [
@@ -125,7 +126,7 @@ let clash =
   JSON.parse!
     `{"components": {"schemas": {"io.k8s.api.core.v1.Widget": {"type": "object", "properties": {"size": {"type": "integer"}}}, "io.k8s.api.core.v1.Holder": {"type": "object", "properties": {"kind": {"type": "string", "enum": ["Widget", "Gadget"]}}}}}}`
 
-let clash_out = gen.generate "../../plimsoll" [clash]
+let clash_out = gen.generate "../../plimsoll" ["api/v1"] [clash]
 
 group "an enum value with a record's name" (fn () -> [
   test "stays String" (fn t ->
@@ -145,7 +146,7 @@ let odd =
   JSON.parse!
     `{"components": {"schemas": {"io.k8s.api.core.v1.DaemonEndpoint": {"type": "object", "properties": {"Port": {"type": "integer"}, "host": {"type": "string"}}}}}}`
 
-let odd_out = gen.generate "../../plimsoll" [odd]
+let odd_out = gen.generate "../../plimsoll" ["api/v1"] [odd]
 
 group "unspellable keys" (fn () -> [
   test "the field is left out" (fn t ->

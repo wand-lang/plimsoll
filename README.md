@@ -188,16 +188,24 @@ millicores, and "128Mi" is 134217728 bytes.
 ### 5. Keep the types in step with your clusters
 
 ```sh
-wand github.com/wand-lang/plimsoll/cli check              # the current context
-wand github.com/wand-lang/plimsoll/cli check --context prod
-wand github.com/wand-lang/plimsoll/cli upgrade
+wand github.com/wand-lang/plimsoll/cli check
+wand github.com/wand-lang/plimsoll/cli check --contexts staging,prod
+wand github.com/wand-lang/plimsoll/cli upgrade --contexts staging,prod
 ```
 
-`check` exits non-zero when a cluster's schema differs from `k8s/`, and
-names the types that changed. Run it in CI for each cluster you deploy to.
-`upgrade` regenerates `k8s/` from the oldest cluster you list, typechecks
-your scripts, and writes a report of each type that changed and each
-script that broke.
+`check` generates the types again, in memory, from each kubectl context,
+and compares them with `k8s/`. It names each type, field and enum value
+that differs, and exits non-zero when anything does. Run it in CI for each
+cluster you deploy to. With no `--contexts`, it uses the current context.
+
+`upgrade` finds the oldest of the clusters, writes `k8s/` from it,
+typechecks your scripts, and prints a report: what changed in the schema,
+and each script that no longer typechecks, with its file, line and
+message. It exits non-zero when a script broke, so a CI job can open the
+upgrade as a pull request with the report as its body.
+
+Neither command needs the group-versions again: each module's first line
+names the ones `gen` read.
 
 ## License
 

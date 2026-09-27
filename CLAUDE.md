@@ -13,8 +13,11 @@ Obey them here.
   cluster only through kubectl.
 - `_gen.wand` — the generator. It is pure: OpenAPI documents in, file texts
   and notes out. It is private to this package.
-- `cli.wand` — the command: `wand github.com/wand-lang/plimsoll/cli gen
-  [group-version ...]`. Run it here as `wand cli.wand gen`.
+- `_drift.wand` — what changed between the modules on disk and the ones
+  `gen` would write now. It is pure. `check` and `upgrade` print it.
+- `cli.wand` — the command: `gen [group-version ...]`, `check [--contexts
+  a,b,c]` and `upgrade [--contexts a,b,c]`. Run it here as
+  `wand cli.wand gen`.
 - `k8s/` — generated modules. Do not edit them. Run `gen` again.
 - `test_*.wand` — tests, run with `wand s`. `testdata/` holds fixtures cut
   from a real schema.
@@ -26,7 +29,7 @@ Obey them here.
 Check by exit code.
 
 ```sh
-wand t _gen.wand cli.wand plimsoll.wand test_gen.wand   # no findings
+wand t _gen.wand _drift.wand cli.wand plimsoll.wand test_*.wand   # no findings
 wand s                                                  # all tests pass
 wand t k8s/*/*.wand                                     # generated modules
 for f in k8s/*/*.wand; do cp $f /tmp/x.wand; wand f /tmp/x.wand; cmp $f /tmp/x.wand; done

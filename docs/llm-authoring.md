@@ -227,3 +227,62 @@ script using plimsoll declares `uses {Shell}`. wand 0.88.1.
 |---|---|---|---|
 | `plimsoll.wand` | 1 | 0 | 0 |
 | `test_plimsoll.wand` | 1, then 1 run of `wand s` | 0 | 0 |
+
+## 2026-09-27 — check and upgrade
+
+**Task.** `gen` writes the group-versions it read into each module's first
+line. Wrote `_drift.wand` (the pure comparison) and `test_drift.wand` (7
+tests). Added `check [--contexts a,b,c]` and `upgrade [--contexts a,b,c]`
+to `cli.wand`. Against the kind cluster (Kubernetes v1.37.0): `check`
+matched; after a field was added to `Deployment` by hand, `check` named it
+and exited 1, and `upgrade` wrote `k8s/` again and named the script that
+used the field. wand 0.88.1.
+
+### Easy
+
+- **`_drift.wand` typechecked on the first attempt,** and its 7 tests
+  passed on the first run. A fold over the lines with a small `Parse`
+  record read records and sums, both one-line and wrapped.
+- **The output of `wand t --json` decoded with a derived decoder.** `type
+  Diagnostic(severity: String, file: String, line: Int, col: Int, message:
+  String)` read it; the keys it does not name were left out.
+- **The oldest cluster was one line.** `List.sort_by (fn (_, v) -> v)`
+  sorted `Version` values, since `Version` is ordered.
+- **The manifest named the new binary.** `wand t` gave "this command runs
+  'wand', which Shell(kubectl) does not allow", and `wand t --fix` wrote
+  `Shell(kubectl, wand)`.
+
+### Hard
+
+1. **A body with statements, again.** `run_upgrade!` had a statement after
+   its `let` lines with no brackets. Diagnostic: "the ';' above ended the
+   definition, so this line is a statement of its own rather than part of
+   it -- put the body in parentheses to sequence it". Fixed with `( ... )`.
+   Cause: the LLM's own mistake, the second time in two tasks. The message
+   said what to do.
+2. **Two `!` names that cannot raise.** `sources_of!` and `with_contexts!`
+   end the process with `Proc.exit`, and do not raise. V-BANG2: "'sources_of!'
+   cannot raise, so the `!` promises a risk that is not there". Renamed.
+   Cause: the LLM's own mistake (it read "may stop the script" as "raises").
+3. **`FS.glob` gives whole paths.** The LLM stripped a leading `./` only, so
+   every module on disk looked removed and every generated one new. Found on
+   the first run against the cluster. Fixed by writing each path from the
+   working directory. Cause: the LLM's own mistake (it did not read `wand d
+   FS.glob` first).
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `_gen.wand` | 1 | 0 | 0 |
+| `_drift.wand` | 1 | 0 | 0 |
+| `test_drift.wand` | 2, then 1 run of `wand s` | 2 (imports) | 0 |
+| `cli.wand` | 4, then 2 fixes after runs | 1 (manifest) | 4 |
+
+### Diagnostics
+
+| Item | Code | Did it say what to do? |
+|---|---|---|
+| 1 body with statements | parse error | yes |
+| 2 `!` names | V-BANG2 | yes |
+| manifest | E-TYPE | yes, with a fix |

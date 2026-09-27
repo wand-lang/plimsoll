@@ -1,0 +1,150 @@
+-- What changed between two sets of generated modules: what `check` and
+-- `upgrade` report.
+--
+-- It is pure: module texts in, lines of change out. It reads the modules
+-- as `gen` writes them, not as wand parses them, so it depends on the
+-- layout in _gen.wand.
+
+import List
+import Option
+import String
+
+let gen = import ./_gen
+
+-- One declaration of a generated module: a record and its fields, or a sum
+-- and its values. A field is its name and whether it is required; a value
+-- is its name and `true`.
+type Decl(name: String, sum: Bool, items: List (String, Bool))
+
+-- The declarations read so far, and the one being read.
+type Parse(cur: Option Decl, done: List Decl)
+
+-- A record field line, "  name: Type,", as its name and whether it is
+-- required. A field with a default (`Option ... = None`, or a literal) is
+-- not required.
+let field_of line =
+  let t = String.trim line;
+  if String.empty? t || String.starts_with? "--" t then None
+  else
+    match String.split ": " t with
+    | [name :: rest] -> (
+      let ty = String.join ": " rest;
+      Some (name, !(String.starts_with? "Option " ty) && !(String.contains? " = " ty))
+    )
+    | _ -> None
+
+let close (p: Parse) =
+  match p.cur with
+  | Some d -> d :: p.done
+  | None -> p.done
+
+-- A `type` line: "type Name(" opens a record, "type Name = A | B" or
+-- "type Name =" a sum.
+let open_decl line =
+  let rest = String.slice 5 (String.length line) line;
+  if String.ends_with? "(" rest then
+    Decl(name = String.slice 0 (String.length rest - 1) rest, sum = false, items = [])
+  else
+    match String.split " =" rest with
+    | [name, values] ->
+      Decl(
+        name = name,
+        sum = true,
+        items =
+          String.split "|" values
+          |> List.map String.trim
+          |> List.filter (fn v -> !(String.empty? v))
+          |> List.map (fn v -> (v, true))
+      )
+    | _ -> Decl(name = rest, sum = true, items = [])
+
+let step (p: Parse) line =
+  if String.starts_with? "type " line then Parse(cur = Some (open_decl line), done = close p)
+  else
+    match p.cur with
+    | None -> p
+    | Some d ->
+      let t = String.trim line;
+      if d.sum then
+        -- A wrapped sum goes on with "  A" and "  | B" lines.
+        if String.starts_with? "  " line && !(String.empty? t) && !(String.starts_with? "--" t) then (
+          let v = if String.starts_with? "| " t then String.slice 2 (String.length t) t else t;
+          Parse(cur = Some Decl(d, items = List.append d.items [(v, true)]), done = p.done)
+        )
+        else Parse(cur = None, done = close p)
+      else if t == ")" then Parse(cur = None, done = close p)
+      else
+        match field_of line with
+        | Some f -> Parse(cur = Some Decl(d, items = List.append d.items [f]), done = p.done)
+        | None -> p
+
+-- The declarations of one generated module, in the order they are written.
+let decls text =
+  List.fold_left step Parse(cur = None, done = []) (String.lines text) |> close |> List.reverse
+
+let names items = List.map (fn (x, _) -> x) items
+
+let has? x xs = List.any? (fn y -> y == x) xs
+
+-- What changed in one declaration.
+let decl_changes path (o: Decl) (n: Decl) =
+  let what = if n.sum then "value" else "field";
+  let added =
+    List.filter (fn (x, _) -> !(has? x (names o.items))) n.items
+    |> List.map (fn (x, _) -> "%{path}: %{n.name}: %{what} `%{x}` added");
+  let removed =
+    List.filter (fn (x, _) -> !(has? x (names n.items))) o.items
+    |> List.map (fn (x, _) -> "%{path}: %{n.name}: %{what} `%{x}` removed");
+  let required =
+    if n.sum then []
+    else
+      List.filter_map
+        (fn (x, now) ->
+          match List.find (fn (y, _) -> y == x) o.items with
+          | Some(_, before) when before != now ->
+            Some
+              (if now then "%{path}: %{n.name}: field `%{x}` is now required"
+              else "%{path}: %{n.name}: field `%{x}` is now optional")
+          | _ -> None)
+        n.items;
+  List.flatten [added, removed, required]
+
+-- What changed in one module, as lines. A module whose text changed but
+-- whose declarations did not changed only its doc comments.
+let module_changes path old_text new_text =
+  let o = decls old_text;
+  let n = decls new_text;
+  let find name ds = List.find (fn (d: Decl) -> d.name == name) ds;
+  let removed =
+    List.filter (fn (d: Decl) -> Option.none? (find d.name n)) o
+    |> List.map (fn (d: Decl) -> "%{path}: type `%{d.name}` removed");
+  let added =
+    List.filter (fn (d: Decl) -> Option.none? (find d.name o)) n
+    |> List.map (fn (d: Decl) -> "%{path}: type `%{d.name}` added");
+  let changed =
+    List.filter_map
+      (fn (d: Decl) -> find d.name o |> Option.map (fn (od: Decl) -> decl_changes path od d))
+      n
+    |> List.flatten;
+  let all = List.flatten [removed, added, changed];
+  if List.empty? all && old_text != new_text then ["%{path}: doc comments changed"] else all
+
+-- What changed from the modules on disk, as (path, text), to the modules
+-- `gen` would write now. Empty when they are the same.
+let compare (old: List (String, String)) (new: List gen.File) =
+  let old_text p = List.find (fn (q, _) -> q == p) old |> Option.map (fn (_, t) -> t);
+  let new_text p =
+    List.find (fn (f: gen.File) -> f.path == p) new |> Option.map (fn (f: gen.File) -> f.text);
+  let paths =
+    List.append (names old) (List.map (fn (f: gen.File) -> f.path) new)
+    |> List.unique
+    |> List.sort;
+  List.map
+    (fn p ->
+      match (old_text p, new_text p) with
+      | (Some o, Some n) -> if o == n then [] else module_changes p o n
+      | (None, Some _) -> ["%{p}: new module"]
+      | (Some _, None) -> ["%{p}: no longer generated"]
+      | (None, None) -> [])
+    paths
+  |> List.flatten

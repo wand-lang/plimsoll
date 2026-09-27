@@ -412,7 +412,22 @@ let render_rec (r: Rec) =
     |> List.flatten;
   List.flatten [doc_lines "" r.doc, ["type %{r.name}("], lines, [")"]]
 
-let render_module plim_target mod (enums: List Enum) (recs: List Rec) =
+-- The first line of a generated module. It names the group-versions `gen`
+-- read, so `check` and `upgrade` can read them again with no argument.
+let header sources = "-- DO NOT EDIT: written by plimsoll gen from " ++ String.join ", " sources
+
+-- The group-versions a module was generated from, read from its first
+-- line.
+let sources_of text =
+  let first = String.lines text |> List.head |> Option.default "";
+  let prefix = "-- DO NOT EDIT: written by plimsoll gen from ";
+  if String.starts_with? prefix first then
+    String.slice (String.length prefix) (String.length first) first
+    |> String.split ", "
+    |> List.filter (fn s -> !(String.empty? s))
+  else []
+
+let render_module plim_target sources mod (enums: List Enum) (recs: List Rec) =
   let fields = List.map (fn (r: Rec) -> r.fields) recs |> List.flatten;
   let others =
     List.map (fn (f: Field) -> f.ty.refs) fields
@@ -431,7 +446,7 @@ let render_module plim_target mod (enums: List Enum) (recs: List Rec) =
       (List.map render_enum (List.sort_by (fn (e: Enum) -> e.name) enums))
       (List.map render_rec recs);
   let body = List.map (String.join "\n") blocks |> String.join "\n\n";
-  let head = "-- DO NOT EDIT: written by plimsoll gen";
+  let head = header sources;
   let parts =
     if List.empty? imports then [head, body] else [head, String.join "\n" imports, body];
   String.join "\n\n" parts ++ "\n"
@@ -457,8 +472,9 @@ let cycle_notes (edges: List (String, List String)) =
 
 -- The files for every record the documents define. `plim_target` is how a
 -- generated module imports plimsoll: "../../plimsoll" inside this package,
--- "github.com/wand-lang/plimsoll" anywhere else.
-let generate plim_target (docs: List JSON) =
+-- "github.com/wand-lang/plimsoll" anywhere else. `sources` names the
+-- group-versions the documents came from, for each module's first line.
+let generate plim_target (sources: List String) (docs: List JSON) =
   let schemas = List.fold_left (fn acc d -> Map.merge acc (schemas_of d)) Map.empty docs;
   let records = Map.keys schemas |> List.sort |> List.filter (record? schemas);
   let mods = List.map module_of records |> List.unique |> List.sort;
@@ -476,7 +492,7 @@ let generate plim_target (docs: List JSON) =
     |> List.map (fn ((m, recs), d) ->
       File(
         path = m ++ ".wand",
-        text = render_module plim_target m d.enums (topo [] recs [])
+        text = render_module plim_target sources m d.enums (topo [] recs [])
       ));
   let edges =
     List.map
