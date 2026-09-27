@@ -141,22 +141,24 @@ group "an enum value with a record's name" (fn () -> [
       clash_out.notes)
 ])
 
--- A property that wand cannot spell is left out, and a note says so.
+-- A property wand cannot spell as a field name gets a name made from its
+-- key, and the key: `port "Port": Option Int = None`. A made name that
+-- another property already has gets a trailing `_`.
 let odd =
   JSON.parse!
-    `{"components": {"schemas": {"io.k8s.api.core.v1.DaemonEndpoint": {"type": "object", "properties": {"Port": {"type": "integer"}, "host": {"type": "string"}}}}}}`
+    `{"components": {"schemas": {"io.k8s.api.core.v1.DaemonEndpoint": {"type": "object", "properties": {"Port": {"type": "integer"}, "host": {"type": "string"}, "$ref": {"type": "string"}, "ref": {"type": "string"}, "x-kubernetes-list-type": {"type": "string"}}}}}}`
 
 let odd_out = gen.generate "../../plimsoll" ["api/v1"] [odd]
 
-group "unspellable keys" (fn () -> [
-  test "the field is left out" (fn t ->
-    let text =
-      List.head odd_out.files
-      |> Option.map (fn (f: gen.File) -> f.text)
-      |> Option.default "";
-    t.ok (String.contains? "type DaemonEndpoint(host: Option String = None)" text)),
-  test "and noted" (fn t ->
-    t.eq
-      ["k8s/core/v1: DaemonEndpoint.Port is left out (not a wand field name)"]
-      odd_out.notes)
+let odd_text =
+  List.head odd_out.files |> Option.map (fn (f: gen.File) -> f.text) |> Option.default ""
+
+group "keys a field name cannot be" (fn () -> [
+  test "a capitalised key" (fn t -> t.ok (String.contains? "  port \"Port\": Option Int = None" odd_text)),
+  test "a key with $" (fn t -> t.ok (String.contains? "  ref_ \"$ref\": Option String = None" odd_text)),
+  test "a key with -" (fn t ->
+    t.ok (String.contains? "  x_kubernetes_list_type \"x-kubernetes-list-type\": Option String = None" odd_text)),
+  test "a key that is a field name has no key written" (fn t ->
+    t.ok (String.contains? "  ref: Option String = None" odd_text)),
+  test "and nothing is left out" (fn t -> t.eq [] odd_out.notes)
 ])

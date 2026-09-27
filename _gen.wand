@@ -24,7 +24,7 @@ type Output(files: List File, notes: List String)
 type Ty(text: String, refs: List String, plim: Bool)
 
 -- One field of a record.
-type Field(name: String, ty: Ty, doc: String, required: Bool)
+type Field(name: String, key: Option String, ty: Ty, doc: String, required: Bool)
 
 -- One record: a schema object with properties.
 type Rec(
@@ -116,6 +116,35 @@ let import_path path = "../" ++ (String.split "/" path |> List.drop 1 |> String.
 
 -- A property name wand can write as a field name.
 let spellable? name = Regex.match? r/^[a-z_][A-Za-z0-9_]*$/ name
+
+-- The field name for a property wand cannot spell, made from its key: a
+-- leading `$` or `@` dropped, the first letter lowercased, and `-` and `.`
+-- written `_`. "$ref" is `ref`, "Port" is `port`, "x-kubernetes-list-type"
+-- is `x_kubernetes_list_type`.
+let field_name_of key =
+  let bare =
+    if String.starts_with? "$" key || String.starts_with? "@" key then
+      String.slice 1 (String.length key) key
+    else key;
+  let lowered = String.lower (String.slice 0 1 bare) ++ String.slice 1 (String.length bare) bare;
+  lowered |> String.replace "-" "_" |> String.replace "." "_"
+
+-- The field name for each property, in order, with the key the document
+-- uses where the name is not the key. A made name that another property
+-- already has gets a trailing `_`. A key that still makes no field name is
+-- left out.
+let field_names props =
+  List.fold_left
+    (fn acc p ->
+      if spellable? p then List.append acc [(p, p, None)]
+      else (
+        let taken n = List.any? (fn (_, x, _) -> x == n) acc || List.any? (fn q -> q == n) props;
+        let base = field_name_of p;
+        let name = if taken base then base ++ "_" else base;
+        if spellable? name then List.append acc [(p, name, Some p)] else acc
+      ))
+    []
+    props
 
 -- A value that can be a constructor.
 let constructor? v =
@@ -325,11 +354,12 @@ let build_rec (ctx: Ctx) name =
   let fields =
     Map.keys props
     |> List.sort
-    |> List.filter spellable?
-    |> List.map (fn p ->
+    |> field_names
+    |> List.map (fn (p, fname, key) ->
       let j = Map.get p props |> Option.default JSON.null;
       Field(
-        name = p,
+        name = fname,
+        key = key,
         ty = ty_of ctx name p j,
         doc = str "description" j |> Option.default "",
         required = List.any? (fn r -> r == p) required
@@ -342,15 +372,17 @@ let build_rec (ctx: Ctx) name =
     gvk = gvk_of s
   )
 
+-- The properties no field name can be made for. A property wand cannot
+-- spell as it is gets a made name and its key (`port "Port": Int`); only
+-- one that still makes no name is left out.
 let unspellable schemas name =
-  Map.get name schemas
-  |> Option.default JSON.null
-  |> obj "properties"
-  |> Map.keys
-  |> List.sort
-  |> List.filter (fn p -> !(spellable? p))
+  let props =
+    Map.get name schemas |> Option.default JSON.null |> obj "properties" |> Map.keys |> List.sort;
+  let kept = field_names props |> List.map (fn (p, _, _) -> p);
+  props
+  |> List.filter (fn p -> !(List.any? (fn k -> k == p) kept))
   |> List.map (fn p ->
-    "%{module_of name}: %{short_name name}.%{p} is left out (not a wand field name)")
+    "%{module_of name}: %{short_name name}.%{p} is left out (no field name can be made from it)")
 
 -- The definitions of the same module that a record's fields name.
 let local_deps (r: Rec) =
@@ -403,7 +435,11 @@ let render_field (r: Rec) last (f: Field) =
     | ("kind", Some(_, k)) -> `String = "%{k}"`
     | _ -> if f.required then f.ty.text else "Option %{paren f.ty.text} = None"
   in
-  List.append (doc_lines "  " f.doc) ["  %{f.name}: %{ty}" ++ (if last then "" else ",")]
+  let key =
+    match f.key with
+    | Some k -> " \"" ++ (String.replace "\\" "\\\\" k |> String.replace "\"" "\\\"") ++ "\""
+    | None -> "";
+  List.append (doc_lines "  " f.doc) ["  %{f.name}%{key}: %{ty}" ++ (if last then "" else ",")]
 
 -- A record whose fields have no doc comments goes on one line when the line
 -- fits the width `wand f` keeps, as `wand f` writes it. A comment on a field

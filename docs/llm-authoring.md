@@ -328,3 +328,38 @@ wand 0.88.1.
 | Item | Code | Did it say what to do? |
 |---|---|---|
 | 2 order of definitions | E-TYPE | no: it asked for a type annotation, and the fix was the order |
+
+## 2026-09-27 — Keys a field name cannot be
+
+**Task.** The generator gives a property that wand cannot spell a field
+name made from its key, and writes the key: `port "Port": Int`, `ref
+"$ref": Option String = None`. This uses the document key of wand 0.89.0
+(not released yet; checked with a local build). On all 23 group-versions:
+25 modules typecheck, all are `wand f` fixed points, and no property is
+left out. A real Node from the kind cluster decoded its kubelet `Port`,
+and a CRD from a server-side dry run decoded and encoded with its
+`x-kubernetes-*` keys.
+
+### Easy
+
+- **The change to the generator was small.** One function makes names
+  from keys (`field_names`), and `render_field` writes the key. `wand t`
+  was clean on the first attempt after the edit.
+- **Nothing else changed for keys.** Every record that holds a keyed type
+  (`NodeStatus`, `CustomResourceDefinition`) kept its derived decoder with
+  no generated code.
+
+### Hard
+
+1. **An edit removed five functions.** The LLM replaced the text from one
+   function to another in a script, and five functions stood between them.
+   `wand t` gave "unbound variable 'doc_lines'" and three more, which named
+   the missing functions at once; they were restored from git. Cause: the
+   LLM's own mistake.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `_gen.wand` | 2 | 0 | 1 |
+| `test_gen.wand` | 1, then 2 runs of `wand s` (2 failures by design, then 0) | 0 | 1 |
