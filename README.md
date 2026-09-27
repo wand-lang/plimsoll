@@ -58,8 +58,12 @@ typed too.
   the cluster, and a reviewer sees that on line one:
 
   ```
-  uses {Shell(kubectl)}
+  uses {Shell}
   ```
+
+  A file with no `Shell` on its first line cannot reach the cluster at all.
+  plimsoll's own first line is `uses {Shell(kubectl)}`, so the commands it
+  runs for a script are `kubectl` and nothing else.
 
 - **A rehearsal before a real run.** `wand --dry-run deploy.wand` withholds
   every change and reports it. `Plimsoll.check` asks the API server to
@@ -144,7 +148,7 @@ because two Kubernetes enums can have the same value names.
 ### 4. Check and apply them
 
 ```ocaml
-uses {Shell(kubectl)}
+uses {Shell}
 
 import github.com/wand-lang/plimsoll
 
@@ -167,7 +171,12 @@ that raises, and a plain form that gives a `Result`:
 | `plimsoll.get! dec kind name` | Reads one object and decodes it |
 | `plimsoll.list! dec kind` | Reads every object of a kind and decodes them |
 | `plimsoll.delete! kind name` | Deletes one object |
+| `plimsoll.get_in! dec ns kind name`, `list_in!`, `delete_in!` | The same, in the namespace `ns` |
 | `plimsoll.manifest enc objs` | Writes objects as one JSON list, for a file or a review |
+
+`get!`, `list!` and `delete!` work in the current namespace, which the
+kubectl context sets. The `_in` forms name the namespace at the call.
+`apply!` and `check!` use the namespace in the object's `metadata`.
 
 `get!` and `list!` only read, so a rehearsal (`wand --dry-run`) runs them,
 and a script that reads the cluster before it changes it rehearses the

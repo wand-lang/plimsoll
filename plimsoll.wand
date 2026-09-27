@@ -121,7 +121,7 @@ let get! dec kind name =
 let get dec kind name = try get! dec kind name
 
 -- Every object of a kind in the current namespace, decoded. It only reads,
--- so a rehearsal runs it.
+-- so a rehearsal runs it. The `_in` forms below take the namespace.
 let list! dec kind =
   let doc = JSON.parse! (Shell.inspect! $*(kubectl get %{kind} -o json));
   Result.get! (JSON.decode (Decode.list dec) (JSON.field! "items" doc))
@@ -129,12 +129,34 @@ let list! dec kind =
 -- `list!`, giving an `Error` where it raises.
 let list dec kind = try list! dec kind
 
+-- `get!` in the namespace `ns`, not the current one.
+let get_in! dec ns kind name =
+  let doc = JSON.parse! (Shell.inspect! $*(kubectl get -n %{ns} %{kind} %{name} -o json));
+  Result.get! (JSON.decode dec doc)
+
+-- `get_in!`, giving an `Error` where it raises.
+let get_in dec ns kind name = try get_in! dec ns kind name
+
+-- `list!` in the namespace `ns`, not the current one.
+let list_in! dec ns kind =
+  let doc = JSON.parse! (Shell.inspect! $*(kubectl get -n %{ns} %{kind} -o json));
+  Result.get! (JSON.decode (Decode.list dec) (JSON.field! "items" doc))
+
+-- `list_in!`, giving an `Error` where it raises.
+let list_in dec ns kind = try list_in! dec ns kind
+
 -- Delete one object. Gives kubectl's line, such as
 -- "deployment.apps "web" deleted".
 let delete! kind name = $(kubectl delete %{kind} %{name})
 
 -- `delete!`, giving an `Error` where it raises.
 let delete kind name = try delete! kind name
+
+-- `delete!` in the namespace `ns`, not the current one.
+let delete_in! ns kind name = $(kubectl delete -n %{ns} %{kind} %{name})
+
+-- `delete_in!`, giving an `Error` where it raises.
+let delete_in ns kind name = try delete_in! ns kind name
 
 -- Objects as one JSON list, for a file or for a review. It reaches nothing.
 let manifest enc objs = JSON.stringify (JSON.of_list (List.map enc objs))

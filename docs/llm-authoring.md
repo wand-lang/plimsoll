@@ -207,3 +207,23 @@ against the kind cluster (Kubernetes v1.37.0). wand 0.88.1.
 | overflow | runtime error | yes: it named the limits and the place |
 | missing `import Result` | E-TYPE | yes, with a fix |
 | 3 wider manifest | A-USES1 | yes, with a fix |
+
+## 2026-09-27 — Namespaces for get, list and delete
+
+**Task.** Added `get_in!`, `list_in!` and `delete_in!`, and their `Result`
+forms, to `plimsoll.wand`, with 3 tests. Changed the README to say that a
+script using plimsoll declares `uses {Shell}`. wand 0.88.1.
+
+### Easy
+
+- **All of it was clean on the first attempt.** `wand t` reported nothing
+  on `plimsoll.wand` and `test_plimsoll.wand`, and `wand s` passed 51 of
+  51. The new functions copy the shape of the old ones, with `-n %{ns}` in
+  the command; the tests copy the `Shell!command` case.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `plimsoll.wand` | 1 | 0 | 0 |
+| `test_plimsoll.wand` | 1, then 1 run of `wand s` | 0 | 0 |

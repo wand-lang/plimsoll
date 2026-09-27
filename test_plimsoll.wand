@@ -102,6 +102,18 @@ group "the cluster" (fn () -> [
     t.eq
       "kubectl delete 'deployment' 'web'"
       (command_of (fn () -> plimsoll.delete! "deployment" "web"))),
+  test "get_in names the namespace" (fn t ->
+    t.eq
+      "kubectl get -n 'prod' 'deployment' 'web' -o json"
+      (command_of (fn () -> (let _ = plimsoll.get_in dec "prod" "deployment" "web"; "")))),
+  test "list_in names the namespace" (fn t ->
+    t.eq
+      "kubectl get -n 'prod' 'deployment' -o json"
+      (command_of (fn () -> (let _ = plimsoll.list_in dec "prod" "deployment"; "")))),
+  test "delete_in names the namespace" (fn t ->
+    t.eq
+      "kubectl delete -n 'prod' 'deployment' 'web'"
+      (command_of (fn () -> plimsoll.delete_in! "prod" "deployment" "web"))),
   test "manifest writes one JSON list and reaches nothing" (fn t ->
     t.eq
       "[%{JSON.stringify (enc web)},%{JSON.stringify (enc web)}]"
