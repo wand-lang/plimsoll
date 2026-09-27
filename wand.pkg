@@ -1,0 +1,3 @@
+{ package = github.com/wand-lang/plimsoll
+, wand    = 0.88.1
+}

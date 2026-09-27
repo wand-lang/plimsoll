@@ -1,0 +1,226 @@
+{
+ "components": {
+  "schemas": {
+   "io.k8s.api.apps.v1.Deployment": {
+    "description": "Deployment enables declarative updates for Pods and ReplicaSets.",
+    "properties": {
+     "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object.",
+      "type": "string"
+     },
+     "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents.",
+      "type": "string"
+     },
+     "metadata": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+       }
+      ],
+      "default": {},
+      "description": "Standard object's metadata."
+     },
+     "spec": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/io.k8s.api.apps.v1.DeploymentSpec"
+       }
+      ],
+      "default": {},
+      "description": "Specification of the desired behavior of the Deployment."
+     }
+    },
+    "required": [
+     "spec"
+    ],
+    "type": "object",
+    "x-kubernetes-group-version-kind": [
+     {
+      "group": "apps",
+      "kind": "Deployment",
+      "version": "v1"
+     }
+    ]
+   },
+   "io.k8s.api.apps.v1.DeploymentSpec": {
+    "description": "DeploymentSpec is the specification of the desired behavior of the Deployment.",
+    "properties": {
+     "paused": {
+      "description": "Indicates that the deployment is paused.",
+      "type": "boolean"
+     },
+     "replicas": {
+      "description": "Number of desired pods.",
+      "format": "int32",
+      "type": "integer"
+     },
+     "strategy": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/io.k8s.api.apps.v1.DeploymentStrategy"
+       }
+      ],
+      "default": {},
+      "description": "The deployment strategy to use to replace existing pods with new ones.",
+      "x-kubernetes-patch-strategy": "retainKeys"
+     }
+    },
+    "required": [],
+    "type": "object"
+   },
+   "io.k8s.api.apps.v1.DeploymentStrategy": {
+    "description": "DeploymentStrategy describes how to replace existing pods with new ones.",
+    "properties": {
+     "rollingUpdate": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/io.k8s.api.apps.v1.RollingUpdateDeployment"
+       }
+      ],
+      "description": "Rolling update config params."
+     },
+     "type": {
+      "description": "Type of deployment.",
+      "enum": [
+       "Recreate",
+       "RollingUpdate"
+      ],
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "io.k8s.api.apps.v1.RollingUpdateDeployment": {
+    "description": "Spec to control the desired behavior of rolling update.",
+    "properties": {
+     "maxSurge": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.util.intstr.IntOrString"
+       }
+      ],
+      "description": "The maximum number of pods that can be scheduled above the desired number of pods."
+     },
+     "maxUnavailable": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.util.intstr.IntOrString"
+       }
+      ],
+      "description": "The maximum number of pods that can be unavailable during the update."
+     }
+    },
+    "type": "object"
+   },
+   "io.k8s.api.apps.v1.StatefulSetSpec": {
+    "description": "A StatefulSetSpec is the specification of a StatefulSet.",
+    "properties": {
+     "podManagementPolicy": {
+      "description": "podManagementPolicy controls how pods are created during initial scale up, when replacing pods on nodes, or when scaling down.",
+      "enum": [
+       "OrderedReady",
+       "Parallel"
+      ],
+      "type": "string"
+     },
+     "serviceName": {
+      "default": "",
+      "description": "serviceName is the name of the service that governs this StatefulSet.",
+      "type": "string"
+     }
+    },
+    "required": [],
+    "type": "object"
+   },
+   "io.k8s.api.apps.v1.StatefulSetUpdateStrategy": {
+    "description": "StatefulSetUpdateStrategy indicates the strategy that the StatefulSet controller will use to perform updates.",
+    "properties": {
+     "type": {
+      "description": "Type indicates the type of the StatefulSetUpdateStrategy.",
+      "enum": [
+       "OnDelete",
+       "Recreate",
+       "RollingUpdate"
+      ],
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1": {
+    "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.",
+    "type": "object"
+   },
+   "io.k8s.apimachinery.pkg.apis.meta.v1.ManagedFieldsEntry": {
+    "description": "ManagedFieldsEntry is a workflow-id, a FieldSet and the group version of the resource that the fieldset applies to.",
+    "properties": {
+     "fieldsV1": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1"
+       }
+      ],
+      "description": "FieldsV1 holds the first JSON version format as described in the \"FieldsV1\" type."
+     },
+     "manager": {
+      "description": "Manager is an identifier of the workflow managing these fields.",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
+    "description": "ObjectMeta is metadata that all persisted resources must have, which includes all objects users must create.",
+    "properties": {
+     "creationTimestamp": {
+      "allOf": [
+       {
+        "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
+       }
+      ],
+      "description": "CreationTimestamp is a timestamp representing the server time when this object was created."
+     },
+     "labels": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects.",
+      "type": "object"
+     },
+     "managedFields": {
+      "description": "ManagedFields maps workflow-id and version to the set of fields that are managed by that workflow.",
+      "items": {
+       "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ManagedFieldsEntry"
+      },
+      "type": "array",
+      "x-kubernetes-list-type": "atomic"
+     },
+     "name": {
+      "description": "Name must be unique within a namespace.",
+      "type": "string"
+     }
+    },
+    "type": "object"
+   },
+   "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
+    "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.",
+    "format": "date-time",
+    "type": "string"
+   },
+   "io.k8s.apimachinery.pkg.util.intstr.IntOrString": {
+    "description": "IntOrString is a type that can hold an int32 or a string.",
+    "format": "int-or-string",
+    "oneOf": [
+     {
+      "type": "integer"
+     },
+     {
+      "type": "string"
+     }
+    ]
+   }
+  }
+ },
+ "openapi": "3.0.0"
+}

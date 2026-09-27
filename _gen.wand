@@ -1,0 +1,507 @@
+-- The generator: OpenAPI v3 documents in, wand source text out.
+--
+-- It is pure. It reads no file and runs no command, so a test gives it a
+-- document and reads what it writes. cli.wand reads the cluster and writes
+-- the files.
+
+import JSON
+import List
+import Map
+import Option
+import Regex
+import Result
+import String
+
+-- A generated file: where it goes, and what it holds.
+type File(path: String, text: String)
+
+-- What the generator gives: the files, and a note for each thing it could
+-- not write as the schema says.
+type Output(files: List File, notes: List String)
+
+-- A field's type as wand text, the definitions it names, and whether it
+-- names a plimsoll type.
+type Ty(text: String, refs: List String, plim: Bool)
+
+-- One field of a record.
+type Field(name: String, ty: Ty, doc: String, required: Bool)
+
+-- One record: a schema object with properties.
+type Rec(
+  full: String,
+  name: String,
+  doc: String,
+  fields: List Field,
+  gvk: Option (String, String)
+)
+
+-- An enum-style sum: its type name and its constructors.
+type Enum(name: String, values: List String, of_field: String)
+
+-- A string enum that one field declares, before the generator decides
+-- whether it can be a sum type.
+type Candidate(mod: String, key: String, name: String, values: List String)
+
+-- What a field's type is read against.
+type Ctx(schemas: Map JSON, mod: String, enums: Map String)
+
+-- ── Reading JSON ──────────────────────────────────────────────────────────
+
+let field k j = Result.to_option (JSON.field k j)
+
+let str k j = field k j |> Option.and_then (fn v -> Result.to_option (JSON.get_string v))
+
+let arr k j =
+  field k j
+  |> Option.and_then (fn v -> Result.to_option (JSON.get_array v))
+  |> Option.default []
+
+let obj k j =
+  field k j
+  |> Option.and_then (fn v -> Result.to_option (JSON.get_object v))
+  |> Option.default Map.empty
+
+let flag? k j =
+  field k j
+  |> Option.and_then (fn v -> Result.to_option (JSON.get_bool v))
+  |> Option.default false
+
+let strings js = List.filter_map (fn v -> Result.to_option (JSON.get_string v)) js
+
+-- The schemas of a document, by definition name.
+let schemas_of doc =
+  field "components" doc |> Option.map (obj "schemas") |> Option.default Map.empty
+
+-- The definition a schema names: through `$ref`, or through an `allOf` that
+-- holds one `$ref`.
+let ref_of j =
+  str "$ref" j
+  |> Option.or_else (fn () -> List.head (arr "allOf" j) |> Option.and_then (str "$ref"))
+  |> Option.map (String.replace "#/components/schemas/" "")
+
+-- ── Names ─────────────────────────────────────────────────────────────────
+
+-- The last segment of a definition name: its type name.
+let short_name name =
+  String.split "." name |> List.reverse |> List.head |> Option.default name
+
+-- The module a definition goes to, as a path: "k8s/apps/v1".
+-- io.k8s.api.<group>.<version>.T and ...pkg.apis.<group>.<version>.T are
+-- read by position. Any other name, such as a CRD's com.example.v1.Widget,
+-- has its version second from the end and its group, reversed, before it.
+let module_of name = (
+  let segs = String.split "." name;
+  let n = List.length segs;
+  let at i = List.get i segs |> Option.default "";
+  let apis = List.indexed segs |> List.find (fn (_, s) -> s == "apis");
+  if String.starts_with? "io.k8s.api." name then "k8s/%{at 3}/%{at 4}"
+  else match apis with
+    | Some(i, _) -> "k8s/%{at (i + 1)}/%{at (i + 2)}"
+    | None -> (
+      let group = List.take (n - 2) segs |> List.reverse |> String.join ".";
+      "k8s/%{group}/%{at (n - 2)}"
+    )
+)
+
+-- The name a module is imported under: "k8s/meta/v1" is meta_v1.
+let alias_of path =
+  String.split "/" path
+  |> List.drop 1
+  |> String.join "_"
+  |> String.replace "." "_"
+  |> String.replace "-" "_"
+
+-- The import of one generated module from another. Both are k8s/<g>/<v>.
+let import_path path = "../" ++ (String.split "/" path |> List.drop 1 |> String.join "/")
+
+-- A property name wand can write as a field name.
+let spellable? name = Regex.match? r/^[a-z_][A-Za-z0-9_]*$/ name
+
+-- A value that can be a constructor.
+let constructor? v =
+  Regex.match? r/^[A-Z][A-Za-z0-9_]*$/ v && !(List.any? (fn r -> r == v) ["None", "Some", "Ok", "Error"])
+
+let capital s = String.upper (String.slice 0 1 s) ++ String.slice 1 (String.length s) s
+
+-- The types wand declares itself. A definition may not take one of these
+-- names.
+let builtin_types = [
+  "Bool",
+  "CIDR",
+  "Command",
+  "Connection",
+  "DateTime",
+  "Decoder",
+  "Duration",
+  "Float",
+  "Glob",
+  "IPv4",
+  "Int",
+  "JSON",
+  "List",
+  "Map",
+  "Option",
+  "Path",
+  "Port",
+  "Process",
+  "Result",
+  "Shared",
+  "Size",
+  "String",
+  "TOML",
+  "URL",
+  "Unit",
+  "Version",
+  "YAML"
+]
+
+-- ── Types ─────────────────────────────────────────────────────────────────
+
+-- Definitions that are not records. Each is a type that wand or plimsoll
+-- already has.
+let special name =
+  match name with
+  | "io.k8s.apimachinery.pkg.util.intstr.IntOrString" -> Some "plimsoll.IntOrString"
+  | "io.k8s.apimachinery.pkg.api.resource.Quantity" -> Some "plimsoll.Quantity"
+  | "io.k8s.apimachinery.pkg.apis.meta.v1.Time" -> Some "DateTime"
+  | "io.k8s.apimachinery.pkg.apis.meta.v1.MicroTime" -> Some "DateTime"
+  | _ -> None
+
+-- A definition that becomes a record: an object with properties.
+let record? schemas name =
+  Option.none? (special name) && (Map.get name schemas
+  |> Option.map (fn s -> Map.size (obj "properties" s) > 0)
+  |> Option.default false)
+
+let plain t = Ty(text = t, refs = [], plim = false)
+
+let paren t = if String.contains? " " t then "(%{t})" else t
+
+let wrap outer (t: Ty) = Ty(t, text = "%{outer} %{paren t.text}")
+
+-- A definition's name as the module `mod` writes it.
+let qualify mod name =
+  if module_of name == mod then short_name name
+  else "%{alias_of (module_of name)}.%{short_name name}"
+
+-- The values of a string enum on a property, or on the items of an array
+-- property.
+let enum_values j =
+  let own = strings (arr "enum" j);
+  if !(List.empty? own) then own
+  else strings (arr "enum" (field "items" j |> Option.default JSON.null))
+
+-- A property's type. `owner` and `prop` find the enum the property declares.
+let ty_of (ctx: Ctx) owner prop j =
+  if flag? "x-kubernetes-int-or-string" j then
+    Ty(text = "plimsoll.IntOrString", refs = [], plim = true)
+  else if flag? "x-kubernetes-preserve-unknown-fields" j then plain "JSON"
+  else match ref_of j with
+    | Some r -> (
+      match special r with
+      | Some t -> Ty(text = t, refs = [], plim = String.starts_with? "plimsoll." t)
+      | None -> if record? ctx.schemas r then Ty(text = qualify ctx.mod r, refs = [r], plim = false)
+        else ty_of ctx owner prop (Map.get r ctx.schemas |> Option.default JSON.null)
+    )
+    | None -> (
+      match str "type" j with
+      | Some "string" -> if str "format" j == Some "date-time" then plain "DateTime"
+        else Map.get "%{owner}/%{prop}" ctx.enums
+        |> Option.map plain
+        |> Option.default (plain "String")
+      | Some "integer" -> plain "Int"
+      | Some "number" -> plain "Float"
+      | Some "boolean" -> plain "Bool"
+      | Some "array" -> wrap
+        "List"
+        (ty_of ctx owner prop (field "items" j |> Option.default JSON.null))
+      | Some "object" -> (
+        match field "additionalProperties" j with
+        | Some ap -> wrap "Map" (ty_of ctx owner prop ap)
+        | None -> plain "JSON"
+      )
+      | _ -> plain "JSON"
+    )
+
+-- ── Enums ─────────────────────────────────────────────────────────────────
+
+-- Every string enum that the properties of `records` declare.
+let candidates schemas records =
+  records
+  |> List.map (fn name ->
+    let props = Map.get name schemas |> Option.default JSON.null |> obj "properties";
+    Map.keys props
+    |> List.sort
+    |> List.filter_map (fn p ->
+      let vals = enum_values (Map.get p props |> Option.default JSON.null) |> List.unique;
+      if List.empty? vals then None
+      else Some Candidate(
+        mod = module_of name,
+        key = "%{name}/%{p}",
+        name = short_name name ++ capital p,
+        values = vals
+      )))
+  |> List.flatten
+
+let set_key values = List.sort values |> String.join "|"
+
+-- Which enums of one module become sum types.
+type Decision(enums: List Enum, keys: List (String, String), notes: List String)
+
+-- Candidates with one set of values share one type, named for the first of
+-- them. Two sets may share a constructor name: wand 0.88 reads
+-- `PullPolicy.Always` as the constructor of that type. A set stays String
+-- when a value cannot be a constructor, when its type name is taken, or
+-- when a value is the name of a type in the module. A value with a record's
+-- name would make a bare `Deployment(...)` in a script name two things.
+let decide mod (cands: List Candidate) (records: List String) =
+  let mine = List.filter (fn (c: Candidate) -> c.mod == mod) cands;
+  let groups =
+    List.map (fn (c: Candidate) -> set_key c.values) mine
+    |> List.unique
+    |> List.map (fn k -> List.filter (fn (c: Candidate) -> set_key c.values == k) mine);
+  let first g =
+    List.head g |> Option.default Candidate(mod = mod, key = "", name = "", values = []);
+  let shaped = List.filter (fn g -> List.all? constructor? (first g).values) groups;
+  let taken = List.append (List.map short_name records) builtin_types;
+  let clashes g =
+    let c = first g;
+    let other_names =
+      List.filter (fn o -> (first o).name != c.name) shaped
+      |> List.map (fn o -> (first o).name);
+    let type_names = List.append taken other_names;
+    let named_like_a_type w = List.any? (fn t -> t == w) type_names;
+    named_like_a_type c.name
+    || List.any? named_like_a_type c.values
+    || List.any? (fn v -> v == c.name) c.values;
+  let chosen = List.filter (fn g -> !(clashes g)) shaped;
+  let chosen? g = List.any? (fn o -> (first o).name == (first g).name) chosen;
+  let enums =
+    List.map
+      (fn g ->
+        let c = first g;
+        Enum(
+          name = c.name,
+          values = c.values,
+          of_field = String.replace "/" "." (short_name c.key)
+        ))
+      chosen;
+  let keys =
+    List.map (fn g -> List.map (fn (c: Candidate) -> (c.key, (first g).name)) g) chosen
+    |> List.flatten;
+  let notes =
+    groups
+    |> List.filter (fn g -> !(chosen? g))
+    |> List.map (fn g ->
+      let c = first g;
+      let why =
+        if List.all? constructor? c.values then "a name clashes"
+        else "a value is not a constructor name";
+      "%{mod}: %{c.key} stays String (%{why})");
+  Decision(enums, keys, notes)
+
+-- ── Records ───────────────────────────────────────────────────────────────
+
+-- The apiVersion of one group-version-kind entry: "apps/v1", or "v1" for
+-- the core group.
+let api_version g =
+  let group = str "group" g |> Option.default "";
+  let version = str "version" g |> Option.default "";
+  if String.empty? group then version else "%{group}/%{version}"
+
+-- The apiVersion and kind of a top-level kind. A schema that names more than
+-- one has neither, since no one default is right.
+let gvk_of s =
+  match arr "x-kubernetes-group-version-kind" s with
+  | [g] -> Some (api_version g, str "kind" g |> Option.default "")
+  | _ -> None
+
+-- The record for one definition. A property that wand cannot spell is left
+-- out, and `unspellable` names it.
+let build_rec (ctx: Ctx) name =
+  let s = Map.get name ctx.schemas |> Option.default JSON.null;
+  let props = obj "properties" s;
+  let required = strings (arr "required" s);
+  let fields =
+    Map.keys props
+    |> List.sort
+    |> List.filter spellable?
+    |> List.map (fn p ->
+      let j = Map.get p props |> Option.default JSON.null;
+      Field(
+        name = p,
+        ty = ty_of ctx name p j,
+        doc = str "description" j |> Option.default "",
+        required = List.any? (fn r -> r == p) required
+      ));
+  Rec(
+    full = name,
+    name = short_name name,
+    doc = str "description" s |> Option.default "",
+    fields = fields,
+    gvk = gvk_of s
+  )
+
+let unspellable schemas name =
+  Map.get name schemas
+  |> Option.default JSON.null
+  |> obj "properties"
+  |> Map.keys
+  |> List.sort
+  |> List.filter (fn p -> !(spellable? p))
+  |> List.map (fn p ->
+    "%{module_of name}: %{short_name name}.%{p} is left out (not a wand field name)")
+
+-- The definitions of the same module that a record's fields name.
+let local_deps (r: Rec) =
+  r.fields
+  |> List.map (fn (f: Field) -> f.ty.refs)
+  |> List.flatten
+  |> List.filter (fn d -> d != r.full && module_of d == module_of r.full)
+
+-- Records in dependency order: a record comes after the records it names.
+-- Ties, and the members of a cycle, go in name order.
+let topo done (left: List Rec) acc = (
+  let ready (r: Rec) = List.all? (fn d -> List.any? (fn x -> x == d) done) (local_deps r);
+  match List.find ready left |> Option.or_else (fn () -> List.head left) with
+  | None -> List.reverse acc
+  | Some r -> topo
+    (r.full :: done)
+    (List.filter (fn (x: Rec) -> x.full != r.full) left)
+    (r :: acc)
+)
+
+-- ── Rendering ─────────────────────────────────────────────────────────────
+
+let doc_lines indent doc =
+  if String.empty? (String.trim doc) then []
+  else String.lines (String.trim_right doc)
+  |> List.map (fn l ->
+    let t = String.trim_right l;
+    if String.empty? t then indent ++ "--" else "%{indent}-- %{t}")
+
+-- The widest line `wand f` keeps an enum on. A wider one gets one
+-- constructor on each line, with the `=` at the end of the first line.
+let enum_width = 92
+
+let render_enum (e: Enum) =
+  let one = "type %{e.name} = " ++ String.join " | " e.values;
+  let head = "-- The values of %{e.of_field}.";
+  if String.length one <= enum_width then [head, one]
+  else (
+    let rest = List.drop 1 e.values |> List.map (fn v -> "  | %{v}");
+    List.append
+      [head, "type %{e.name} =", "  %{List.head e.values |> Option.default ""}"]
+      rest
+  )
+
+let render_field (r: Rec) last (f: Field) =
+  let ty =
+    match (f.name, r.gvk) with
+    | ("apiVersion", Some(av, _)) -> `String = "%{av}"`
+    | ("kind", Some(_, k)) -> `String = "%{k}"`
+    | _ -> if f.required then f.ty.text else "Option %{paren f.ty.text} = None"
+  in
+  List.append (doc_lines "  " f.doc) ["  %{f.name}: %{ty}" ++ (if last then "" else ",")]
+
+let render_rec (r: Rec) =
+  let n = List.length r.fields;
+  let lines =
+    List.indexed r.fields
+    |> List.map (fn (i, f) -> render_field r (i == n - 1) f)
+    |> List.flatten;
+  List.flatten [doc_lines "" r.doc, ["type %{r.name}("], lines, [")"]]
+
+let render_module plim_target mod (enums: List Enum) (recs: List Rec) =
+  let fields = List.map (fn (r: Rec) -> r.fields) recs |> List.flatten;
+  let others =
+    List.map (fn (f: Field) -> f.ty.refs) fields
+    |> List.flatten
+    |> List.map module_of
+    |> List.filter (fn m -> m != mod)
+    |> List.unique
+    |> List.sort;
+  let plim = List.any? (fn (f: Field) -> f.ty.plim) fields;
+  let imports =
+    List.append
+      (List.map (fn m -> "let %{alias_of m} = import %{import_path m}") others)
+      (if plim then ["let plimsoll = import %{plim_target}"] else []);
+  let blocks =
+    List.append
+      (List.map render_enum (List.sort_by (fn (e: Enum) -> e.name) enums))
+      (List.map render_rec recs);
+  let body = List.map (String.join "\n") blocks |> String.join "\n\n";
+  let head = "-- DO NOT EDIT: written by plimsoll gen";
+  let parts =
+    if List.empty? imports then [head, body] else [head, String.join "\n" imports, body];
+  String.join "\n\n" parts ++ "\n"
+
+-- ── Generating ────────────────────────────────────────────────────────────
+
+-- The modules each module imports, and a note for each module that can
+-- reach itself. wand refuses an import cycle.
+let cycle_notes (edges: List (String, List String)) =
+  let next m =
+    List.find (fn (k, _) -> k == m) edges
+    |> Option.map (fn (_, v) -> v)
+    |> Option.default [];
+  let reach m =
+    List.fold_left
+      (fn seen _ -> List.unique (List.append seen (List.map next seen |> List.flatten)))
+      (next m)
+      edges;
+  edges
+  |> List.map (fn (m, _) -> m)
+  |> List.filter (fn m -> List.any? (fn x -> x == m) (reach m))
+  |> List.map (fn m -> "%{m}: its imports lead back to it, and wand refuses an import cycle")
+
+-- The files for every record the documents define. `plim_target` is how a
+-- generated module imports plimsoll: "../../plimsoll" inside this package,
+-- "github.com/wand-lang/plimsoll" anywhere else.
+let generate plim_target (docs: List JSON) =
+  let schemas = List.fold_left (fn acc d -> Map.merge acc (schemas_of d)) Map.empty docs;
+  let records = Map.keys schemas |> List.sort |> List.filter (record? schemas);
+  let mods = List.map module_of records |> List.unique |> List.sort;
+  let cands = candidates schemas records;
+  let decisions =
+    List.map (fn m -> decide m cands (List.filter (fn r -> module_of r == m) records)) mods;
+  let enum_keys =
+    List.map (fn (d: Decision) -> d.keys) decisions |> List.flatten |> Map.from_list;
+  let module_recs m =
+    let ctx = Ctx(schemas = schemas, mod = m, enums = enum_keys);
+    List.filter (fn r -> module_of r == m) records |> List.map (build_rec ctx);
+  let built = List.map (fn m -> (m, module_recs m)) mods;
+  let files =
+    List.zip built decisions
+    |> List.map (fn ((m, recs), d) ->
+      File(
+        path = m ++ ".wand",
+        text = render_module plim_target m d.enums (topo [] recs [])
+      ));
+  let edges =
+    List.map
+      (fn (m, recs) ->
+        let refs =
+          List.map
+            (fn (r: Rec) -> List.map (fn (f: Field) -> f.ty.refs) r.fields |> List.flatten)
+            recs;
+        (
+          m,
+          List.flatten refs
+          |> List.map module_of
+          |> List.filter (fn x -> x != m)
+          |> List.unique
+        ))
+      built;
+  let clash_notes =
+    records
+    |> List.filter (fn r -> List.any? (fn b -> b == short_name r) builtin_types)
+    |> List.map (fn r -> "%{module_of r}: %{short_name r} takes the name of a wand type");
+  let notes =
+    List.flatten [
+      List.map (fn (d: Decision) -> d.notes) decisions |> List.flatten,
+      List.map (unspellable schemas) records |> List.flatten,
+      cycle_notes edges,
+      clash_notes
+    ];
+  Output(files, notes)

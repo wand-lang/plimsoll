@@ -1,0 +1,12 @@
+-- plimsoll: Kubernetes objects as typed wand values.
+--
+-- The generated modules under k8s/ refer to the types in this file. The
+-- runtime API (apply, check, get, list, delete, manifest) comes later.
+
+-- A value that is an integer or a string. Kubernetes uses it for ports and
+-- for rollout limits, such as `maxSurge: 1` or `maxSurge: "25%"`.
+type IntOrString = I Int | S String
+
+-- A Kubernetes quantity, such as "500m" or "128Mi". It is text: wand's Size
+-- has no binary units and no millicores.
+type Quantity = String

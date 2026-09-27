@@ -1,0 +1,61 @@
+uses {FS.Read, FS.Write, IO, Proc, Shell(kubectl)}
+
+-- The plimsoll command.
+--
+--   wand github.com/wand-lang/plimsoll/cli gen [group-version ...]
+--
+-- `gen` reads the OpenAPI v3 schema of each group-version from the cluster
+-- that kubectl points at, and writes one wand module per group-version
+-- under k8s/. With no group-version, it reads apis/apps/v1. A document
+-- holds every definition its kinds name, so k8s/core/v1 and k8s/meta/v1
+-- come with apps/v1.
+
+import FS
+import IO
+import JSON
+import List
+import Path
+import Proc
+import Shell
+import String
+
+let gen = import ./_gen
+
+-- How a generated module imports plimsoll. Inside this package it is a
+-- path; anywhere else it is the package URL, which wand.pkg requires.
+let plimsoll_target () =
+  match FS.read_file ./wand.pkg with
+  | Ok text when String.contains? "package = github.com/wand-lang/plimsoll\n" text -> "../../plimsoll"
+  | _ -> "github.com/wand-lang/plimsoll"
+
+-- One group-version's schema, as the API server serves it. The command only
+-- reads, so it runs through Shell.inspect!, and `wand --dry-run cli.wand
+-- gen` reads the real schema and reports the files it would write.
+let fetch! group_version =
+  let path = "/openapi/v3/" ++ group_version;
+  JSON.parse! (Shell.inspect! $*(kubectl get --raw %{path}))
+
+let write! (f: gen.File) = (
+  FS.mkdir! (Path.dirname (Path.of_string f.path));
+  FS.write_file! (Path.of_string f.path) f.text
+)
+
+let run_gen! group_versions = (
+  let docs = List.map fetch! group_versions;
+  let out = gen.generate (plimsoll_target ()) docs;
+  List.each write! out.files;
+  -- "generated", not "wrote": in a rehearsal nothing is written, and
+  -- wand's own `would write` line says so.
+  List.each (fn (f: gen.File) -> IO.println "generated %{f.path}") out.files;
+  List.each (fn n -> IO.println_err "note: %{n}") out.notes
+)
+
+let usage = "usage: wand github.com/wand-lang/plimsoll/cli gen [group-version ...]"
+
+let main! () =
+  match Proc.args () with
+  | ["gen"] -> run_gen! ["apis/apps/v1"]
+  | ["gen" :: gvs] -> run_gen! gvs
+  | _ -> (IO.println_err usage; Proc.exit 2)
+
+main! ()

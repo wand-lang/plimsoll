@@ -1,0 +1,71 @@
+uses {IO, Shell(kubectl)}
+
+-- A Deployment built from the generated types, and checked by the API
+-- server of the cluster that kubectl points at.
+--
+-- It encodes the Deployment with its derived encoder, asks the server to
+-- validate it with `kubectl apply --dry-run=server`, decodes the object the
+-- server would store, and compares the fields it set. Nothing on the
+-- cluster changes. `wand --dry-run` withholds the apply, since wand cannot
+-- see that `--dry-run=server` changes nothing.
+import IO
+import JSON
+import Map
+import Option
+
+let apps = import ../k8s/apps/v1
+let core = import ../k8s/core/v1
+let meta = import ../k8s/meta/v1
+let plimsoll = import ../plimsoll
+
+let labels = Map.from_list [("app", "web")]
+
+let web =
+  apps.Deployment(
+    metadata = Some meta.ObjectMeta(name = Some "web", labels = Some labels),
+    spec = apps.DeploymentSpec(
+      replicas = Some 3,
+      selector = meta.LabelSelector(matchLabels = Some labels),
+      strategy = Some apps.DeploymentStrategy(
+        type = Some apps.DeploymentStrategyType.RollingUpdate,
+        rollingUpdate = Some apps.RollingUpdateDeployment(maxSurge = Some (plimsoll.S "25%"))
+      ),
+      template = core.PodTemplateSpec(
+        metadata = Some meta.ObjectMeta(labels = Some labels),
+        spec = Some core.PodSpec(
+          restartPolicy = Some core.PodSpecRestartPolicy.Always,
+          containers = [
+            core.Container(
+              name = "web",
+              image = Some "nginx:1.27",
+              imagePullPolicy = Some core.ContainerImagePullPolicy.IfNotPresent,
+              ports = Some [core.ContainerPort(containerPort = 8080)]
+            )
+          ]
+        )
+      )
+    )
+  )
+
+let sent = JSON.stringify (apps.Deployment.encoder web)
+
+let stored =
+  sent |> $(kubectl apply --server-side --dry-run=server -o json -f -)
+
+let back = JSON.decode apps.Deployment.decoder (JSON.parse! stored)
+
+let pull (d: apps.Deployment) =
+  match d.spec.template.spec with
+  | Some s ->
+    (match s.containers with
+     | [c :: _] -> c.imagePullPolicy
+     | [] -> None)
+  | None -> None
+
+match back with
+| Ok d -> (
+  IO.println "sent:   %{sent}";
+  IO.println "stored: replicas %{d.spec.replicas}, pull %{pull d}, strategy %{Option.map (fn (s: apps.DeploymentStrategy) -> s.type) d.spec.strategy}";
+  IO.println "same pull policy: %{pull d == pull web}"
+)
+| Error e -> IO.println_err "the server's object did not decode: %{e}"

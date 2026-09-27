@@ -1,0 +1,161 @@
+uses {FS.Read}
+
+-- Tests for the generator, on testdata/apps_v1_cut.json: a cut of the
+-- apps/v1 schema that a Kubernetes v1.37.0 API server served. The cut keeps
+-- a few definitions and a few properties of each, with short descriptions.
+
+import JSON
+import List
+import Option
+import String
+
+let {test, group} = import Test
+let gen = import ./_gen
+
+let doc = JSON.read_file! ./testdata/apps_v1_cut.json
+let out = gen.generate "../../plimsoll" [doc]
+
+let text_of path =
+  List.find (fn (f: gen.File) -> f.path == path) out.files
+  |> Option.map (fn (f: gen.File) -> f.text)
+  |> Option.default ""
+
+let apps = text_of "k8s/apps/v1.wand"
+let meta = text_of "k8s/meta/v1.wand"
+
+-- The position of `part` in `whole`, to test the order of two parts.
+let index_of part whole =
+  match String.split part whole with
+  | [first :: _ :: _] -> String.length first
+  | _ -> -1
+
+group "module paths" (fn () -> [
+  test "a built-in group" (fn t ->
+    t.eq "k8s/apps/v1" (gen.module_of "io.k8s.api.apps.v1.Deployment")),
+  test "the core group" (fn t ->
+    t.eq "k8s/core/v1" (gen.module_of "io.k8s.api.core.v1.Pod")),
+  test "meta" (fn t ->
+    t.eq "k8s/meta/v1" (gen.module_of "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta")),
+  test "a CRD" (fn t ->
+    t.eq "k8s/example.com/v1alpha1" (gen.module_of "com.example.v1alpha1.Widget")),
+  test "an import alias" (fn t -> t.eq "meta_v1" (gen.alias_of "k8s/meta/v1")),
+  test "a dotted group" (fn t ->
+    t.eq "example_com_v1alpha1" (gen.alias_of "k8s/example.com/v1alpha1"))
+])
+
+group "files" (fn () -> [
+  test "one module per group-version, in path order" (fn t ->
+    t.eq
+      ["k8s/apps/v1.wand", "k8s/meta/v1.wand"]
+      (List.map (fn (f: gen.File) -> f.path) out.files)),
+  test "the header" (fn t ->
+    t.ok (String.starts_with? "-- DO NOT EDIT: written by plimsoll gen\n" apps)),
+  test "the same input gives the same output" (fn t ->
+    t.eq
+      (List.map (fn (f: gen.File) -> f.text) out.files)
+      (List.map (fn (f: gen.File) -> f.text) (gen.generate "../../plimsoll" [doc]).files))
+])
+
+group "fields" (fn () -> [
+  test "a required field is plain" (fn t ->
+    t.ok (String.contains? "  spec: DeploymentSpec\n" apps)),
+  test "an optional field is an Option with None" (fn t ->
+    t.ok (String.contains? "  replicas: Option Int = None" apps)),
+  test "a top-level kind has its apiVersion" (fn t ->
+    t.ok (String.contains? "  apiVersion: String = \"apps/v1\",\n" apps)),
+  test "and its kind" (fn t ->
+    t.ok (String.contains? "  kind: String = \"Deployment\",\n" apps)),
+  test "a record in another module is qualified" (fn t ->
+    t.ok (String.contains? "  metadata: Option meta_v1.ObjectMeta = None" apps)),
+  test "and its module is imported" (fn t ->
+    t.ok (String.contains? "let meta_v1 = import ../meta/v1\n" apps)),
+  test "IntOrString is plimsoll's" (fn t ->
+    t.ok (String.contains? "  maxSurge: Option plimsoll.IntOrString = None" apps)),
+  test "and plimsoll is imported" (fn t ->
+    t.ok (String.contains? "let plimsoll = import ../../plimsoll\n" apps)),
+  test "Time is a DateTime" (fn t ->
+    t.ok (String.contains? "  creationTimestamp: Option DateTime = None" meta)),
+  test "FieldsV1 is JSON" (fn t ->
+    t.ok (String.contains? "  fieldsV1: Option JSON = None" meta)),
+  test "labels are a Map" (fn t ->
+    t.ok (String.contains? "  labels: Option (Map String) = None" meta)),
+  test "a description is a doc comment" (fn t ->
+    t.ok
+      (String.contains?
+        "-- Deployment enables declarative updates for Pods and ReplicaSets.\ntype Deployment("
+        apps))
+])
+
+group "order" (fn () -> [
+  test "a record comes after the records it names" (fn t ->
+    t.ok
+      (index_of "type RollingUpdateDeployment(" apps < index_of "type DeploymentStrategy(" apps)),
+  test "and a module's enums come first" (fn t ->
+    t.ok
+      (index_of "type StatefulSetSpecPodManagementPolicy =" apps < index_of "type Deployment(" apps))
+])
+
+group "enums" (fn () -> [
+  test "an enum of constructor names is a sum" (fn t ->
+    t.ok
+      (String.contains?
+        "type StatefulSetSpecPodManagementPolicy = OrderedReady | Parallel\n"
+        apps)),
+  test "and the field names it" (fn t ->
+    t.ok
+      (String.contains?
+        "  podManagementPolicy: Option StatefulSetSpecPodManagementPolicy = None"
+        apps)),
+  -- wand 0.88 reads `DeploymentStrategyType.Recreate` as the constructor
+  -- of that type, so two sets may share a value.
+  test "two sets that share a value are both sums" (fn t ->
+    t.ok
+      (String.contains? "type DeploymentStrategyType = Recreate | RollingUpdate\n" apps
+      && String.contains?
+        "type StatefulSetUpdateStrategyType = OnDelete | Recreate | RollingUpdate\n"
+        apps)),
+  test "and each field names its own" (fn t ->
+    t.ok (String.contains? "  type: Option DeploymentStrategyType = None" apps)),
+  test "and no note is written" (fn t -> t.eq [] out.notes)
+])
+
+-- A value with the name of a record in the module stays String: a script
+-- that builds the record bare, `Widget(...)`, would name two things.
+let clash =
+  JSON.parse!
+    `{"components": {"schemas": {"io.k8s.api.core.v1.Widget": {"type": "object", "properties": {"size": {"type": "integer"}}}, "io.k8s.api.core.v1.Holder": {"type": "object", "properties": {"kind": {"type": "string", "enum": ["Widget", "Gadget"]}}}}}}`
+
+let clash_out = gen.generate "../../plimsoll" [clash]
+
+group "an enum value with a record's name" (fn () -> [
+  test "stays String" (fn t ->
+    let text =
+      List.head clash_out.files
+      |> Option.map (fn (f: gen.File) -> f.text)
+      |> Option.default "";
+    t.ok (String.contains? "  kind: Option String = None" text)),
+  test "and a note says so" (fn t ->
+    t.eq
+      ["k8s/core/v1: io.k8s.api.core.v1.Holder/kind stays String (a name clashes)"]
+      clash_out.notes)
+])
+
+-- A property that wand cannot spell is left out, and a note says so.
+let odd =
+  JSON.parse!
+    `{"components": {"schemas": {"io.k8s.api.core.v1.DaemonEndpoint": {"type": "object", "properties": {"Port": {"type": "integer"}, "host": {"type": "string"}}}}}}`
+
+let odd_out = gen.generate "../../plimsoll" [odd]
+
+group "unspellable keys" (fn () -> [
+  test "the field is left out" (fn t ->
+    let text =
+      List.head odd_out.files
+      |> Option.map (fn (f: gen.File) -> f.text)
+      |> Option.default "";
+    t.ok (String.contains? "type DaemonEndpoint(\n  host: Option String = None\n)" text)),
+  test "and noted" (fn t ->
+    t.eq
+      ["k8s/core/v1: DaemonEndpoint.Port is left out (not a wand field name)"]
+      odd_out.notes)
+])
