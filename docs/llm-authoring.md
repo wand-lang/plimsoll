@@ -286,3 +286,45 @@ used the field. wand 0.88.1.
 | 1 body with statements | parse error | yes |
 | 2 `!` names | V-BANG2 | yes |
 | manifest | E-TYPE | yes, with a fix |
+
+## 2026-09-27 — The full API: a layout the generator did not match
+
+**Task.** Ran `gen` on all 23 group-versions a Kubernetes v1.37.0 API
+server lists, in a scratch copy: 25 modules, 603 records and 60 sums, in
+6.7 s. Two modules were not `wand f` fixed points; fixed the generator.
+wand 0.88.1.
+
+### Easy
+
+- **Scale was not a problem.** 603 records typechecked, where they parsed,
+  with no change to the generator for size.
+- **The fix was one rule in one function.** `render_rec` writes a record
+  with no field comments on one line when it fits in 92 columns. `wand t`
+  was clean on the first attempt.
+
+### Hard
+
+1. **The generator did not write what `wand f` writes for a short record.**
+   `wand f` writes `type GroupResource(group: String, resource: String)`
+   on one line; the generator wrote one field per line. The `apps/v1` cut
+   had no record without field comments, so the tests did not show it.
+   Cause: docs missing (the reference does not say when `wand f` puts a
+   record on one line; the LLM found it by diffing).
+2. **A test used a value defined further down the file.** E-TYPE:
+   "'odd_out' needs its type before '.files' can be read: write '(odd_out:
+   Output)'". The real cause was the order of definitions, which the
+   message did not name. Fixed by removing the test, which added nothing.
+   Cause: the LLM's own mistake.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `_gen.wand` | 1 | 0 | 0 |
+| `test_gen.wand` | 2, then 2 runs of `wand s` | 0 | 3 |
+
+### Diagnostics
+
+| Item | Code | Did it say what to do? |
+|---|---|---|
+| 2 order of definitions | E-TYPE | no: it asked for a type annotation, and the fix was the order |

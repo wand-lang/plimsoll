@@ -134,7 +134,7 @@ group "an enum value with a record's name" (fn () -> [
       List.head clash_out.files
       |> Option.map (fn (f: gen.File) -> f.text)
       |> Option.default "";
-    t.ok (String.contains? "  kind: Option String = None" text)),
+    t.ok (String.contains? "type Holder(kind: Option String = None)" text)),
   test "and a note says so" (fn t ->
     t.eq
       ["k8s/core/v1: io.k8s.api.core.v1.Holder/kind stays String (a name clashes)"]
@@ -154,7 +154,7 @@ group "unspellable keys" (fn () -> [
       List.head odd_out.files
       |> Option.map (fn (f: gen.File) -> f.text)
       |> Option.default "";
-    t.ok (String.contains? "type DaemonEndpoint(\n  host: Option String = None\n)" text)),
+    t.ok (String.contains? "type DaemonEndpoint(host: Option String = None)" text)),
   test "and noted" (fn t ->
     t.eq
       ["k8s/core/v1: DaemonEndpoint.Port is left out (not a wand field name)"]

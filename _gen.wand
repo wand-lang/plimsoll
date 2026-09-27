@@ -380,8 +380,9 @@ let doc_lines indent doc =
     let t = String.trim_right l;
     if String.empty? t then indent ++ "--" else "%{indent}-- %{t}")
 
--- The widest line `wand f` keeps an enum on. A wider one gets one
--- constructor on each line, with the `=` at the end of the first line.
+-- The widest line `wand f` keeps a declaration on. A wider enum gets one
+-- constructor on each line, with the `=` at the end of the first line; a
+-- wider record gets one field on each line.
 let enum_width = 92
 
 let render_enum (e: Enum) =
@@ -404,13 +405,19 @@ let render_field (r: Rec) last (f: Field) =
   in
   List.append (doc_lines "  " f.doc) ["  %{f.name}: %{ty}" ++ (if last then "" else ",")]
 
+-- A record whose fields have no doc comments goes on one line when the line
+-- fits the width `wand f` keeps, as `wand f` writes it. A comment on a field
+-- keeps the fields one to a line.
 let render_rec (r: Rec) =
   let n = List.length r.fields;
   let lines =
     List.indexed r.fields
     |> List.map (fn (i, f) -> render_field r (i == n - 1) f)
     |> List.flatten;
-  List.flatten [doc_lines "" r.doc, ["type %{r.name}("], lines, [")"]]
+  let bare = List.all? (fn (f: Field) -> String.empty? (String.trim f.doc)) r.fields;
+  let one = "type %{r.name}(" ++ (List.map String.trim lines |> String.join " ") ++ ")";
+  if bare && String.length one <= enum_width then List.append (doc_lines "" r.doc) [one]
+  else List.flatten [doc_lines "" r.doc, ["type %{r.name}("], lines, [")"]]
 
 -- The first line of a generated module. It names the group-versions `gen`
 -- read, so `check` and `upgrade` can read them again with no argument.
