@@ -10,7 +10,7 @@ uses {Clock, FS.Read, FS.Write, IO, Proc, Shell(kubectl, sh, wand)}
 --    (examples/deployment.wand).
 -- 3. A CRD gets a module, and a Widget built from it round-trips:
 --    testdata/widget-crd.yaml is installed, `gen` writes its module in a
---    copy of this package, testdata/widget.wand runs there, and the CRD is
+--    copy of this package, testdata/widget.wand.in runs there, and the CRD is
 --    removed again, whether the step passed or not.
 --
 -- It changes the cluster only in step 3, and leaves it as it was.
@@ -45,7 +45,7 @@ let widget! dir = (
   IO.println $(kubectl wait --for=condition=Established crd/widgets.example.com --timeout=60s);
   wait_for_schema! 60;
   List.each (fn f -> copy_into! dir f f) sources;
-  copy_into! dir "testdata/widget.wand" "widget.wand";
+  copy_into! dir "testdata/widget.wand.in" "widget.wand";
   IO.println $(sh -c 'cd "$1" && wand cli.wand gen apis/example.com/v1alpha1 && wand widget.wand' e2e %{Path.to_string dir})
 )
 

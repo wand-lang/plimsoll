@@ -1,0 +1,167 @@
+name: Kubernetes
+
+# Once a week, against the newest kind release: does plimsoll work on the
+# newest Kubernetes versions, and has the newest one changed k8s/?
+#
+# - `generate` runs for each of the three newest Kubernetes minors that the
+#   release ships a node image for: gen writes every group-version, each
+#   module has to typecheck and be a wand f fixed point, and tools/e2e.wand
+#   has to pass.
+# - `upgrade` runs on the newest one. When k8s/ changes, it pushes a branch
+#   with k8s/ generated again and opens a pull request whose body is the
+#   upgrade report. When the repository does not let Actions open pull
+#   requests, it opens an issue that names the branch.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  versions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      kind: ${{ steps.find.outputs.kind }}
+      images: ${{ steps.find.outputs.images }}
+      newest: ${{ steps.find.outputs.newest }}
+    steps:
+      # The node images a kind release lists, one for each Kubernetes minor,
+      # newest first, each pinned by digest.
+      - name: Find the newest kind release and its node images
+        id: find
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          kind=$(gh api repos/kubernetes-sigs/kind/releases/latest --jq .tag_name)
+          images=$(gh api repos/kubernetes-sigs/kind/releases/latest --jq .body \
+            | grep -oE 'kindest/node:v[0-9]+\.[0-9]+\.[0-9]+@sha256:[0-9a-f]+' \
+            | awk '!seen[$0]++' | head -n 3)
+          echo "kind $kind"
+          echo "$images"
+          echo "kind=$kind" >> "$GITHUB_OUTPUT"
+          echo "newest=$(echo "$images" | head -n 1)" >> "$GITHUB_OUTPUT"
+          echo "images=$(echo "$images" | jq -R . | jq -cs .)" >> "$GITHUB_OUTPUT"
+
+  generate:
+    needs: versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.versions.outputs.images) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install wand
+        run: |
+          version=$(sed -nE 's/^, wand *= *([0-9.]+).*/\1/p' wand.pkg)
+          curl -fsSL "https://raw.githubusercontent.com/wand-lang/wand/v$version/install.sh" \
+            | WAND_VERSION="$version" WAND_INSTALL_DIR="$HOME/.local/bin" sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Create a kind cluster
+        env:
+          KIND_VERSION: ${{ needs.versions.outputs.kind }}
+          IMAGE: ${{ matrix.image }}
+        run: |
+          base="https://github.com/kubernetes-sigs/kind/releases/download/$KIND_VERSION"
+          curl -fsSLo kind "$base/kind-linux-amd64"
+          curl -fsSL "$base/kind-linux-amd64.sha256sum" | awk '{print $1 "  kind"}' | sha256sum -c
+          chmod +x kind
+          sudo mv kind /usr/local/bin/kind
+          kind create cluster --name plimsoll --image "$IMAGE" --wait 120s
+          kubectl version
+
+      - name: Generate every group-version
+        run: wand cli.wand gen
+
+      - name: Typecheck the generated modules
+        run: wand t k8s/*/*.wand
+
+      - name: The generated modules are wand f fixed points
+        run: |
+          for f in k8s/*/*.wand; do
+            cp "$f" "$RUNNER_TEMP/x.wand"
+            wand f "$RUNNER_TEMP/x.wand" > /dev/null
+            cmp "$f" "$RUNNER_TEMP/x.wand"
+          done
+
+      - name: The end-to-end test
+        run: wand tools/e2e.wand
+
+  upgrade:
+    needs: versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install wand
+        run: |
+          version=$(sed -nE 's/^, wand *= *([0-9.]+).*/\1/p' wand.pkg)
+          curl -fsSL "https://raw.githubusercontent.com/wand-lang/wand/v$version/install.sh" \
+            | WAND_VERSION="$version" WAND_INSTALL_DIR="$HOME/.local/bin" sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Create a kind cluster on the newest Kubernetes
+        env:
+          KIND_VERSION: ${{ needs.versions.outputs.kind }}
+          IMAGE: ${{ needs.versions.outputs.newest }}
+        run: |
+          base="https://github.com/kubernetes-sigs/kind/releases/download/$KIND_VERSION"
+          curl -fsSLo kind "$base/kind-linux-amd64"
+          curl -fsSL "$base/kind-linux-amd64.sha256sum" | awk '{print $1 "  kind"}' | sha256sum -c
+          chmod +x kind
+          sudo mv kind /usr/local/bin/kind
+          kind create cluster --name plimsoll --image "$IMAGE" --wait 120s
+
+      # `upgrade` writes k8s/ from the group-versions the modules record and
+      # reports what changed and what broke; `gen` then adds any
+      # group-version the new release serves that k8s/ does not have yet.
+      - name: Upgrade k8s/
+        id: upgrade
+        run: |
+          set +e
+          wand cli.wand upgrade > "$RUNNER_TEMP/report.md"
+          echo "scripts_ok=$([ $? -eq 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          set -e
+          wand cli.wand gen > /dev/null
+          cat "$RUNNER_TEMP/report.md"
+          if [ -n "$(git status --porcelain k8s)" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open a pull request
+        if: steps.upgrade.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE: ${{ needs.versions.outputs.newest }}
+        run: |
+          version=$(echo "$IMAGE" | sed -E 's/.*:(v[0-9.]+)@.*/\1/')
+          branch="kubernetes-$version"
+          if git ls-remote --exit-code origin "refs/heads/$branch" > /dev/null; then
+            echo "$branch is already pushed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add -A k8s
+          git commit -m "Generate k8s/ from Kubernetes $version"
+          git push origin "$branch"
+          gh pr create --head "$branch" --title "Kubernetes $version" --body-file "$RUNNER_TEMP/report.md" \
+            || gh issue create --title "Kubernetes $version changes k8s/" \
+                 --body "The branch \`$branch\` has k8s/ generated from Kubernetes $version. Actions may not open pull requests here, so open one from the branch. The upgrade report:
+
+          $(cat "$RUNNER_TEMP/report.md")"

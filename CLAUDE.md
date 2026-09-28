@@ -24,7 +24,7 @@ Obey them here.
 - `examples/` — scripts that use the generated types.
 - `tools/e2e.wand` — the end-to-end test against the cluster kubectl points
   at: `check`, the Deployment round trip, and a CRD from
-  `testdata/widget-crd.yaml` round-tripped by `testdata/widget.wand` in a
+  `testdata/widget-crd.yaml` round-tripped by `testdata/widget.wand.in` in a
   copy of the package. It leaves the cluster as it was.
 - `.github/workflows/ci.yml` — CI: the checks below with no cluster, and
   `tools/e2e.wand` on a kind cluster. It installs the wand that `wand.pkg`

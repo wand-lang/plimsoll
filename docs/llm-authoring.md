@@ -489,3 +489,31 @@ once a second until the path is listed. wand 0.89.0.
 | File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
 |---|---|---|---|
 | `tools/e2e.wand` | 1 | 4 (three imports, manifest) | 0 |
+
+## 2026-09-27 — A weekly run on the newest Kubernetes versions
+
+**Task.** Added `.github/workflows/kubernetes.yml`: once a week, for the
+three newest Kubernetes minors of the newest kind release, gen writes every
+group-version, and the modules and `tools/e2e.wand` are checked; on the
+newest one, `upgrade` and `gen` write k8s/ again, and a change becomes a
+branch and a pull request (or an issue). Renamed `testdata/widget.wand` to
+`testdata/widget.wand.in` so `wand t .` does not read it.
+
+### Easy
+
+- **No wand code changed for the new job.** `gen`, `upgrade` and
+  `tools/e2e.wand` already did each step; the workflow only calls them.
+
+### Hard
+
+1. **A script that cannot typecheck in place broke `wand t .`.**
+   `upgrade` typechecks the whole repo, and `testdata/widget.wand` imports
+   a module that only exists in the e2e copy, so every report would have
+   listed it as broken. Renamed it to `.in`. Cause: missing language or
+   stdlib feature (no way to mark a file that `wand t .` should skip).
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `tools/e2e.wand` | 1 | 0 | 1 |
