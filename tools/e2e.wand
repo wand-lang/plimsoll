@@ -1,4 +1,4 @@
-uses {FS.Read, FS.Write, IO, Proc, Shell(kubectl, sh, wand)}
+uses {Clock, FS.Read, FS.Write, IO, Proc, Shell(kubectl, sh, wand)}
 
 -- The end-to-end test against a real cluster: the one kubectl points at.
 -- CI runs it on a kind cluster, and it runs the same on a laptop.
@@ -15,11 +15,14 @@ uses {FS.Read, FS.Write, IO, Proc, Shell(kubectl, sh, wand)}
 --
 -- It changes the cluster only in step 3, and leaves it as it was.
 
+import Clock
 import FS
 import IO
 import List
 import Path
 import Proc
+import Result
+import String
 
 -- What the copy needs to generate a module and run a script against it.
 let sources = ["_gen.wand", "_drift.wand", "cli.wand", "plimsoll.wand", "wand.pkg"]
@@ -27,9 +30,20 @@ let sources = ["_gen.wand", "_drift.wand", "cli.wand", "plimsoll.wand", "wand.pk
 let copy_into! dir name target =
   FS.copy! (Path.of_string name) (Path.join dir (Path.of_string target))
 
+-- An established CRD's schema is published a moment later: until then the
+-- API server answers "not found" for its path. Wait for it, once a second.
+let wait_for_schema! tries =
+  if String.contains? "apis/example.com/v1alpha1" $(kubectl get --raw /openapi/v3) then ()
+  else if tries <= 0 then Result.get! (Error "the CRD's schema was not published in time")
+  else (
+    Clock.sleep 1s;
+    wait_for_schema! (tries - 1)
+  )
+
 let widget! dir = (
   IO.println $(kubectl apply -f testdata/widget-crd.yaml);
   IO.println $(kubectl wait --for=condition=Established crd/widgets.example.com --timeout=60s);
+  wait_for_schema! 60;
   List.each (fn f -> copy_into! dir f f) sources;
   copy_into! dir "testdata/widget.wand" "widget.wand";
   IO.println $(sh -c 'cd "$1" && wand cli.wand gen apis/example.com/v1alpha1 && wand widget.wand' e2e %{Path.to_string dir})

@@ -470,3 +470,22 @@ cluster as it was. wand 0.89.0.
 |---|---|---|---|
 | `tools/e2e.wand` | 1 | 1 (manifest) | 0 |
 | `testdata/widget.wand` | 1, in a copy | 2 (an import, manifest) | 0 |
+
+## 2026-09-27 — CI: wait for a CRD's schema
+
+**Task.** The first CI run failed in `tools/e2e.wand`: the CRD was
+Established, but `/openapi/v3/apis/example.com/v1alpha1` was "not found"
+for a moment longer. Added `wait_for_schema!`, which reads `/openapi/v3`
+once a second until the path is listed. wand 0.89.0.
+
+### Easy
+
+- **`wand t --fix` wrote everything the retry loop needed.** Three imports
+  (`String`, `Result`, `Clock`) and `Clock` in the manifest, since the loop
+  waits. `wand t` was clean after that, on the first attempt.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `tools/e2e.wand` | 1 | 4 (three imports, manifest) | 0 |
