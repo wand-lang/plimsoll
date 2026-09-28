@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.0] - 2026-09-28
 
 This release needs wand 0.92.0 or later.
 
