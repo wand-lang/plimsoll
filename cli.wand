@@ -109,6 +109,22 @@ let on_disk! () =
   FS.glob ./k8s/*/*.wand
   |> List.map (fn p -> (local (Path.to_string p), FS.read_file! p))
 
+-- Remove each generated module this run did not write. Modules name each
+-- other's types, so they have to come from one run: a module left from an
+-- older one can name a type the new ones do not have, as
+-- storagemigration/v1 from Kubernetes v1.37 named meta's GroupResource,
+-- which meta/v1 from v1.36 does not hold. A file gen did not write is left
+-- alone.
+let remove_stale! (files: List gen.File) =
+  on_disk! ()
+  |> List.filter (fn (path, text) ->
+    String.starts_with? "-- DO NOT EDIT: written by plimsoll gen" text
+    && !(List.any? (fn (f: gen.File) -> f.path == path) files))
+  |> List.each (fn (path, _) -> (
+    FS.delete! (Path.of_string path);
+    IO.println "removed %{path}"
+  ))
+
 -- The group-versions the modules on disk came from.
 let sources_in modules =
   let found = List.map (fn (_, text) -> gen.sources_of text) modules |> List.flatten |> List.unique;
@@ -126,6 +142,7 @@ let generate! ctx sources =
 let run_gen! group_versions = (
   let out = generate! None group_versions;
   List.each write! out.files;
+  remove_stale! out.files;
   -- "generated", not "wrote": in a rehearsal nothing is written, and
   -- wand's own `would write` line says so.
   List.each (fn (f: gen.File) -> IO.println "generated %{f.path}") out.files;
@@ -198,6 +215,7 @@ let run_upgrade! contexts = (
   let out = generate! ref_ctx sources;
   let changes = drift.compare modules out.files;
   List.each write! out.files;
+  remove_stale! out.files;
   let broken = broken_scripts! ();
   IO.println (report ref_ctx ref_version versions changes broken);
   if List.empty? broken then () else Proc.exit 1

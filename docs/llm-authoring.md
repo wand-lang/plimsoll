@@ -517,3 +517,29 @@ branch and a pull request (or an issue). Renamed `testdata/widget.wand` to
 | File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
 |---|---|---|---|
 | `tools/e2e.wand` | 1 | 0 | 1 |
+
+## 2026-09-27 — gen removes the modules it did not write
+
+**Task.** The first weekly run failed on Kubernetes v1.35.8 and v1.36.4:
+"k8s/storagemigration/v1.wand: type error: unknown type
+'meta_v1.GroupResource'". `gen` wrote the modules for the older version
+and left the v1.37 `storagemigration/v1.wand` in place, which named a type
+the new `meta/v1` does not hold. Added `remove_stale!` to `cli.wand`: gen
+and upgrade remove each module with gen's first line that this run did not
+write. wand 0.89.0.
+
+### Easy
+
+- **The fix typechecked on the first attempt,** and a local test (one
+  stale module with gen's header, one hand-written file without it)
+  removed the first and kept the second.
+- **The diagnostic named the cause.** "unknown type
+  'meta_v1.GroupResource' in field 'resource' of
+  'StorageVersionMigrationSpec'" pointed at the module and the type, so
+  the stale module was clear from the first failed run.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `cli.wand` | 1 | 0 | 0 |
