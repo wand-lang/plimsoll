@@ -543,3 +543,24 @@ write. wand 0.89.0.
 | File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
 |---|---|---|---|
 | `cli.wand` | 1 | 0 | 0 |
+
+## 2026-09-27 — The weekly run: one example, one version
+
+**Task.** The second weekly run passed the typecheck on Kubernetes v1.35
+and v1.36, and failed at `examples/deployment.wand`: "DeploymentSpec and
+Option DeploymentSpec are not the same type". `Deployment.spec` is
+required in v1.37 and optional in v1.36. The example is written for the
+version k8s/ came from, so `tools/e2e.wand --no-example` leaves it out, and
+the weekly run uses that. wand 0.89.0.
+
+### Easy
+
+- **The diagnostic showed the schema change at once.** It named the two
+  types, and the fix was not in wand code at all but in which test runs
+  where.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `tools/e2e.wand` | 1 | 0 | 0 |

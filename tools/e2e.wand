@@ -4,6 +4,12 @@ uses {Clock, FS.Read, FS.Write, IO, Proc, Shell(kubectl, sh, wand)}
 -- CI runs it on a kind cluster, and it runs the same on a laptop.
 --
 --   wand tools/e2e.wand
+--   wand tools/e2e.wand --no-example
+--
+-- `--no-example` leaves out step 2. examples/deployment.wand is written for
+-- the Kubernetes version k8s/ was generated from, and another version's
+-- types can differ: Deployment.spec is required in v1.37 and optional in
+-- v1.36. The weekly run on other versions uses it.
 --
 -- 1. k8s/ matches the cluster's schema (`check`).
 -- 2. A Deployment built from k8s/ round-trips through the API server
@@ -52,8 +58,11 @@ let widget! dir = (
 let main! () = (
   IO.println "== k8s/ matches the cluster";
   IO.println $(wand cli.wand check);
-  IO.println "== a Deployment round-trips";
-  IO.println $(wand examples/deployment.wand);
+  if Proc.args () == ["--no-example"] then ()
+  else (
+    IO.println "== a Deployment round-trips";
+    IO.println $(wand examples/deployment.wand)
+  );
   IO.println "== a CRD gets a module, and a Widget round-trips";
   let outcome = with FS.temp_dir "plimsoll-e2e-" as dir -> try widget! dir;
   IO.println $(kubectl delete crd widgets.example.com --ignore-not-found);

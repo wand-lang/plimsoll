@@ -91,8 +91,10 @@ jobs:
             cmp "$f" "$RUNNER_TEMP/x.wand"
           done
 
+      # Without the Deployment example: it is written for the version
+      # k8s/ was generated from, and CI's `cluster` job runs it there.
       - name: The end-to-end test
-        run: wand tools/e2e.wand
+        run: wand tools/e2e.wand --no-example
 
   upgrade:
     needs: versions
