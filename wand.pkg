@@ -1,5 +1,5 @@
 { package = github.com/wand-lang/plimsoll
-, wand    = 0.91.1
+, wand    = 0.91.2
 }
 
 -- DO NOT EDIT: interface, written by `wand p`

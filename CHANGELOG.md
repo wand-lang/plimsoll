@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+This release needs wand 0.91.2 or later.
+
 ### Added
 
 - **`gen --context name` reads the cluster of a kubectl context.** Before,
