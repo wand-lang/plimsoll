@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-This release needs wand 0.91.2 or later.
+This release needs wand 0.92.0 or later.
 
 ### Added
 
@@ -13,6 +13,12 @@ This release needs wand 0.91.2 or later.
   ```sh
   wand github.com/wand-lang/plimsoll/cli gen --context prod
   ```
+
+- **Objects can be written as YAML.** `plimsoll.manifest_yaml enc objs` and
+  `app.manifest_yaml a` write one YAML document for each object, with `---`
+  between them. `kubectl apply -f` reads the file with no plimsoll and no
+  wand. So you can stop using plimsoll at any time and keep your objects as
+  YAML files.
 
 ## [0.2.0] - 2026-09-28
 

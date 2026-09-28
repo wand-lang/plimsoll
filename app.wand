@@ -16,6 +16,7 @@ import JSON
 import List
 import Map
 import Option
+import YAML
 
 let apps = import ./k8s/apps/v1
 let core = import ./k8s/core/v1
@@ -78,6 +79,13 @@ let service (a: App) =
 let manifest (a: App) =
   JSON.stringify
     (JSON.of_list [apps.Deployment.encoder (deployment a), core.Service.encoder (service a)])
+
+-- The Deployment and the Service as YAML, two documents with `---` between
+-- them: a file that `kubectl apply -f` reads. It reaches nothing.
+let manifest_yaml (a: App) = YAML.stringify_all [
+  YAML.of_json (apps.Deployment.encoder (deployment a)),
+  YAML.of_json (core.Service.encoder (service a))
+]
 
 -- Server-side apply of the Deployment, then the Service. Gives kubectl's
 -- two lines.

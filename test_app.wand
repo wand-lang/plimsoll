@@ -6,6 +6,7 @@ uses {Shell}
 import JSON
 import Map
 import Option
+import YAML
 
 let {test, group} = import Test
 let app = import ./app
@@ -115,6 +116,13 @@ group "the cluster" (fn () -> [
     let d = JSON.stringify (apps.Deployment.encoder (app.deployment web));
     let s = JSON.stringify (core.Service.encoder (app.service web));
     t.eq "[%{d},%{s}]" (app.manifest web)),
+  test "manifest_yaml is the Deployment and the Service, as YAML" (fn t ->
+    t.eq
+      [
+        YAML.of_json (apps.Deployment.encoder (app.deployment web)),
+        YAML.of_json (core.Service.encoder (app.service web))
+      ]
+      (YAML.parse_all! (app.manifest_yaml web))),
   test "apply sends the Deployment, then the Service" (fn t ->
     let sent =
       handle app.apply! web with

@@ -76,7 +76,7 @@ typed too.
 
 ## How to use it
 
-You need wand 0.91.2 or later, and `kubectl` with a context for your
+You need wand 0.92.0 or later, and `kubectl` with a context for your
 cluster.
 
 ### 1. Add plimsoll to your package
@@ -192,6 +192,7 @@ that raises, and a plain form that gives a `Result`:
 | `plimsoll.delete! kind name` | Deletes one object |
 | `plimsoll.get_in! dec ns kind name`, `list_in!`, `delete_in!` | The same, in the namespace `ns` |
 | `plimsoll.manifest enc objs` | Writes objects as one JSON list, for a file or a review |
+| `plimsoll.manifest_yaml enc objs` | Writes objects as YAML, one document for each, for a file that `kubectl apply -f` reads |
 
 `get!`, `list!` and `delete!` work in the current namespace, which the
 kubectl context sets. The `_in` forms name the namespace at the call.
@@ -219,7 +220,7 @@ The cluster may be newer than the types in k8s/. Run `wand github.com/wand-lang/
 ```
 
 This is on purpose. A script does not continue with a value that it does
-not know. To fix it, generate the types again with `upgrade` (see step 6),
+not know. To fix it, generate the types again with `upgrade` (see step 7),
 then fix each script that it reports. Run `check` in CI against each
 cluster, and you see a new value before a script does.
 
@@ -259,6 +260,7 @@ app.apply! web
 | `app.service a` | The Service, with the app's name, that sends `a.port` to the pods |
 | `app.labels a` | `{app = <name>}`: the labels of the pods, and of both selectors |
 | `app.manifest a` | The two objects as one JSON list. It reaches nothing |
+| `app.manifest_yaml a` | The two objects as YAML. It reaches nothing |
 | `app.apply! a` | Server-side apply of the Deployment, then the Service |
 
 Only `replicas` (1), `env`, `cpu` and `memory` can be left out. The labels
@@ -277,7 +279,31 @@ let slow = apps.Deployment(d, spec = apps.DeploymentSpec(d.spec, minReadySeconds
 plimsoll.apply! apps.Deployment.encoder slow
 ```
 
-### 6. Keep the types in step with your clusters
+### 6. Stop using plimsoll at any time
+
+Your objects can leave plimsoll as ordinary YAML files. Write them once,
+commit the files, and use `kubectl`, Helm or any other tool from then on:
+
+```ocaml
+uses {FS.Write}
+
+import FS
+
+let app = import github.com/wand-lang/plimsoll/app
+
+FS.write_file! ./web.yaml (app.manifest_yaml web)
+```
+
+```sh
+kubectl apply -f web.yaml
+```
+
+For objects that you built from the types in `k8s/`, use
+`plimsoll.manifest_yaml` with each type's encoder. The YAML quotes every
+string that a YAML reader could read as something else, such as `"on"` or
+`"1.10"`, so kubectl reads the same values that plimsoll would send.
+
+### 7. Keep the types in step with your clusters
 
 ```sh
 wand github.com/wand-lang/plimsoll/cli check

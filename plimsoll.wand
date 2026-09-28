@@ -13,6 +13,7 @@ import JSON
 import List
 import Result
 import Shell
+import YAML
 
 let decode = import ./_lib/decode
 let quantity = import ./_lib/quantity
@@ -122,3 +123,9 @@ let delete_in ns kind name = try delete_in! ns kind name
 
 -- Objects as one JSON list, for a file or for a review. It reaches nothing.
 let manifest enc objs = JSON.stringify (JSON.of_list (List.map enc objs))
+
+-- Objects as YAML, one document for each, with `---` between them: a
+-- manifest file that `kubectl apply -f` reads. It reaches nothing. With it,
+-- objects built in wand can be kept as YAML and used without plimsoll.
+let manifest_yaml enc objs =
+  YAML.stringify_all (List.map (fn o -> YAML.of_json (enc o)) objs)

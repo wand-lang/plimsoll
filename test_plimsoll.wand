@@ -10,6 +10,7 @@ import Map
 import Option
 import Result
 import String
+import YAML
 
 let {test, group} = import Test
 let plimsoll = import ./plimsoll
@@ -143,6 +144,10 @@ group "the cluster" (fn () -> [
     t.eq
       "kubectl delete -n 'prod' 'deployment' 'web'"
       (command_of (fn () -> plimsoll.delete_in! "prod" "deployment" "web"))),
+  test "manifest_yaml writes one YAML document for each object" (fn t ->
+    t.eq
+      [YAML.of_json (enc web), YAML.of_json (enc web)]
+      (YAML.parse_all! (plimsoll.manifest_yaml enc [web, web]))),
   test "manifest writes one JSON list and reaches nothing" (fn t ->
     t.eq
       "[%{JSON.stringify (enc web)},%{JSON.stringify (enc web)}]"
