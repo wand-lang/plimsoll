@@ -431,3 +431,42 @@ built-in modules did not change. wand 0.89.0.
 | Item | Code | Did it say what to do? |
 |---|---|---|
 | 1 pipe in an argument | E-TYPE | no: types only |
+
+## 2026-09-27 — CI and the end-to-end test
+
+**Task.** Wrote `tools/e2e.wand` (the checks against a cluster: `check`,
+the Deployment round trip, and a CRD from `testdata/widget-crd.yaml`
+round-tripped by `testdata/widget.wand` in a copy of the package) and
+`.github/workflows/ci.yml` (the checks with no cluster, and `e2e.wand` on
+kind). On a local kind cluster `e2e.wand` passed in 6 s and left the
+cluster as it was. wand 0.89.0.
+
+### Easy
+
+- **`e2e.wand` typechecked on the first attempt,** and `wand t --fix` wrote
+  its manifest: `uses {FS.Read, FS.Write, IO, Proc, Shell(kubectl, sh,
+  wand)}`. The manifest names every binary the test runs, which is what a
+  reviewer of a CI script wants to see.
+- **Cleanup whatever happens was two lines.** `with FS.temp_dir ... as dir
+  -> try widget! dir` removes the copy, and the CRD is deleted before the
+  outcome is matched.
+
+### Hard
+
+1. **A script that imports a module that is not there.**
+   `testdata/widget.wand` imports the module `gen` writes for the CRD, so
+   it cannot be typechecked in the repo. The LLM ran `wand t --fix` on it
+   in a copy that had the module, and brought the manifest back. Cause:
+   missing language or stdlib feature (no way to typecheck a script
+   against a module that does not exist yet).
+2. **No way to run a command in another directory.** `gen` writes under
+   the working directory, and wand has no `cd` for a command, so the copy
+   is reached with `sh -c 'cd "$1" && ...'`. Cause: missing language or
+   stdlib feature.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `tools/e2e.wand` | 1 | 1 (manifest) | 0 |
+| `testdata/widget.wand` | 1, in a copy | 2 (an import, manifest) | 0 |

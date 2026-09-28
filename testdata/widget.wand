@@ -1,0 +1,40 @@
+uses {IO, Proc, Shell}
+
+-- The Widget round trip, for tools/e2e.wand. It imports the module that
+-- `gen` writes for testdata/widget-crd.yaml, so it runs only in the copy
+-- that e2e.wand makes, never in this directory.
+import IO
+import JSON
+import List
+import Map
+import Proc
+
+let plimsoll = import ./plimsoll
+let ex = import ./k8s/example.com/v1alpha1
+let meta = import ./k8s/meta/v1
+
+let w =
+  ex.Widget(
+    metadata = Some meta.ObjectMeta(name = Some "plimsoll-e2e", namespace = Some "default"),
+    spec = Some ex.WidgetSpec(
+      size = 3,
+      mode = Some ex.WidgetSpecMode.Fast,
+      port = Some (plimsoll.S "http"),
+      max_replicas = Some 5,
+      owner = Some ex.WidgetSpecOwner(team = Some "infra"),
+      labels = Some (Map.from_list [("tier", "web")]),
+      extra = Some (JSON.parse! `{"anything":[1,2]}`)
+    )
+  )
+
+let main! () = (
+  let _ = plimsoll.check! ex.Widget.encoder w;
+  IO.println (plimsoll.apply! ex.Widget.encoder w);
+  let got = plimsoll.get_in! ex.Widget.decoder "default" "widget" "plimsoll-e2e";
+  let listed = plimsoll.list_in! ex.Widget.decoder "default" "widgets";
+  IO.println (plimsoll.delete_in! "default" "widget" "plimsoll-e2e");
+  if got.spec == w.spec && List.length listed == 1 then IO.println "the Widget came back as it was sent"
+  else (IO.println_err "the Widget did not come back as it was sent"; Proc.exit 1)
+)
+
+main! ()

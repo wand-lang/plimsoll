@@ -22,6 +22,13 @@ Obey them here.
 - `test_*.wand` — tests, run with `wand s`. `testdata/` holds fixtures cut
   from a real schema.
 - `examples/` — scripts that use the generated types.
+- `tools/e2e.wand` — the end-to-end test against the cluster kubectl points
+  at: `check`, the Deployment round trip, and a CRD from
+  `testdata/widget-crd.yaml` round-tripped by `testdata/widget.wand` in a
+  copy of the package. It leaves the cluster as it was.
+- `.github/workflows/ci.yml` — CI: the checks below with no cluster, and
+  `tools/e2e.wand` on a kind cluster. It installs the wand that `wand.pkg`
+  names.
 - `docs/llm-authoring.md` — the authoring log. See below.
 
 ## Checks
@@ -29,7 +36,7 @@ Obey them here.
 Check by exit code.
 
 ```sh
-wand t _gen.wand _drift.wand cli.wand plimsoll.wand test_*.wand   # no findings
+wand t _gen.wand _drift.wand cli.wand plimsoll.wand test_*.wand examples/*.wand tools/*.wand   # no findings
 wand s                                                  # all tests pass
 wand t k8s/*/*.wand                                     # generated modules
 for f in k8s/*/*.wand; do cp $f /tmp/x.wand; wand f /tmp/x.wand; cmp $f /tmp/x.wand; done
@@ -41,6 +48,8 @@ one, change the generator, not the file.
 `gen` needs a cluster. `wand --dry-run cli.wand gen` rehearses it: the
 schema is read with `Shell.inspect!`, which a rehearsal runs, and the files
 are reported, not written.
+
+`wand tools/e2e.wand` runs every check that needs a cluster.
 
 `examples/deployment.wand` is the round trip: it builds a Deployment,
 encodes it, has the API server validate it with `--dry-run=server`, and
