@@ -45,16 +45,17 @@ let scale suffix =
   | "Ti" -> Ok (1099511627776, 1)
   | "Pi" -> Ok (1125899906842624, 1)
   | "Ei" -> Ok (1152921504606846976, 1)
-  | s ->
+  | s -> (
     match Regex.capture r/^[eE]([+-]?[0-9]+)$/ s with
     | [_, e] ->
       String.to_int e
       |> Result.map (fn n -> if n >= 0 then (pow10 n, 1) else (1, pow10 (0 - n)))
     | _ -> Error "'%{s}' is not a quantity suffix"
+  )
 
 -- A quantity as a fraction (numerator, denominator), counted exactly: a
 -- float reads "0.1" as a little more than a tenth.
-let amount (q: Quantity) =
+let amount (q: Quantity) = (
   let text = String.trim q;
   match Regex.capture r/^([+-]?)([0-9]*)\.?([0-9]*)([a-zA-Z]*|[eE][+-]?[0-9]+)$/ text with
   | [_, sign, whole, frac, suffix] when !(String.empty? (whole ++ frac)) ->
@@ -65,10 +66,11 @@ let amount (q: Quantity) =
         let n = if sign == "-" then 0 - digits * num else digits * num;
         (n, pow10 (String.length frac) * den)))
   | _ -> Error "'%{q}' is not a quantity"
+)
 
 -- Rounded up, as Kubernetes rounds a quantity it has to count in whole
 -- units.
-let ceil_div a b = if a >= 0 then (a + b - 1) / b else 0 - ((0 - a) / b)
+let ceil_div a b = if a >= 0 then (a + b - 1) / b else 0 - (0 - a) / b
 
 -- A CPU quantity in millicores: "500m" is 500, "2" is 2000, "0.1" is 100.
 -- A quantity too large to count in an Int is an `Error`.

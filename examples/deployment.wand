@@ -54,16 +54,18 @@ let back = JSON.decode apps.Deployment.decoder stored
 
 let pull (d: apps.Deployment) =
   match d.spec.template.spec with
-  | Some s ->
-    (match s.containers with
-     | [c :: _] -> c.imagePullPolicy
-     | [] -> None)
+  | Some s -> (
+    match s.containers with
+    | [c :: _] -> c.imagePullPolicy
+    | [] -> None
+  )
   | None -> None
 
 match back with
 | Ok d -> (
   IO.println "sent:   %{sent}";
-  IO.println "stored: replicas %{d.spec.replicas}, pull %{pull d}, strategy %{Option.map (fn (s: apps.DeploymentStrategy) -> s.type) d.spec.strategy}";
+  IO.println
+    "stored: replicas %{d.spec.replicas}, pull %{pull d}, strategy %{Option.map (fn (s: apps.DeploymentStrategy) -> s.type) d.spec.strategy}";
   IO.println "same pull policy: %{pull d == pull web}"
 )
 | Error e -> IO.println_err "the server's object did not decode: %{e}"

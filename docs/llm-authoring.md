@@ -668,3 +668,26 @@ this, and a rehearsal runs it. `wand.pkg` needs wand 0.90.0.
 | File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
 |---|---|---|---|
 | `plimsoll.wand` | 1 | 0 | 0 |
+
+## 2026-09-28 — wand f fixed points, and wand 0.90.1
+
+**Task.** `plimsoll.wand` and `examples/deployment.wand` are now `wand f`
+fixed points, formatted with wand 0.90.1. `wand.pkg` needs 0.90.1.
+
+### Hard
+
+- **The LLM did not run `wand f` on the hand-written files.** The checks
+  in CLAUDE.md run it on `k8s/` only, and the LLM ran no more than that.
+  With 0.90.1, eight hand-written files are not fixed points. Cause: the
+  LLM's own mistake.
+- **`wand p interface --check` failed on the section that `wand p
+  release` had just written**, with "the interface section of wand.pkg
+  does not match the code" and every field of a long record listed as
+  removed. The LLM ran the check after the tag was pushed. Cause: a wand
+  bug, fixed in 0.90.1.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `plimsoll.wand` | 1 | 0 | 0 |
