@@ -3,7 +3,7 @@
 }
 
 -- DO NOT EDIT: interface, written by `wand p`
-version 0.2.0
+version 0.3.0
 
 type app.App(
   name: String,
@@ -3593,28 +3593,30 @@ type k8s/storagemigration/v1.StorageVersionMigrationStatus(
 type plimsoll.IntOrString = I Int | S String
 type plimsoll.Quantity = String
 
-app.apply!     : App -> List String ! {Raise, Shell}
-app.deployment : App -> Deployment
-app.labels     : App -> Map String
-app.manifest   : App -> String
-app.service    : App -> Service
+app.apply!        : App -> List String ! {Raise, Shell}
+app.deployment    : App -> Deployment
+app.labels        : App -> Map String
+app.manifest      : App -> String
+app.manifest_yaml : App -> String
+app.service       : App -> Service
 cli.main! : Unit -> Unit ! {FS.Read, FS.Write, IO, Proc, Raise, Shell}
-plimsoll.apply      : ('a -> JSON ! {Raise | 'e}) -> 'a -> Result String String ! {Shell | 'e}
-plimsoll.apply!     : ('a -> JSON ! 'e) -> 'a -> String ! {Raise, Shell | 'e}
-plimsoll.bytes      : String -> Result String Int
-plimsoll.check      : ('a -> JSON ! {Raise | 'e}) -> 'a -> Result String JSON ! {Shell | 'e}
-plimsoll.check!     : ('a -> JSON ! 'e) -> 'a -> JSON ! {Raise, Shell | 'e}
-plimsoll.delete     : 'a -> 'b -> Result String String ! {Shell}
-plimsoll.delete!    : 'a -> 'b -> String ! {Raise, Shell}
-plimsoll.delete_in  : 'a -> 'b -> 'c -> Result String String ! {Shell}
-plimsoll.delete_in! : 'a -> 'b -> 'c -> String ! {Raise, Shell}
-plimsoll.get        : Decoder 'a -> 'b -> 'c -> Result String 'a ! {Shell}
-plimsoll.get!       : Decoder 'a -> 'b -> 'c -> 'a ! {Raise, Shell}
-plimsoll.get_in     : Decoder 'a -> 'b -> 'c -> 'd -> Result String 'a ! {Shell}
-plimsoll.get_in!    : Decoder 'a -> 'b -> 'c -> 'd -> 'a ! {Raise, Shell}
-plimsoll.list       : Decoder 'a -> 'b -> Result String (List 'a) ! {Shell}
-plimsoll.list!      : Decoder 'a -> 'b -> List 'a ! {Raise, Shell}
-plimsoll.list_in    : Decoder 'a -> 'b -> 'c -> Result String (List 'a) ! {Shell}
-plimsoll.list_in!   : Decoder 'a -> 'b -> 'c -> List 'a ! {Raise, Shell}
-plimsoll.manifest   : ('a -> JSON ! 'e) -> List 'a -> String ! 'e
-plimsoll.millicores : String -> Result String Int
+plimsoll.apply         : ('a -> JSON ! {Raise | 'e}) -> 'a -> Result String String ! {Shell | 'e}
+plimsoll.apply!        : ('a -> JSON ! 'e) -> 'a -> String ! {Raise, Shell | 'e}
+plimsoll.bytes         : String -> Result String Int
+plimsoll.check         : ('a -> JSON ! {Raise | 'e}) -> 'a -> Result String JSON ! {Shell | 'e}
+plimsoll.check!        : ('a -> JSON ! 'e) -> 'a -> JSON ! {Raise, Shell | 'e}
+plimsoll.delete        : 'a -> 'b -> Result String String ! {Shell}
+plimsoll.delete!       : 'a -> 'b -> String ! {Raise, Shell}
+plimsoll.delete_in     : 'a -> 'b -> 'c -> Result String String ! {Shell}
+plimsoll.delete_in!    : 'a -> 'b -> 'c -> String ! {Raise, Shell}
+plimsoll.get           : Decoder 'a -> 'b -> 'c -> Result String 'a ! {Shell}
+plimsoll.get!          : Decoder 'a -> 'b -> 'c -> 'a ! {Raise, Shell}
+plimsoll.get_in        : Decoder 'a -> 'b -> 'c -> 'd -> Result String 'a ! {Shell}
+plimsoll.get_in!       : Decoder 'a -> 'b -> 'c -> 'd -> 'a ! {Raise, Shell}
+plimsoll.list          : Decoder 'a -> 'b -> Result String (List 'a) ! {Shell}
+plimsoll.list!         : Decoder 'a -> 'b -> List 'a ! {Raise, Shell}
+plimsoll.list_in       : Decoder 'a -> 'b -> 'c -> Result String (List 'a) ! {Shell}
+plimsoll.list_in!      : Decoder 'a -> 'b -> 'c -> List 'a ! {Raise, Shell}
+plimsoll.manifest      : ('a -> JSON ! 'e) -> List 'a -> String ! 'e
+plimsoll.manifest_yaml : ('a -> JSON ! 'e) -> List 'a -> String ! 'e
+plimsoll.millicores    : String -> Result String Int
