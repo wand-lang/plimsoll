@@ -3,7 +3,7 @@
 }
 
 -- DO NOT EDIT: interface, written by `wand p`
-version 0.1.0
+version 0.2.0
 
 type app.App(
   name: String,
@@ -79,7 +79,7 @@ type k8s/admissionregistration/v1.MutatingWebhook(
   objectSelector: Option meta_v1.LabelSelector = None,
   reinvocationPolicy: Option MutatingAdmissionPolicySpecReinvocationPolicy = None,
   rules: Option (List RuleWithOperations) = None,
-  sideEffects: String,
+  sideEffects: MutatingWebhookSideEffects,
   timeoutSeconds: Option Int = None
 )
 type k8s/admissionregistration/v1.MutatingWebhookConfiguration(
@@ -94,19 +94,23 @@ type k8s/admissionregistration/v1.MutatingWebhookConfigurationList(
   kind: String = "MutatingWebhookConfigurationList",
   metadata: Option meta_v1.ListMeta = None
 )
+type k8s/admissionregistration/v1.MutatingWebhookSideEffects = None_ "None" | NoneOnDryRun | Some_ "Some" | Unknown
 type k8s/admissionregistration/v1.Mutation(
   applyConfiguration: Option ApplyConfiguration = None,
   jsonPatch: Option JSONPatch = None,
-  patchType: String
+  patchType: MutationPatchType
 )
+type k8s/admissionregistration/v1.MutationPatchType = ApplyConfiguration_ "ApplyConfiguration" | JSONPatch_ "JSONPatch"
 type k8s/admissionregistration/v1.NamedRuleWithOperations(
   apiGroups: Option (List String) = None,
   apiVersions: Option (List String) = None,
-  operations: Option (List String) = None,
+  operations: Option (List NamedRuleWithOperationsOperations) = None,
   resourceNames: Option (List String) = None,
   resources: Option (List String) = None,
-  scope: Option String = None
+  scope: Option NamedRuleWithOperationsScope = None
 )
+type k8s/admissionregistration/v1.NamedRuleWithOperationsOperations = All "*" | CONNECT | CREATE | DELETE | UPDATE
+type k8s/admissionregistration/v1.NamedRuleWithOperationsScope = All "*" | Cluster | Namespaced
 type k8s/admissionregistration/v1.ParamKind(apiVersion: Option String = None, kind: Option String = None)
 type k8s/admissionregistration/v1.ParamRef(
   name: Option String = None,
@@ -117,9 +121,9 @@ type k8s/admissionregistration/v1.ParamRef(
 type k8s/admissionregistration/v1.RuleWithOperations(
   apiGroups: Option (List String) = None,
   apiVersions: Option (List String) = None,
-  operations: Option (List String) = None,
+  operations: Option (List NamedRuleWithOperationsOperations) = None,
   resources: Option (List String) = None,
-  scope: Option String = None
+  scope: Option NamedRuleWithOperationsScope = None
 )
 type k8s/admissionregistration/v1.ServiceReference(
   name: String,
@@ -184,7 +188,7 @@ type k8s/admissionregistration/v1.ValidatingWebhook(
   namespaceSelector: Option meta_v1.LabelSelector = None,
   objectSelector: Option meta_v1.LabelSelector = None,
   rules: Option (List RuleWithOperations) = None,
-  sideEffects: String,
+  sideEffects: MutatingWebhookSideEffects,
   timeoutSeconds: Option Int = None
 )
 type k8s/admissionregistration/v1.ValidatingWebhookConfiguration(
@@ -1019,9 +1023,33 @@ type k8s/certificates/v1.CertificateSigningRequestSpec(
   request: String,
   signerName: String,
   uid: Option String = None,
-  usages: Option (List String) = None,
+  usages: Option (List CertificateSigningRequestSpecUsages) = None,
   username: Option String = None
 )
+type k8s/certificates/v1.CertificateSigningRequestSpecUsages =
+  Any "any"
+  | CertSign "cert sign"
+  | ClientAuth "client auth"
+  | CodeSigning "code signing"
+  | ContentCommitment "content commitment"
+  | CrlSign "crl sign"
+  | DataEncipherment "data encipherment"
+  | DecipherOnly "decipher only"
+  | DigitalSignature "digital signature"
+  | EmailProtection "email protection"
+  | EncipherOnly "encipher only"
+  | IpsecEndSystem "ipsec end system"
+  | IpsecTunnel "ipsec tunnel"
+  | IpsecUser "ipsec user"
+  | KeyAgreement "key agreement"
+  | KeyEncipherment "key encipherment"
+  | MicrosoftSgc "microsoft sgc"
+  | NetscapeSgc "netscape sgc"
+  | OcspSigning "ocsp signing"
+  | SMime "s/mime"
+  | ServerAuth "server auth"
+  | Signing "signing"
+  | Timestamping "timestamping"
 type k8s/certificates/v1.CertificateSigningRequestStatus(
   certificate: Option String = None,
   conditions: Option (List CertificateSigningRequestCondition) = None
@@ -1107,13 +1135,15 @@ type k8s/core/v1.AppArmorProfile(localhostProfile: Option String = None, type: A
 type k8s/core/v1.AppArmorProfileType = Localhost | RuntimeDefault | Unconfined
 type k8s/core/v1.AttachedVolume(devicePath: String, name: String)
 type k8s/core/v1.AzureDiskVolumeSource(
-  cachingMode: Option String = None,
+  cachingMode: Option AzureDiskVolumeSourceCachingMode = None,
   diskName: String,
   diskURI: String,
   fsType: Option String = None,
-  kind: Option String = None,
+  kind: Option AzureDiskVolumeSourceKind = None,
   readOnly: Option Bool = None
 )
+type k8s/core/v1.AzureDiskVolumeSourceCachingMode = None_ "None" | ReadOnly | ReadWrite
+type k8s/core/v1.AzureDiskVolumeSourceKind = Dedicated | Managed | Shared_ "Shared"
 type k8s/core/v1.AzureFilePersistentVolumeSource(
   readOnly: Option Bool = None,
   secretName: String,
@@ -1322,10 +1352,76 @@ type k8s/core/v1.ContainerStatus(
   restartCount: Int,
   started: Option Bool = None,
   state: Option ContainerState = None,
-  stopSignal: Option String = None,
+  stopSignal: Option ContainerStatusStopSignal = None,
   user: Option ContainerUser = None,
   volumeMounts: Option (List VolumeMountStatus) = None
 )
+type k8s/core/v1.ContainerStatusStopSignal =
+  SIGABRT
+  | SIGALRM
+  | SIGBUS
+  | SIGCHLD
+  | SIGCLD
+  | SIGCONT
+  | SIGFPE
+  | SIGHUP
+  | SIGILL
+  | SIGINT
+  | SIGIO
+  | SIGIOT
+  | SIGKILL
+  | SIGPIPE
+  | SIGPOLL
+  | SIGPROF
+  | SIGPWR
+  | SIGQUIT
+  | SIGRTMAX
+  | SIGRTMAX1 "SIGRTMAX-1"
+  | SIGRTMAX10 "SIGRTMAX-10"
+  | SIGRTMAX11 "SIGRTMAX-11"
+  | SIGRTMAX12 "SIGRTMAX-12"
+  | SIGRTMAX13 "SIGRTMAX-13"
+  | SIGRTMAX14 "SIGRTMAX-14"
+  | SIGRTMAX2 "SIGRTMAX-2"
+  | SIGRTMAX3 "SIGRTMAX-3"
+  | SIGRTMAX4 "SIGRTMAX-4"
+  | SIGRTMAX5 "SIGRTMAX-5"
+  | SIGRTMAX6 "SIGRTMAX-6"
+  | SIGRTMAX7 "SIGRTMAX-7"
+  | SIGRTMAX8 "SIGRTMAX-8"
+  | SIGRTMAX9 "SIGRTMAX-9"
+  | SIGRTMIN
+  | SIGRTMIN1 "SIGRTMIN+1"
+  | SIGRTMIN10 "SIGRTMIN+10"
+  | SIGRTMIN11 "SIGRTMIN+11"
+  | SIGRTMIN12 "SIGRTMIN+12"
+  | SIGRTMIN13 "SIGRTMIN+13"
+  | SIGRTMIN14 "SIGRTMIN+14"
+  | SIGRTMIN15 "SIGRTMIN+15"
+  | SIGRTMIN2 "SIGRTMIN+2"
+  | SIGRTMIN3 "SIGRTMIN+3"
+  | SIGRTMIN4 "SIGRTMIN+4"
+  | SIGRTMIN5 "SIGRTMIN+5"
+  | SIGRTMIN6 "SIGRTMIN+6"
+  | SIGRTMIN7 "SIGRTMIN+7"
+  | SIGRTMIN8 "SIGRTMIN+8"
+  | SIGRTMIN9 "SIGRTMIN+9"
+  | SIGSEGV
+  | SIGSTKFLT
+  | SIGSTOP
+  | SIGSYS
+  | SIGTERM
+  | SIGTRAP
+  | SIGTSTP
+  | SIGTTIN
+  | SIGTTOU
+  | SIGURG
+  | SIGUSR1
+  | SIGUSR2
+  | SIGVTALRM
+  | SIGWINCH
+  | SIGXCPU
+  | SIGXFSZ
 type k8s/core/v1.ContainerTerminationMessagePolicy = FallbackToLogsOnError | File
 type k8s/core/v1.ContainerUser(linux: Option LinuxContainerUser = None)
 type k8s/core/v1.DaemonEndpoint(port "Port": Int)
@@ -1519,7 +1615,16 @@ type k8s/core/v1.HTTPGetActionScheme = HTTP | HTTPS
 type k8s/core/v1.HTTPHeader(name: String, value: String)
 type k8s/core/v1.HostAlias(hostnames: Option (List String) = None, ip: String)
 type k8s/core/v1.HostIP(ip: String)
-type k8s/core/v1.HostPathVolumeSource(path: String, type: Option String = None)
+type k8s/core/v1.HostPathVolumeSource(path: String, type: Option HostPathVolumeSourceType = None)
+type k8s/core/v1.HostPathVolumeSourceType =
+  Empty ""
+  | BlockDevice
+  | CharDevice
+  | Directory
+  | DirectoryOrCreate
+  | File
+  | FileOrCreate
+  | Socket
 type k8s/core/v1.ISCSIPersistentVolumeSource(
   chapAuthDiscovery: Option Bool = None,
   chapAuthSession: Option Bool = None,
@@ -1555,7 +1660,7 @@ type k8s/core/v1.KeyToPath(key: String, mode: Option Int = None, path: String, u
 type k8s/core/v1.Lifecycle(
   postStart: Option LifecycleHandler = None,
   preStop: Option LifecycleHandler = None,
-  stopSignal: Option String = None
+  stopSignal: Option ContainerStatusStopSignal = None
 )
 type k8s/core/v1.LifecycleHandler(
   exec: Option ExecAction = None,
@@ -1947,7 +2052,7 @@ type k8s/core/v1.PodSpec(
   automountServiceAccountToken: Option Bool = None,
   containers: List Container,
   dnsConfig: Option PodDNSConfig = None,
-  dnsPolicy: Option String = None,
+  dnsPolicy: Option PodSpecDnsPolicy = None,
   enableServiceLinks: Option Bool = None,
   ephemeralContainers: Option (List EphemeralContainer) = None,
   evictionResponders: Option (List EvictionResponder) = None,
@@ -1986,6 +2091,7 @@ type k8s/core/v1.PodSpec(
   topologySpreadConstraints: Option (List TopologySpreadConstraint) = None,
   volumes: Option (List Volume) = None
 )
+type k8s/core/v1.PodSpecDnsPolicy = ClusterFirst | ClusterFirstWithHostNet | Default | None_ "None"
 type k8s/core/v1.PodSpecPreemptionPolicy = Never | PreemptLowerPriority
 type k8s/core/v1.PodSpecRestartPolicy = Always | Never | OnFailure
 type k8s/core/v1.PodStatus(
@@ -2305,7 +2411,7 @@ type k8s/core/v1.ServiceSpec(
   externalTrafficPolicy: Option ServiceSpecExternalTrafficPolicy = None,
   healthCheckNodePort: Option Int = None,
   internalTrafficPolicy: Option ServiceSpecExternalTrafficPolicy = None,
-  ipFamilies: Option (List String) = None,
+  ipFamilies: Option (List ServiceSpecIpFamilies) = None,
   ipFamilyPolicy: Option ServiceSpecIpFamilyPolicy = None,
   loadBalancerClass: Option String = None,
   loadBalancerIP: Option String = None,
@@ -2313,13 +2419,15 @@ type k8s/core/v1.ServiceSpec(
   ports: Option (List ServicePort) = None,
   publishNotReadyAddresses: Option Bool = None,
   selector: Option (Map String) = None,
-  sessionAffinity: Option String = None,
+  sessionAffinity: Option ServiceSpecSessionAffinity = None,
   sessionAffinityConfig: Option SessionAffinityConfig = None,
   trafficDistribution: Option String = None,
   type: Option ServiceSpecType = None
 )
 type k8s/core/v1.ServiceSpecExternalTrafficPolicy = Cluster | Local
+type k8s/core/v1.ServiceSpecIpFamilies = Empty "" | IPv4_ "IPv4" | IPv6
 type k8s/core/v1.ServiceSpecIpFamilyPolicy = PreferDualStack | RequireDualStack | SingleStack
+type k8s/core/v1.ServiceSpecSessionAffinity = ClientIP | None_ "None"
 type k8s/core/v1.ServiceSpecType = ClusterIP | ExternalName | LoadBalancer | NodePort
 type k8s/core/v1.ServiceStatus(
   conditions: Option (List meta_v1.Condition) = None,
@@ -2428,13 +2536,14 @@ type k8s/core/v1.VolumeHealthStatus(
 type k8s/core/v1.VolumeMount(
   bindMountOptions: Option (List String) = None,
   mountPath: String,
-  mountPropagation: Option String = None,
+  mountPropagation: Option VolumeMountMountPropagation = None,
   name: String,
   readOnly: Option Bool = None,
   recursiveReadOnly: Option String = None,
   subPath: Option String = None,
   subPathExpr: Option String = None
 )
+type k8s/core/v1.VolumeMountMountPropagation = Bidirectional | HostToContainer | None_ "None"
 type k8s/core/v1.VolumeMountStatus(
   mountPath: String,
   name: String,
@@ -2496,13 +2605,14 @@ type k8s/discovery/v1.EndpointPort(
 )
 type k8s/discovery/v1.EndpointPortProtocol = SCTP | TCP | UDP
 type k8s/discovery/v1.EndpointSlice(
-  addressType: String,
+  addressType: EndpointSliceAddressType,
   apiVersion: String = "discovery.k8s.io/v1",
   endpoints: Option (List Endpoint) = None,
   kind: String = "EndpointSlice",
   metadata: Option meta_v1.ObjectMeta = None,
   ports: Option (List EndpointPort) = None
 )
+type k8s/discovery/v1.EndpointSliceAddressType = FQDN | IPv4_ "IPv4" | IPv6
 type k8s/discovery/v1.EndpointSliceList(
   apiVersion: String = "discovery.k8s.io/v1",
   items: List EndpointSlice,
@@ -2867,8 +2977,9 @@ type k8s/networking/v1.NetworkPolicySpec(
   egress: Option (List NetworkPolicyEgressRule) = None,
   ingress: Option (List NetworkPolicyIngressRule) = None,
   podSelector: Option meta_v1.LabelSelector = None,
-  policyTypes: Option (List String) = None
+  policyTypes: Option (List NetworkPolicySpecPolicyTypes) = None
 )
+type k8s/networking/v1.NetworkPolicySpecPolicyTypes = Egress | Ingress_ "Ingress"
 type k8s/networking/v1.ParentReference(
   group: Option String = None,
   name: String,
@@ -3131,9 +3242,13 @@ type k8s/resource/v1.DeviceRequestAllocationResult(
   pool: String,
   request: String,
   shareID: Option String = None,
-  skipNodeOperations: Option (List String) = None,
+  skipNodeOperations: Option (List DeviceRequestAllocationResultSkipNodeOperations) = None,
   tolerations: Option (List DeviceToleration) = None
 )
+type k8s/resource/v1.DeviceRequestAllocationResultSkipNodeOperations =
+  All "*"
+  | NodePrepareResources
+  | NodeUnprepareResources
 type k8s/resource/v1.DeviceSelector(cel: Option CELDeviceSelector = None)
 type k8s/resource/v1.DeviceSubRequest(
   allocationMode: Option DeviceSubRequestAllocationMode = None,
@@ -3147,11 +3262,12 @@ type k8s/resource/v1.DeviceSubRequest(
 )
 type k8s/resource/v1.DeviceSubRequestAllocationMode = All | ExactCount
 type k8s/resource/v1.DeviceTaint(
-  effect: String,
+  effect: DeviceTaintEffect,
   key: String,
   timeAdded: Option DateTime = None,
   value: Option String = None
 )
+type k8s/resource/v1.DeviceTaintEffect = NoExecute | NoSchedule | None_ "None"
 type k8s/resource/v1.DeviceTaintRule(
   apiVersion: String = "resource.k8s.io/v1",
   kind: String = "DeviceTaintRule",
@@ -3176,7 +3292,7 @@ type k8s/resource/v1.DeviceTaintSelector(
   pool: Option String = None
 )
 type k8s/resource/v1.DeviceToleration(
-  effect: Option String = None,
+  effect: Option DeviceTaintEffect = None,
   key: Option String = None,
   operator: Option DeviceTolerationOperator = None,
   tolerationSeconds: Option Int = None,
@@ -3276,7 +3392,7 @@ type k8s/resource/v1.ResourceSliceSpec(
   perDeviceNodeSelection: Option Bool = None,
   pool: ResourcePool,
   sharedCounters: Option (List CounterSet) = None,
-  skipNodeOperations: Option (List String) = None
+  skipNodeOperations: Option (List DeviceRequestAllocationResultSkipNodeOperations) = None
 )
 type k8s/scheduling/v1.PriorityClass(
   apiVersion: String = "scheduling.k8s.io/v1",
@@ -3526,6 +3642,7 @@ plimsoll.bytes      : String -> Result String Int
 plimsoll.ceil_div   : Int -> Int -> Int
 plimsoll.check      : ('a -> JSON ! {Raise | 'e}) -> 'a -> Result String JSON ! {Shell | 'e}
 plimsoll.check!     : ('a -> JSON ! 'e) -> 'a -> JSON ! {Raise, Shell | 'e}
+plimsoll.decoded!   : Decoder 'a -> JSON -> 'a ! {Raise}
 plimsoll.delete     : 'a -> 'b -> Result String String ! {Shell}
 plimsoll.delete!    : 'a -> 'b -> String ! {Raise, Shell}
 plimsoll.delete_in  : 'a -> 'b -> 'c -> Result String String ! {Shell}
@@ -3542,6 +3659,7 @@ plimsoll.manifest   : ('a -> JSON ! 'e) -> List 'a -> String ! 'e
 plimsoll.millicores : String -> Result String Int
 plimsoll.pow10      : Int -> Int
 plimsoll.scale      : String -> Result String (Int, Int)
+plimsoll.stale_hint : String
 tools/e2e.copy_into!       : Path -> String -> String -> Unit ! {FS.Write, Raise}
 tools/e2e.main!            : Unit -> Unit ! {Clock, FS.Read, FS.Write, IO, Proc, Raise, Shell}
 tools/e2e.sources          : List String
