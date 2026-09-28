@@ -101,12 +101,14 @@ let apply enc obj = try apply! enc obj
 -- Admission, webhooks and defaults run. Gives the object the server would
 -- store, as JSON; decode it with the type's decoder to read it.
 --
--- `wand --dry-run` withholds it, as it withholds `apply!`: wand cannot see
--- that `--dry-run=server` changes nothing.
+-- It changes nothing, so a rehearsal (`wand --dry-run`) runs it, and a
+-- script that checks an object before it applies it rehearses the path a
+-- real run takes.
 let check! enc obj =
   JSON.parse!
     (JSON.stringify (enc obj)
-    |> $(kubectl apply --server-side --field-manager=plimsoll --dry-run=server -o json -f -))
+    |> Shell.inspect_with!
+      $*(kubectl apply --server-side --field-manager=plimsoll --dry-run=server -o json -f -))
 
 -- `check!`, giving an `Error` where it raises.
 let check enc obj = try check! enc obj

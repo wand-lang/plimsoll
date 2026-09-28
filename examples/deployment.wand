@@ -6,8 +6,7 @@ uses {IO, Shell}
 -- It encodes the Deployment with its derived encoder, asks the server to
 -- validate it with `plimsoll.check!` (a server-side dry run), decodes the
 -- object the server would store, and compares the fields it set. Nothing on
--- the cluster changes. `wand --dry-run` withholds the check, since wand
--- cannot see that a server-side dry run changes nothing.
+-- the cluster changes, so `wand --dry-run` runs the check too.
 import IO
 import JSON
 import Map

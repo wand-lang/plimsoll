@@ -76,7 +76,7 @@ typed too.
 
 ## How to use it
 
-You need wand 0.89.0 or later, and `kubectl` with a context for your
+You need wand 0.90.0 or later, and `kubectl` with a context for your
 cluster.
 
 ### 1. Add plimsoll to your package
@@ -179,9 +179,10 @@ that raises, and a plain form that gives a `Result`:
 kubectl context sets. The `_in` forms name the namespace at the call.
 `apply!` and `check!` use the namespace in the object's `metadata`.
 
-`get!` and `list!` only read, so a rehearsal (`wand --dry-run`) runs them,
-and a script that reads the cluster before it changes it rehearses the
-path a real run takes. `apply!`, `check!` and `delete!` are withheld.
+`get!`, `list!` and `check!` change nothing, so a rehearsal (`wand
+--dry-run`) runs them, and a script that reads or checks before it changes
+the cluster rehearses the path a real run takes. `apply!` and `delete!` are
+withheld.
 
 `plimsoll.millicores` and `plimsoll.bytes` read a `Quantity`: "500m" is 500
 millicores, and "128Mi" is 134217728 bytes.

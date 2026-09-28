@@ -636,3 +636,35 @@ kind.
 | `tools/e2e.wand` | 1 | 0 | 0 |
 
 One test failed on its first run (the env order). `wand s`: 81 tests pass.
+
+## 2026-09-28 — A rehearsal runs check!
+
+**Task.** `wand --dry-run` withheld `plimsoll.check!`, so both examples
+stopped at "json_parse: Blank input data". `check!` now runs its
+server-side dry run with `Shell.inspect_with!`, which wand 0.90.0 adds for
+this, and a rehearsal runs it. `wand.pkg` needs wand 0.90.0.
+
+### Hard
+
+- **No stdin for a command that only reads.** The LLM tried
+  `x |> Shell.inspect! $*(kubectl apply --dry-run=server -f -)`. E-TYPE:
+  "String and 'a -> 'b are not the same type". The message did not say
+  that `inspect!` takes no input; the LLM found that in `wand d
+  Shell.inspect!`. Cause: missing language or stdlib feature. Fixed in wand
+  0.90.0 (`Shell.inspect_with!`).
+- **V-SHELL3 did not know a kubectl dry run.** `Shell.inspect!
+  $*(kubectl apply --server-side --dry-run=server -o json -f -)` gave
+  V-SHELL3: "'kubectl apply' changes things, and Shell.inspect! runs it in
+  a rehearsal as well as in a real run; run it with $(...) so that
+  --dry-run withholds it". The command stores nothing. Cause: missing
+  language or stdlib feature. Fixed in wand 0.90.0.
+- **`wand f` is not a fixed point on `plimsoll.wand`.** It moves a
+  multi-line `match` arm body onto the arrow line and puts the `|>` at the
+  level of the arm. The meaning stays the same, but the layout is worse.
+  The LLM did not keep the change. Cause: a formatter fault, for wand.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `plimsoll.wand` | 1 | 0 | 0 |

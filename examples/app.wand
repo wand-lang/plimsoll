@@ -6,7 +6,7 @@ uses {IO, Shell}
 -- `app.deployment` and `app.service` make the two objects. The script
 -- changes the Deployment with a record update, and asks the server to
 -- validate each object with `plimsoll.check!` (a server-side dry run).
--- Nothing on the cluster changes. `wand --dry-run` withholds the checks.
+-- Nothing on the cluster changes, so `wand --dry-run` runs the checks too.
 import IO
 import JSON
 import Map
