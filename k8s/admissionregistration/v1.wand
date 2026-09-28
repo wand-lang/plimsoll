@@ -11,6 +11,18 @@ type MutatingAdmissionPolicySpecFailurePolicy = Fail | Ignore
 -- The values of MutatingAdmissionPolicySpec.reinvocationPolicy.
 type MutatingAdmissionPolicySpecReinvocationPolicy = IfNeeded | Never
 
+-- The values of MutatingWebhook.sideEffects.
+type MutatingWebhookSideEffects = None_ "None" | NoneOnDryRun | Some_ "Some" | Unknown
+
+-- The values of Mutation.patchType.
+type MutationPatchType = ApplyConfiguration_ "ApplyConfiguration" | JSONPatch_ "JSONPatch"
+
+-- The values of NamedRuleWithOperations.operations.
+type NamedRuleWithOperationsOperations = All "*" | CONNECT | CREATE | DELETE | UPDATE
+
+-- The values of NamedRuleWithOperations.scope.
+type NamedRuleWithOperationsScope = All "*" | Cluster | Namespaced
+
 -- The values of ValidatingAdmissionPolicyBindingSpec.validationActions.
 type ValidatingAdmissionPolicyBindingSpecValidationActions = Audit | Deny | Warn
 
@@ -162,7 +174,7 @@ type Mutation(
   -- Possible enum values:
   --  - `"ApplyConfiguration"` ApplyConfiguration indicates that the mutation is using apply configuration to mutate the object.
   --  - `"JSONPatch"` JSONPatch indicates that the object is mutated through JSON Patch.
-  patchType: String
+  patchType: MutationPatchType
 )
 
 -- NamedRuleWithOperations is a tuple of Operations and Resources with ResourceNames.
@@ -172,7 +184,7 @@ type NamedRuleWithOperations(
   -- apiVersions is the API versions the resources belong to. '*' is all versions. If '*' is present, the length of the slice must be one. Required.
   apiVersions: Option (List String) = None,
   -- operations is the operations the admission hook cares about - CREATE, UPDATE, DELETE, CONNECT or * for all of those operations and any future admission operations that are added. If '*' is present, the length of the slice must be one. Required.
-  operations: Option (List String) = None,
+  operations: Option (List NamedRuleWithOperationsOperations) = None,
   -- resourceNames is an optional white list of names that the rule applies to.  An empty set means that everything is allowed.
   resourceNames: Option (List String) = None,
   -- resources is a list of resources this rule applies to.
@@ -190,7 +202,7 @@ type NamedRuleWithOperations(
   --  - `"*"` means that all scopes are included.
   --  - `"Cluster"` means that scope is limited to cluster-scoped objects. Namespace objects are cluster-scoped.
   --  - `"Namespaced"` means that scope is limited to namespaced objects.
-  scope: Option String = None
+  scope: Option NamedRuleWithOperationsScope = None
 )
 
 -- MatchResources decides whether to run the admission control policy on an object based on whether it meets the match criteria. The exclude rules take precedence over include rules (if a resource matches both, it is excluded)
@@ -330,7 +342,7 @@ type RuleWithOperations(
   -- apiVersions is the API versions the resources belong to. '*' is all versions. If '*' is present, the length of the slice must be one. Required.
   apiVersions: Option (List String) = None,
   -- operations is the operations the admission hook cares about - CREATE, UPDATE, DELETE, CONNECT or * for all of those operations and any future admission operations that are added. If '*' is present, the length of the slice must be one. Required.
-  operations: Option (List String) = None,
+  operations: Option (List NamedRuleWithOperationsOperations) = None,
   -- resources is a list of resources this rule applies to.
   --
   -- For example: 'pods' means pods. 'pods/log' means the log subresource of pods. '*' means all resources, but not subresources. 'pods/*' means all subresources of pods. '*/scale' means all scale subresources. '*/*' means all resources and their subresources.
@@ -346,7 +358,7 @@ type RuleWithOperations(
   --  - `"*"` means that all scopes are included.
   --  - `"Cluster"` means that scope is limited to cluster-scoped objects. Namespace objects are cluster-scoped.
   --  - `"Namespaced"` means that scope is limited to namespaced objects.
-  scope: Option String = None
+  scope: Option NamedRuleWithOperationsScope = None
 )
 
 -- ServiceReference holds a reference to Service.legacy.k8s.io
@@ -730,7 +742,7 @@ type MutatingWebhook(
   --  - `"NoneOnDryRun"` means that calling the webhook will possibly have side effects, but if the request being reviewed has the dry-run attribute, the side effects will be suppressed.
   --  - `"Some"` means that calling the webhook will possibly have side effects. If a request with the dry-run attribute would trigger a call to this webhook, the request will instead fail.
   --  - `"Unknown"` means that no information is known about the side effects of calling the webhook. If a request with the dry-run attribute would trigger a call to this webhook, the request will instead fail.
-  sideEffects: String,
+  sideEffects: MutatingWebhookSideEffects,
   -- timeoutSeconds specifies the timeout for this webhook. After the timeout passes, the webhook call will be ignored or the API call will fail based on the failure policy. The timeout value must be between 1 and 30 seconds. Default to 10 seconds.
   timeoutSeconds: Option Int = None
 )
@@ -837,7 +849,7 @@ type ValidatingWebhook(
   --  - `"NoneOnDryRun"` means that calling the webhook will possibly have side effects, but if the request being reviewed has the dry-run attribute, the side effects will be suppressed.
   --  - `"Some"` means that calling the webhook will possibly have side effects. If a request with the dry-run attribute would trigger a call to this webhook, the request will instead fail.
   --  - `"Unknown"` means that no information is known about the side effects of calling the webhook. If a request with the dry-run attribute would trigger a call to this webhook, the request will instead fail.
-  sideEffects: String,
+  sideEffects: MutatingWebhookSideEffects,
   -- timeoutSeconds specifies the timeout for this webhook. After the timeout passes, the webhook call will be ignored or the API call will fail based on the failure policy. The timeout value must be between 1 and 30 seconds. Default to 10 seconds.
   timeoutSeconds: Option Int = None
 )

@@ -2,6 +2,32 @@
 
 let meta_v1 = import ../meta/v1
 
+-- The values of CertificateSigningRequestSpec.usages.
+type CertificateSigningRequestSpecUsages =
+  Any "any"
+  | CertSign "cert sign"
+  | ClientAuth "client auth"
+  | CodeSigning "code signing"
+  | ContentCommitment "content commitment"
+  | CrlSign "crl sign"
+  | DataEncipherment "data encipherment"
+  | DecipherOnly "decipher only"
+  | DigitalSignature "digital signature"
+  | EmailProtection "email protection"
+  | EncipherOnly "encipher only"
+  | IpsecEndSystem "ipsec end system"
+  | IpsecTunnel "ipsec tunnel"
+  | IpsecUser "ipsec user"
+  | KeyAgreement "key agreement"
+  | KeyEncipherment "key encipherment"
+  | MicrosoftSgc "microsoft sgc"
+  | NetscapeSgc "netscape sgc"
+  | OcspSigning "ocsp signing"
+  | SMime "s/mime"
+  | ServerAuth "server auth"
+  | Signing "signing"
+  | Timestamping "timestamping"
+
 -- CertificateSigningRequestCondition describes a condition of a CertificateSigningRequest object
 type CertificateSigningRequestCondition(
   -- lastTransitionTime is the time the condition last transitioned from one status to another. If unset, when a new condition type is added or an existing condition's status is changed, the server defaults this to the current time.
@@ -87,7 +113,7 @@ type CertificateSigningRequestSpec(
   --  "code signing", "email protection", "s/mime",
   --  "ipsec end system", "ipsec tunnel", "ipsec user",
   --  "timestamping", "ocsp signing", "microsoft sgc", "netscape sgc"
-  usages: Option (List String) = None,
+  usages: Option (List CertificateSigningRequestSpecUsages) = None,
   -- username contains the name of the user that created the CertificateSigningRequest. Populated by the API server on creation and immutable.
   username: Option String = None
 )

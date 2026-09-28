@@ -718,3 +718,49 @@ and the checks in CLAUDE.md now hold them to `wand f`, as they held
 | File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
 |---|---|---|---|
 | all 10 | 1 | 0 | 0 |
+
+## 2026-09-28 — Every enum a sum type, with wand 0.91.0 spellings
+
+**Task.** The 17 enum value sets that stayed `String` are now sum types.
+`_gen.wand` gives each value that cannot be a constructor name a name and
+keeps the value as its spelling in documents: `None_ "None"`, `All "*"`,
+`ClientAuth "client auth"`, `SIGRTMAX1 "SIGRTMAX-1"`. wand 0.91.0 added
+those spellings for this. 20 fields in 6 modules changed type. `gen`
+writes no "stays String" note now. `wand.pkg` needs 0.91.0.
+
+### Easy
+
+- **The generator change typechecked after one fix.** `spell_values` uses
+  the trailing `_` rule that `field_names` already had.
+- **The API server took the spellings.** A Service with
+  `sessionAffinity = None_` and `ipFamilies = [IPv4_]` was written as
+  `"None"` and `"IPv4"`, checked with `check!`, and decoded back.
+
+### Hard
+
+- **A name used before it was defined.** The LLM put the new functions
+  above `capital`, which they call. `wand t`: "unbound variable 'capital'".
+  The message named the function; the fix was to move the block. Cause:
+  the LLM's own mistake.
+- **A test helper name taken.** The LLM added a second `text_of` to
+  `test_gen.wand`. Parse error: "'text_of' is already defined above.
+  Equations for a function must be consecutive". Cause: the LLM's own
+  mistake.
+- **V-BANG1 on two test helpers** that call `JSON.parse!`: "'spell' can
+  raise, but its name does not say so". Renamed to `schema_with!` and
+  `spelled_text!`. Cause: the LLM's own mistake.
+- **A test that assumed sorted values.** The LLM expected
+  `Gadget | Widget_ "Widget"`; `gen` keeps the schema's order. Cause: the
+  LLM's own mistake.
+- **The LLM claimed a bug in `Args` that was not one.** `Args.parse
+  D.decoder` reads a flag by the field's key, and the LLM called it a bug.
+  The reference says `T.decoder` reads a document and `T.parser` reads a
+  command line. Cause: the LLM did not read the reference before it
+  reported.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `_gen.wand` | 2 | 0 | 1 (order) |
+| `test_gen.wand` | 3 | 0 | 2 (name, `!` names) |

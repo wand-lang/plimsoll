@@ -123,25 +123,55 @@ group "enums" (fn () -> [
   test "and no note is written" (fn t -> t.eq [] out.notes)
 ])
 
--- A value with the name of a record in the module stays String: a script
--- that builds the record bare, `Widget(...)`, would name two things.
+-- A value with the name of a record in the module gets a trailing `_` and
+-- keeps its word in a document: a script that builds the record bare,
+-- `Widget(...)`, would otherwise name two things.
 let clash =
   JSON.parse!
     `{"components": {"schemas": {"io.k8s.api.core.v1.Widget": {"type": "object", "properties": {"size": {"type": "integer"}}}, "io.k8s.api.core.v1.Holder": {"type": "object", "properties": {"kind": {"type": "string", "enum": ["Widget", "Gadget"]}}}}}}`
 
 let clash_out = gen.generate "../../plimsoll" ["api/v1"] [clash]
 
+let clash_text =
+  List.head clash_out.files |> Option.map (fn (f: gen.File) -> f.text) |> Option.default ""
+
 group "an enum value with a record's name" (fn () -> [
-  test "stays String" (fn t ->
-    let text =
-      List.head clash_out.files
-      |> Option.map (fn (f: gen.File) -> f.text)
-      |> Option.default "";
-    t.ok (String.contains? "type Holder(kind: Option String = None)" text)),
-  test "and a note says so" (fn t ->
+  test "is renamed, with its word" (fn t ->
+    t.ok (String.contains? "type HolderKind = Widget_ \"Widget\" | Gadget\n" clash_text)),
+  test "and no note is written" (fn t -> t.eq [] clash_out.notes)
+])
+
+-- A value that is not a constructor name gets one made from its parts, and
+-- keeps its word: `All "*"`, `ClientAuth "client auth"`, `None_ "None"`. A
+-- set where two values make one name stays String.
+let schema_with! values =
+  JSON.parse!
+    `{"components": {"schemas": {"io.k8s.api.core.v1.Holder": {"type": "object", "properties": {"mode": {"type": "string", "enum": %{JSON.stringify (JSON.of_list (List.map JSON.of_string values))}}}}}}}`
+
+let spelled_text! values =
+  gen.generate "../../plimsoll" ["api/v1"] [schema_with! values]
+  |> (fn (o: gen.Output) -> List.head o.files)
+  |> Option.map (fn (f: gen.File) -> f.text)
+  |> Option.default ""
+
+group "a value that is not a constructor name" (fn () -> [
+  test "a name made from its parts" (fn t ->
+    t.ok
+      (String.contains?
+        "type HolderMode = All \"*\" | ClientAuth \"client auth\" | Empty \"\" | SIGRTMAX1 \"SIGRTMAX-1\"\n"
+        (spelled_text! ["*", "client auth", "", "SIGRTMAX-1"]))),
+  test "a name wand keeps" (fn t ->
+    t.ok
+      (String.contains?
+        "type HolderMode = ClusterFirst | None_ \"None\" | Some_ \"Some\"\n"
+        (spelled_text! ["ClusterFirst", "None", "Some"]))),
+  test "two values with one name stay String" (fn t ->
+    let o = gen.generate "../../plimsoll" ["api/v1"] [schema_with! ["a b", "a-b"]];
     t.eq
-      ["k8s/core/v1: io.k8s.api.core.v1.Holder/kind stays String (a name clashes)"]
-      clash_out.notes)
+      [
+        "k8s/core/v1: io.k8s.api.core.v1.Holder/mode stays String (no constructor name can be made for each value)"
+      ]
+      o.notes)
 ])
 
 -- A property wand cannot spell as a field name gets a name made from its

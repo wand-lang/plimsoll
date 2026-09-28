@@ -147,12 +147,49 @@ let field_names props =
     []
     props
 
+-- The constructor names wand keeps for Option and Result.
+let reserved = ["None", "Some", "Ok", "Error"]
+
 -- A value that can be a constructor.
 let constructor? v =
-  Regex.match? r/^[A-Z][A-Za-z0-9_]*$/ v
-  && !(List.any? (fn r -> r == v) ["None", "Some", "Ok", "Error"])
+  Regex.match? r/^[A-Z][A-Za-z0-9_]*$/ v && !(List.any? (fn r -> r == v) reserved)
 
 let capital s = String.upper (String.slice 0 1 s) ++ String.slice 1 (String.length s) s
+
+-- A constructor name made from a value that is not one: its parts,
+-- each capitalised, run together. "client auth" is ClientAuth and
+-- "SIGRTMAX-1" is SIGRTMAX1; "*" is All and "" is Empty.
+let made_name v =
+  if v == "*" then "All"
+  else if v == "" then "Empty"
+  else
+    Regex.split r/[^A-Za-z0-9]+/ v
+    |> List.filter (fn p -> !(String.empty? p))
+    |> List.map capital
+    |> String.join ""
+
+-- The constructor of each value, written as the module writes it: the
+-- value itself, or a name and the value as its word in a document
+-- (`None_ "None"`). A value that is a name wand keeps, or the name of a type
+-- in `taken`, gets a trailing `_`, as a field name does. None when the set
+-- cannot be spelled: a made name that is still not a name, a value a word
+-- cannot hold, or two values with one name.
+let spell_values taken values =
+  let spell v =
+    let base = if Regex.match? r/^[A-Z][A-Za-z0-9_]*$/ v then v else made_name v;
+    let name =
+      if List.any? (fn t -> t == base) (List.append reserved taken) then base ++ "_"
+      else base;
+    if !(Regex.match? r/^[A-Z][A-Za-z0-9_]*$/ name) then None
+    else if name == v then Some(name, name)
+    else if String.contains? `"` v || String.contains? "\\" v || String.contains? "|" v then None
+    else Some (name, `%{name} "%{v}"`);
+  let spelled = List.filter_map spell values;
+  let names = List.map (fn (n, _) -> n) spelled;
+  if List.length spelled == List.length values
+  && List.length (List.unique names) == List.length names then
+    Some (List.map (fn (_, text) -> text) spelled)
+  else None
 
 -- The types wand declares itself. A definition may not take one of these
 -- names.
@@ -354,10 +391,12 @@ type Decision(enums: List Enum, keys: List (String, String), notes: List String)
 
 -- Candidates with one set of values share one type, named for the first of
 -- them. Two sets may share a constructor name: wand 0.88 reads
--- `PullPolicy.Always` as the constructor of that type. A set stays String
--- when a value cannot be a constructor, when its type name is taken, or
--- when a value is the name of a type in the module. A value with a record's
--- name would make a bare `Deployment(...)` in a script name two things.
+-- `PullPolicy.Always` as the constructor of that type. A value that cannot
+-- be a constructor as it is gets a name and keeps its word in a document
+-- (`spell_values`). A value with a type's name is renamed the same way,
+-- since a record's name as a value would make a bare `Deployment(...)` in a
+-- script name two things. A set stays String when it cannot be spelled, or
+-- when its own type name is taken.
 let decide mod (cands: List Candidate) (records: List String) =
   let mine = List.filter (fn (c: Candidate) -> c.mod == mod) cands;
   let groups =
@@ -366,18 +405,16 @@ let decide mod (cands: List Candidate) (records: List String) =
     |> List.map (fn k -> List.filter (fn (c: Candidate) -> set_key c.values == k) mine);
   let first g =
     List.head g |> Option.default Candidate(mod = mod, key = "", name = "", values = []);
-  let shaped = List.filter (fn g -> List.all? constructor? (first g).values) groups;
   let taken = List.append (List.map short_name records) builtin_types;
+  let enum_names = List.map (fn g -> (first g).name) groups;
+  -- The type names a value of `g` must not be: every type in the module,
+  -- the other enums, and its own.
+  let names_for g = List.append taken enum_names;
+  let spelled g = spell_values (names_for g) (first g).values;
+  let shaped = List.filter (fn g -> Option.some? (spelled g)) groups;
   let clashes g =
     let c = first g;
-    let other_names =
-      List.filter (fn o -> (first o).name != c.name) shaped
-      |> List.map (fn o -> (first o).name);
-    let type_names = List.append taken other_names;
-    let named_like_a_type w = List.any? (fn t -> t == w) type_names;
-    named_like_a_type c.name
-    || List.any? named_like_a_type c.values
-    || List.any? (fn v -> v == c.name) c.values;
+    List.any? (fn t -> t == c.name) taken;
   let chosen = List.filter (fn g -> !(clashes g)) shaped;
   let chosen? g = List.any? (fn o -> (first o).name == (first g).name) chosen;
   let enums =
@@ -386,7 +423,7 @@ let decide mod (cands: List Candidate) (records: List String) =
         let c = first g;
         Enum(
           name = c.name,
-          values = c.values,
+          values = spelled g |> Option.default [],
           of_field = String.replace "/" "." (short_name c.key)
         ))
       chosen;
@@ -399,8 +436,8 @@ let decide mod (cands: List Candidate) (records: List String) =
     |> List.map (fn g ->
       let c = first g;
       let why =
-        if List.all? constructor? c.values then "a name clashes"
-        else "a value is not a constructor name";
+        if Option.some? (spelled g) then "its type name is taken"
+        else "no constructor name can be made for each value";
       "%{mod}: %{c.key} stays String (%{why})");
   Decision(enums, keys, notes)
 

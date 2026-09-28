@@ -7,8 +7,17 @@ let plimsoll = import ../../plimsoll
 -- The values of DeviceAllocationConfiguration.source.
 type DeviceAllocationConfigurationSource = FromClaim | FromClass
 
+-- The values of DeviceRequestAllocationResult.skipNodeOperations.
+type DeviceRequestAllocationResultSkipNodeOperations =
+  All "*"
+  | NodePrepareResources
+  | NodeUnprepareResources
+
 -- The values of DeviceSubRequest.allocationMode.
 type DeviceSubRequestAllocationMode = All | ExactCount
+
+-- The values of DeviceTaint.effect.
+type DeviceTaintEffect = NoExecute | NoSchedule | None_ "None"
 
 -- The values of DeviceToleration.operator.
 type DeviceTolerationOperator = Equal | Exists
@@ -270,7 +279,7 @@ type DeviceTaint(
   --  - `"NoExecute"` Evict any already-running pods that do not tolerate the device taint.
   --  - `"NoSchedule"` Do not allow new pods to schedule which use a tainted device unless they tolerate the taint, but allow all pods submitted to Kubelet without going through the scheduler to start, and allow all already-running pods to continue running.
   --  - `"None"` No effect, the taint is purely informational.
-  effect: String,
+  effect: DeviceTaintEffect,
   -- The taint key to be applied to a device. Must be a label name.
   key: String,
   -- TimeAdded represents the time at which the taint was added or (only in a DeviceTaintRule) the effect was modified. Added automatically during create or update if not set.
@@ -355,7 +364,7 @@ type DeviceToleration(
   --  - `"NoExecute"` Evict any already-running pods that do not tolerate the device taint.
   --  - `"NoSchedule"` Do not allow new pods to schedule which use a tainted device unless they tolerate the taint, but allow all pods submitted to Kubelet without going through the scheduler to start, and allow all already-running pods to continue running.
   --  - `"None"` No effect, the taint is purely informational.
-  effect: Option String = None,
+  effect: Option DeviceTaintEffect = None,
   -- Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys. Must be a label name.
   key: Option String = None,
   -- Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a ResourceClaim can tolerate all taints of a particular category.
@@ -408,7 +417,7 @@ type DeviceRequestAllocationResult(
   -- ShareID uniquely identifies an individual allocation share of the device, used when the device supports multiple simultaneous allocations. It serves as an additional map key to differentiate concurrent shares of the same device.
   shareID: Option String = None,
   -- SkipNodeOperations lists node-local resource operations (gRPC calls) that will be skipped for this allocated device when determining whether operations are necessary on the node. If all allocated devices for a driver in a claim skip an operation, that gRPC call will be skipped. It is a copy of the ResourceSlice.spec.skipNodeOperations value at the time when the device was allocated.
-  skipNodeOperations: Option (List String) = None,
+  skipNodeOperations: Option (List DeviceRequestAllocationResultSkipNodeOperations) = None,
   -- A copy of all tolerations specified in the request at the time when the device got allocated.
   --
   -- The maximum number of tolerations is 16.
@@ -981,7 +990,7 @@ type ResourceSliceSpec(
   -- - "NodeUnprepareResources": NodeUnprepareResources gRPC calls are skipped. - "*": All node-local resource operations are skipped.
   --
   -- Other values may be added in the future. The kubelet must ignore unknown values.
-  skipNodeOperations: Option (List String) = None
+  skipNodeOperations: Option (List DeviceRequestAllocationResultSkipNodeOperations) = None
 )
 
 -- ResourceSlice represents one or more resources in a pool of similar resources, managed by a common driver. A pool may span more than one ResourceSlice, and exactly how many ResourceSlices comprise a pool is determined by the driver.

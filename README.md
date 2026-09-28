@@ -76,7 +76,7 @@ typed too.
 
 ## How to use it
 
-You need wand 0.90.2 or later, and `kubectl` with a context for your
+You need wand 0.91.0 or later, and `kubectl` with a context for your
 cluster.
 
 ### 1. Add plimsoll to your package
@@ -145,6 +145,13 @@ let web =
 `labels` is one value, used in the selector and in the template. An enum is
 written with its type, as in `core.ContainerImagePullPolicy.IfNotPresent`,
 because two Kubernetes enums can have the same value names.
+
+Some Kubernetes values cannot be wand constructor names. Such a value gets a
+name, and the generated type keeps the value as the constructor's word in
+the document: `core.PodSpecDnsPolicy.None_` is written as `"None"`, and
+`NamedRuleWithOperationsOperations.All` as `"*"`. A value that is a wand
+name or the name of a type gets a trailing `_`. Another value gets a name
+made from its parts: `"client auth"` is `ClientAuth`.
 
 ### 4. Check and apply them
 

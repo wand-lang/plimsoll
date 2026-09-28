@@ -6,11 +6,85 @@ let plimsoll = import ../../plimsoll
 -- The values of AppArmorProfile.type.
 type AppArmorProfileType = Localhost | RuntimeDefault | Unconfined
 
+-- The values of AzureDiskVolumeSource.cachingMode.
+type AzureDiskVolumeSourceCachingMode = None_ "None" | ReadOnly | ReadWrite
+
+-- The values of AzureDiskVolumeSource.kind.
+type AzureDiskVolumeSourceKind = Dedicated | Managed | Shared_ "Shared"
+
 -- The values of Container.imagePullPolicy.
 type ContainerImagePullPolicy = Always | IfNotPresent | Never
 
 -- The values of ContainerPort.protocol.
 type ContainerPortProtocol = SCTP | TCP | UDP
+
+-- The values of ContainerStatus.stopSignal.
+type ContainerStatusStopSignal =
+  SIGABRT
+  | SIGALRM
+  | SIGBUS
+  | SIGCHLD
+  | SIGCLD
+  | SIGCONT
+  | SIGFPE
+  | SIGHUP
+  | SIGILL
+  | SIGINT
+  | SIGIO
+  | SIGIOT
+  | SIGKILL
+  | SIGPIPE
+  | SIGPOLL
+  | SIGPROF
+  | SIGPWR
+  | SIGQUIT
+  | SIGRTMAX
+  | SIGRTMAX1 "SIGRTMAX-1"
+  | SIGRTMAX10 "SIGRTMAX-10"
+  | SIGRTMAX11 "SIGRTMAX-11"
+  | SIGRTMAX12 "SIGRTMAX-12"
+  | SIGRTMAX13 "SIGRTMAX-13"
+  | SIGRTMAX14 "SIGRTMAX-14"
+  | SIGRTMAX2 "SIGRTMAX-2"
+  | SIGRTMAX3 "SIGRTMAX-3"
+  | SIGRTMAX4 "SIGRTMAX-4"
+  | SIGRTMAX5 "SIGRTMAX-5"
+  | SIGRTMAX6 "SIGRTMAX-6"
+  | SIGRTMAX7 "SIGRTMAX-7"
+  | SIGRTMAX8 "SIGRTMAX-8"
+  | SIGRTMAX9 "SIGRTMAX-9"
+  | SIGRTMIN
+  | SIGRTMIN1 "SIGRTMIN+1"
+  | SIGRTMIN10 "SIGRTMIN+10"
+  | SIGRTMIN11 "SIGRTMIN+11"
+  | SIGRTMIN12 "SIGRTMIN+12"
+  | SIGRTMIN13 "SIGRTMIN+13"
+  | SIGRTMIN14 "SIGRTMIN+14"
+  | SIGRTMIN15 "SIGRTMIN+15"
+  | SIGRTMIN2 "SIGRTMIN+2"
+  | SIGRTMIN3 "SIGRTMIN+3"
+  | SIGRTMIN4 "SIGRTMIN+4"
+  | SIGRTMIN5 "SIGRTMIN+5"
+  | SIGRTMIN6 "SIGRTMIN+6"
+  | SIGRTMIN7 "SIGRTMIN+7"
+  | SIGRTMIN8 "SIGRTMIN+8"
+  | SIGRTMIN9 "SIGRTMIN+9"
+  | SIGSEGV
+  | SIGSTKFLT
+  | SIGSTOP
+  | SIGSYS
+  | SIGTERM
+  | SIGTRAP
+  | SIGTSTP
+  | SIGTTIN
+  | SIGTTOU
+  | SIGURG
+  | SIGUSR1
+  | SIGUSR2
+  | SIGVTALRM
+  | SIGWINCH
+  | SIGXCPU
+  | SIGXFSZ
 
 -- The values of Container.terminationMessagePolicy.
 type ContainerTerminationMessagePolicy = FallbackToLogsOnError | File
@@ -23,6 +97,17 @@ type HTTPGetActionProtocol = HTTP1 | HTTP2
 
 -- The values of HTTPGetAction.scheme.
 type HTTPGetActionScheme = HTTP | HTTPS
+
+-- The values of HostPathVolumeSource.type.
+type HostPathVolumeSourceType =
+  Empty ""
+  | BlockDevice
+  | CharDevice
+  | Directory
+  | DirectoryOrCreate
+  | File
+  | FileOrCreate
+  | Socket
 
 -- The values of ModifyVolumeStatus.status.
 type ModifyVolumeStatusStatus = InProgress | Infeasible | Pending
@@ -61,6 +146,9 @@ type PodSecurityContextFsGroupChangePolicy = Always | OnRootMismatch
 -- The values of PodSecurityContext.supplementalGroupsPolicy.
 type PodSecurityContextSupplementalGroupsPolicy = Merge | Strict
 
+-- The values of PodSpec.dnsPolicy.
+type PodSpecDnsPolicy = ClusterFirst | ClusterFirstWithHostNet | Default | None_ "None"
+
 -- The values of PodSpec.preemptionPolicy.
 type PodSpecPreemptionPolicy = Never | PreemptLowerPriority
 
@@ -92,8 +180,14 @@ type SecurityContextProcMount = Default | Unmasked
 -- The values of ServiceSpec.externalTrafficPolicy.
 type ServiceSpecExternalTrafficPolicy = Cluster | Local
 
+-- The values of ServiceSpec.ipFamilies.
+type ServiceSpecIpFamilies = Empty "" | IPv4_ "IPv4" | IPv6
+
 -- The values of ServiceSpec.ipFamilyPolicy.
 type ServiceSpecIpFamilyPolicy = PreferDualStack | RequireDualStack | SingleStack
+
+-- The values of ServiceSpec.sessionAffinity.
+type ServiceSpecSessionAffinity = ClientIP | None_ "None"
 
 -- The values of ServiceSpec.type.
 type ServiceSpecType = ClusterIP | ExternalName | LoadBalancer | NodePort
@@ -112,6 +206,9 @@ type TopologySpreadConstraintWhenUnsatisfiable = DoNotSchedule | ScheduleAnyway
 
 -- The values of VolumeHealthCondition.status.
 type VolumeHealthConditionStatus = DataLoss | Degraded | Inaccessible
+
+-- The values of VolumeMount.mountPropagation.
+type VolumeMountMountPropagation = Bidirectional | HostToContainer | None_ "None"
 
 -- Represents a Persistent Disk resource in AWS.
 --
@@ -159,7 +256,7 @@ type AzureDiskVolumeSource(
   --  - `"None"`
   --  - `"ReadOnly"`
   --  - `"ReadWrite"`
-  cachingMode: Option String = None,
+  cachingMode: Option AzureDiskVolumeSourceCachingMode = None,
   -- diskName is the Name of the data disk in the blob storage
   diskName: String,
   -- diskURI is the URI of data disk in the blob storage
@@ -172,7 +269,7 @@ type AzureDiskVolumeSource(
   --  - `"Dedicated"`
   --  - `"Managed"`
   --  - `"Shared"`
-  kind: Option String = None,
+  kind: Option AzureDiskVolumeSourceKind = None,
   -- readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.
   readOnly: Option Bool = None
 )
@@ -672,7 +769,7 @@ type HostPathVolumeSource(
   --  - `"File"` A file must exist at the given path
   --  - `"FileOrCreate"` If nothing exists at the given path, an empty file will be created there as needed with file mode 0644, having the same group and ownership with Kubelet.
   --  - `"Socket"` A UNIX socket must exist at the given path
-  type: Option String = None
+  type: Option HostPathVolumeSourceType = None
 )
 
 -- ImageVolumeSource represents a image volume resource.
@@ -2287,7 +2384,7 @@ type ServiceSpec(
   -- IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this service. This field is usually assigned automatically based on cluster configuration and the ipFamilyPolicy field. If this field is specified manually, the requested family is available in the cluster, and ipFamilyPolicy allows it, it will be used; otherwise creation of the service will fail. This field is conditionally mutable: it allows for adding or removing a secondary IP family, but it does not allow changing the primary IP family of the Service. Valid values are "IPv4" and "IPv6".  This field only applies to Services of types ClusterIP, NodePort, and LoadBalancer, and does apply to "headless" services. This field will be wiped when updating a Service to type ExternalName.
   --
   -- This field may hold a maximum of two entries (dual-stack families, in either order).  These families must correspond to the values of the clusterIPs field, if specified. Both clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.
-  ipFamilies: Option (List String) = None,
+  ipFamilies: Option (List ServiceSpecIpFamilies) = None,
   -- IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be "SingleStack" (a single IP family), "PreferDualStack" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or "RequireDualStack" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.
   --
   -- Possible enum values:
@@ -2312,7 +2409,7 @@ type ServiceSpec(
   -- Possible enum values:
   --  - `"ClientIP"` is the Client IP based.
   --  - `"None"` - no session affinity.
-  sessionAffinity: Option String = None,
+  sessionAffinity: Option ServiceSpecSessionAffinity = None,
   -- sessionAffinityConfig contains the configurations of session affinity.
   sessionAffinityConfig: Option SessionAffinityConfig = None,
   -- TrafficDistribution offers a way to express preferences for how traffic is distributed to Service endpoints. Implementations can use this field as a hint, but are not required to guarantee strict adherence. If the field is not set, the implementation will apply its default routing strategy. If set to "PreferClose", implementations should prioritize endpoints that are in the same zone.
@@ -2489,7 +2586,7 @@ type Lifecycle(
   --  - `"SIGWINCH"`
   --  - `"SIGXCPU"`
   --  - `"SIGXFSZ"`
-  stopSignal: Option String = None
+  stopSignal: Option ContainerStatusStopSignal = None
 )
 
 -- Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.
@@ -2798,7 +2895,7 @@ type VolumeMount(
   --  - `"Bidirectional"` means that the volume in a container will receive new mounts from the host or other containers, and its own mounts will be propagated from the container to the host or other containers. Note that this mode is recursively applied to all mounts in the volume ("rshared" in Linux terminology).
   --  - `"HostToContainer"` means that the volume in a container will receive new mounts from the host or other containers, but filesystems mounted inside the container won't be propagated to the host or other containers. Note that this mode is recursively applied to all mounts in the volume ("rslave" in Linux terminology).
   --  - `"None"` means that the volume in a container will not receive new mounts from the host or other containers, and filesystems mounted inside the container won't be propagated to the host or other containers. Note that this mode corresponds to "private" in Linux terminology.
-  mountPropagation: Option String = None,
+  mountPropagation: Option VolumeMountMountPropagation = None,
   -- This must match the Name of a Volume.
   name: String,
   -- Mounted read-only if true, read-write otherwise (false or unspecified). Defaults to false.
@@ -3072,7 +3169,7 @@ type ContainerStatus(
   --  - `"SIGWINCH"`
   --  - `"SIGXCPU"`
   --  - `"SIGXFSZ"`
-  stopSignal: Option String = None,
+  stopSignal: Option ContainerStatusStopSignal = None,
   -- User represents user identity information initially attached to the first process of the container
   user: Option ContainerUser = None,
   -- Status of volume mounts.
@@ -3620,7 +3717,7 @@ type PodSpec(
   --  - `"ClusterFirstWithHostNet"` indicates that the pod should use cluster DNS first, if it is available, then fall back on the default (as determined by kubelet) DNS settings.
   --  - `"Default"` indicates that the pod should use the default (as determined by kubelet) DNS settings.
   --  - `"None"` indicates that the pod should use empty DNS settings. DNS parameters such as nameservers and search paths should be defined via DNSConfig.
-  dnsPolicy: Option String = None,
+  dnsPolicy: Option PodSpecDnsPolicy = None,
   -- EnableServiceLinks indicates whether information about services should be injected into pod's environment variables, matching the syntax of Docker links. Optional: Defaults to true.
   enableServiceLinks: Option Bool = None,
   -- List of ephemeral containers run in this pod. Ephemeral containers may be run in an existing pod to perform user-initiated actions such as debugging. This list cannot be specified when creating a pod, and it cannot be modified by updating the pod spec. In order to add an ephemeral container to an existing pod, use the pod's ephemeralcontainers subresource.
