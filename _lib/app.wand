@@ -1,0 +1,37 @@
+-- The parts of `app.deployment` that are not API. They take the fields of
+-- an `App` and not the record, since this module cannot import app.wand:
+-- the two would import each other. Private to the package.
+
+import List
+import Map
+import Option
+
+let core = import ../k8s/core/v1
+
+-- The requests that are given, or `None` when neither is.
+let requests cpu memory =
+  let given =
+    List.filter_map (fn (key, q) -> Option.map (fn v -> (key, v)) q) [
+      ("cpu", cpu),
+      ("memory", memory)
+    ];
+  if given == [] then None else Some (Map.from_list given)
+
+-- The environment as the container writes it, or `None` when it is empty.
+let env_vars env =
+  match Map.to_list env with
+  | [] -> None
+  | pairs -> Some (List.map (fn (key, v) -> core.EnvVar(name = key, value = Some v)) pairs)
+
+-- The container that runs `image` and listens on `port`.
+let container name image port env cpu memory =
+  core.Container(
+    name = name,
+    image = Some image,
+    ports = Some [core.ContainerPort(containerPort = port)],
+    env = env_vars env,
+    resources =
+      Option.map
+        (fn r -> core.ResourceRequirements(requests = Some r))
+        (requests cpu memory)
+  )

@@ -1,0 +1,233 @@
+uses {FS.Read, FS.Write, IO, Proc, Shell(kubectl, wand)}
+
+-- The work behind the plimsoll command in cli.wand: reading the schema,
+-- writing k8s/, and the check and upgrade reports. Private to the package.
+
+import Decode
+import FS
+import IO
+import JSON
+import List
+import Map
+import Option
+import Path
+import Proc
+import Regex
+import Result
+import Shell
+import String
+import Version
+
+let gen = import ../_gen
+let drift = import ../_drift
+
+-- How a generated module imports plimsoll. Inside this package it is a
+-- path; anywhere else it is the package URL, which wand.pkg requires.
+let plimsoll_target () =
+  match FS.read_file ./wand.pkg with
+  | Ok text when String.contains? "package = github.com/wand-lang/plimsoll\n" text -> "../../plimsoll"
+  | _ -> "github.com/wand-lang/plimsoll"
+
+-- ── The cluster ───────────────────────────────────────────────────────────
+
+-- A kubectl context by name, or `None` for the current one.
+let label ctx =
+  match ctx with
+  | Some c -> c
+  | None -> "the current context"
+
+-- A path of the API server, read. The command only reads, so it runs
+-- through Shell.inspect!, and a rehearsal runs it.
+let raw! ctx path =
+  match ctx with
+  | Some c -> Shell.inspect! $*(kubectl --context %{c} get --raw %{path})
+  | None -> Shell.inspect! $*(kubectl get --raw %{path})
+
+-- One group-version's schema, as the API server serves it.
+let fetch! ctx group_version = JSON.parse! (raw! ctx ("/openapi/v3/" ++ group_version))
+
+-- Every group-version the API server serves a schema for: `api/v1`, and
+-- each `apis/<group>/<version>`, CRDs included. The paths that name only a
+-- group, such as `apis/apps`, are left out.
+let group_versions! ctx =
+  JSON.parse! (raw! ctx "/openapi/v3")
+  |> JSON.field! "paths"
+  |> JSON.get_object
+  |> Result.get!
+  |> Map.keys
+  |> List.filter (fn p -> p == "api/v1" || Regex.match? r/^apis\/[^\/]+\/[^\/]+$/ p)
+  |> List.sort
+
+-- The Kubernetes version of a context's API server.
+let version! ctx =
+  let out =
+    match ctx with
+    | Some c -> Shell.inspect! $*(kubectl --context %{c} version -o json)
+    | None -> Shell.inspect! $*(kubectl version -o json)
+  in
+  let git =
+    JSON.parse! out
+    |> JSON.field! "serverVersion"
+    |> JSON.field! "gitVersion"
+    |> JSON.get_string
+    |> Result.get!;
+  Result.get! (Version.of_string (String.replace "v" "" git))
+
+-- ── Modules ───────────────────────────────────────────────────────────────
+
+let write! (f: gen.File) = (
+  FS.mkdir! (Path.dirname (Path.of_string f.path));
+  FS.write_file! (Path.of_string f.path) f.text
+)
+
+-- The generated modules on disk, as (path, text), with each path written
+-- from here, as `gen` writes it: "k8s/apps/v1.wand". `FS.glob` gives
+-- whole paths.
+let on_disk! () =
+  let here = Path.to_string (FS.cwd ()) ++ "/";
+  let local s =
+    if String.starts_with? here s then String.slice (String.length here) (String.length s) s
+    else if String.starts_with? "./" s then String.slice 2 (String.length s) s
+    else s;
+  FS.glob ./k8s/*/*.wand |> List.map (fn p -> (local (Path.to_string p), FS.read_file! p))
+
+-- Remove each generated module this run did not write. Modules name each
+-- other's types, so they have to come from one run: a module left from an
+-- older one can name a type the new ones do not have, as
+-- storagemigration/v1 from Kubernetes v1.37 named meta's GroupResource,
+-- which meta/v1 from v1.36 does not hold. A file gen did not write is left
+-- alone.
+let remove_stale! (files: List gen.File) =
+  on_disk! ()
+  |> List.filter (fn (path, text) ->
+    String.starts_with? "-- DO NOT EDIT: written by plimsoll gen" text
+    && !(List.any? (fn (f: gen.File) -> f.path == path) files))
+  |> List.each (fn (path, _) -> (
+    FS.delete! (Path.of_string path);
+    IO.println "removed %{path}"
+  ))
+
+-- The group-versions the modules on disk came from.
+let sources_in modules =
+  let found =
+    List.map (fn (_, text) -> gen.sources_of text) modules |> List.flatten |> List.unique;
+  if List.empty? found then
+    (
+      IO.println_err
+        "no module under k8s/ names the group-versions it came from; run gen first";
+      Proc.exit 2
+    )
+  else found
+
+let generate! ctx sources =
+  gen.generate (plimsoll_target ()) sources (List.map (fetch! ctx) sources)
+
+-- ── Commands ──────────────────────────────────────────────────────────────
+
+let run_gen! group_versions = (
+  let out = generate! None group_versions;
+  List.each write! out.files;
+  remove_stale! out.files;
+  -- "generated", not "wrote": in a rehearsal nothing is written, and
+  -- wand's own `would write` line says so.
+  List.each (fn (f: gen.File) -> IO.println "generated %{f.path}") out.files;
+  List.each (fn n -> IO.println_err "note: %{n}") out.notes
+)
+
+-- Whether k8s/ matches the schema of one context, printed.
+let check_one! modules sources ctx =
+  let changes = drift.compare modules (generate! ctx sources).files;
+  if List.empty? changes then (IO.println "%{label ctx}: k8s/ matches"; true)
+  else (
+    let n = List.length changes;
+    IO.println "%{label ctx}: %{n} %{if n == 1 then "change" else "changes"}";
+    List.each (fn c -> IO.println "  %{c}") changes;
+    false
+  )
+
+let run_check! contexts =
+  let modules = on_disk! ();
+  let sources = sources_in modules;
+  let results = List.map (check_one! modules sources) contexts;
+  if List.all? (fn ok -> ok) results then () else Proc.exit 1
+
+-- One diagnostic of `wand t --json`.
+type Diagnostic(severity: String, file: String, line: Int, col: Int, message: String)
+
+-- The errors `wand t` finds in the scripts here. In a rehearsal the
+-- command is withheld, so there are none to read.
+let broken_scripts! () =
+  let r = $?(wand t --json .);
+  if String.empty? (String.trim r.stdout) then []
+  else
+    JSON.decode (Decode.list Diagnostic.decoder) (JSON.parse! r.stdout)
+    |> Result.get!
+    |> List.filter (fn (d: Diagnostic) -> d.severity == "error")
+
+let bullet (d: Diagnostic) =
+  match String.lines d.message with
+  | [first :: rest] ->
+    String.join
+      "\n"
+      ("- %{d.file}:%{d.line}:%{d.col}: %{first}" :: List.map (fn l -> "  " ++ l) rest)
+  | [] -> "- %{d.file}:%{d.line}:%{d.col}"
+
+let report ref_ctx ref_version versions changes broken =
+  let or_none xs = if List.empty? xs then ["None."] else xs;
+  String.join
+    "\n"
+    (List.flatten [
+      [
+        "# plimsoll upgrade",
+        "",
+        "Generated from %{label ref_ctx}, Kubernetes %{Version.to_string ref_version}: the oldest of",
+        ""
+      ],
+      List.map (fn (c, v) -> "- %{label c}: %{Version.to_string v}") versions,
+      ["", "## Schema changes", ""],
+      or_none (List.map (fn c -> "- " ++ c) changes),
+      ["", "## Scripts that no longer typecheck", ""],
+      or_none (List.map bullet broken)
+    ])
+
+let run_upgrade! contexts = (
+  let modules = on_disk! ();
+  let sources = sources_in modules;
+  let versions = List.map (fn ctx -> (ctx, version! ctx)) contexts;
+  let (ref_ctx, ref_version) =
+    List.sort_by (fn (_, v) -> v) versions
+    |> List.head
+    |> Option.default (None, version! None);
+  let out = generate! ref_ctx sources;
+  let changes = drift.compare modules out.files;
+  List.each write! out.files;
+  remove_stale! out.files;
+  let broken = broken_scripts! ();
+  IO.println (report ref_ctx ref_version versions changes broken);
+  if List.empty? broken then () else Proc.exit 1
+)
+
+-- ── Arguments ─────────────────────────────────────────────────────────────
+
+-- `--contexts a,b,c`, or the current context.
+let contexts_of args =
+  match args with
+  | ["--contexts", list] ->
+    Ok
+      (String.split "," list
+      |> List.map String.trim
+      |> List.filter (fn c -> !(String.empty? c))
+      |> List.map Some)
+  | [] -> Ok [None]
+  | _ -> Error "expected --contexts a,b,c"
+
+let usage = String.join "\n" [
+  "usage: wand github.com/wand-lang/plimsoll/cli gen [group-version ...]",
+  "       wand github.com/wand-lang/plimsoll/cli check [--contexts a,b,c]",
+  "       wand github.com/wand-lang/plimsoll/cli upgrade [--contexts a,b,c]"
+]
+
+let with_contexts args k =
+  match contexts_of args with
+  | Ok cs -> k cs
+  | Error e -> (IO.println_err "%{e}\n%{usage}"; Proc.exit 2)

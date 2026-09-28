@@ -3,19 +3,19 @@ uses {Clock, FS.Read, FS.Write, IO, Proc, Shell(kubectl, sh, wand)}
 -- The end-to-end test against a real cluster: the one kubectl points at.
 -- CI runs it on a kind cluster, and it runs the same on a laptop.
 --
---   wand tools/e2e.wand
---   wand tools/e2e.wand --no-example
+--   wand tools/_e2e.wand
+--   wand tools/_e2e.wand --no-example
 --
--- `--no-example` leaves out step 2. examples/deployment.wand and
--- examples/app.wand are written for the Kubernetes version k8s/ was
+-- `--no-example` leaves out step 2. examples/_deployment.wand and
+-- examples/_app.wand are written for the Kubernetes version k8s/ was
 -- generated from, and another version's types can differ: Deployment.spec
 -- is required in v1.37 and optional in v1.36. The weekly run on other
 -- versions uses it.
 --
 -- 1. k8s/ matches the cluster's schema (`check`).
 -- 2. A Deployment built from k8s/ round-trips through the API server
---    (examples/deployment.wand), and the API server accepts the
---    Deployment and the Service of an App (examples/app.wand).
+--    (examples/_deployment.wand), and the API server accepts the
+--    Deployment and the Service of an App (examples/_app.wand).
 -- 3. A CRD gets a module, and a Widget built from it round-trips:
 --    testdata/widget-crd.yaml is installed, `gen` writes its module in a
 --    copy of this package, testdata/widget.wand.in runs there, and the CRD is
@@ -33,7 +33,16 @@ import Result
 import String
 
 -- What the copy needs to generate a module and run a script against it.
-let sources = ["_gen.wand", "_drift.wand", "cli.wand", "plimsoll.wand", "wand.pkg"]
+let sources = [
+  "_gen.wand",
+  "_drift.wand",
+  "_lib/cli.wand",
+  "_lib/decode.wand",
+  "_lib/quantity.wand",
+  "cli.wand",
+  "plimsoll.wand",
+  "wand.pkg"
+]
 
 let copy_into! dir name target =
   FS.copy! (Path.of_string name) (Path.join dir (Path.of_string target))
@@ -50,6 +59,7 @@ let widget! dir = (
   IO.println
     $(kubectl wait --for=condition=Established crd/widgets.example.com --timeout=60s);
   wait_for_schema! 60;
+  FS.mkdir! (Path.join dir ./_lib);
   List.each (fn f -> copy_into! dir f f) sources;
   copy_into! dir "testdata/widget.wand.in" "widget.wand";
   IO.println
@@ -62,9 +72,9 @@ let main! () = (
   if Proc.args () == ["--no-example"] then ()
   else (
     IO.println "== a Deployment round-trips";
-    IO.println $(wand examples/deployment.wand);
+    IO.println $(wand examples/_deployment.wand);
     IO.println "== an App's Deployment and Service pass the server's checks";
-    IO.println $(wand examples/app.wand)
+    IO.println $(wand examples/_app.wand)
   );
   IO.println "== a CRD gets a module, and a Widget round-trips";
   let outcome = with FS.temp_dir "plimsoll-e2e-" as dir -> try widget! dir;

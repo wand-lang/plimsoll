@@ -1,0 +1,16 @@
+-- Decoding what kubectl gives back, for `plimsoll.get!` and `plimsoll.list!`.
+-- Private to the package.
+
+import JSON
+import Result
+
+-- What a failed decode says after its own message. The usual cause is a
+-- cluster that is newer than the types: a value an enum does not have, or
+-- a field that is now required.
+let stale_hint =
+  "\nThe cluster may be newer than the types in k8s/. Run `wand github.com/wand-lang/plimsoll/cli check` to see what changed, and `upgrade` to generate the types again."
+
+-- `doc` decoded with `dec`. A failure raises, with `stale_hint` after the
+-- decoder's message.
+let decoded! dec doc =
+  Result.get! (Result.map_error (fn e -> e ++ stale_hint) (JSON.decode dec doc))

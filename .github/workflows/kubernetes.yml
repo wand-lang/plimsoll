@@ -5,7 +5,7 @@ name: Kubernetes
 #
 # - `generate` runs for each of the three newest Kubernetes minors that the
 #   release ships a node image for: gen writes every group-version, each
-#   module has to typecheck and be a wand f fixed point, and tools/e2e.wand
+#   module has to typecheck and be a wand f fixed point, and tools/_e2e.wand
 #   has to pass.
 # - `upgrade` runs on the newest one. When k8s/ changes, it pushes a branch
 #   with k8s/ generated again and opens a pull request whose body is the
@@ -94,7 +94,7 @@ jobs:
       # Without the Deployment example: it is written for the version
       # k8s/ was generated from, and CI's `cluster` job runs it there.
       - name: The end-to-end test
-        run: wand tools/e2e.wand --no-example
+        run: wand tools/_e2e.wand --no-example
 
   upgrade:
     needs: versions

@@ -792,3 +792,44 @@ error and its limit with clusters of different versions. 2 tests added.
 |---|---|---|---|
 | `plimsoll.wand` | 1 | 0 | 0 |
 | `test_plimsoll.wand` | 1 | 0 | 0 |
+
+## 2026-09-28 — Helpers out of the API
+
+**Task.** The interface of 0.2.0 had 75 hand-written entries, and most
+were not API: helpers in `plimsoll.wand`, `app.wand` and `cli.wand`, and
+the bindings of the example and tool scripts. The helpers moved to
+`_lib/` (`quantity.wand`, `decode.wand`, `app.wand`, `cli.wand`), and the
+scripts became `examples/_app.wand`, `examples/_deployment.wand` and
+`tools/_e2e.wand`. The interface now has 28 hand-written entries and the
+680 generated types. v0.2.0 was retracted and is released again.
+
+### Easy
+
+- **wand's rule for what is private was one line to read.** A path with a
+  part that starts with `_` is not in the interface; `wand p interface`
+  showed the result at once.
+- **`wand t --fix` wrote both manifests.** `_lib/cli.wand` got the narrow
+  `Shell(kubectl, wand)` that `cli.wand` had; `cli.wand` runs no command
+  now and got bare `Shell`.
+
+### Hard
+
+- **An import cycle shaped `_lib/app.wand`.** Its helpers cannot take an
+  `App`, since app.wand imports it. They take the fields instead.
+- **The e2e test failed after the move.** It copies a fixed list of source
+  files into a temporary package, and `_lib/` was not in it: "cannot import
+  '.../_lib/cli.wand': No such file or directory". Cause: the LLM's own
+  mistake; it did not search for the copy list.
+- **The LLM reported that nothing ran after the user rejected a command.**
+  The push of v0.2.0 and its GitHub release had run. The LLM found it later
+  with `git ls-remote`. Cause: the LLM's own mistake; it did not check the
+  remote first.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `plimsoll.wand`, `_lib/quantity.wand`, `_lib/decode.wand` | 1 | 2 (unused imports) | 0 |
+| `app.wand`, `_lib/app.wand` | 1 | 0 | 0 |
+| `cli.wand`, `_lib/cli.wand` | 1 | 2 (manifests) | 0 |
+| `tools/_e2e.wand` | 1 | 0 | 1 (the copy list) |

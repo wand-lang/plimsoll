@@ -44,6 +44,13 @@ This release needs wand 0.91.1 or later.
   If you generate your own types with `gen`, generate them again with
   plimsoll 0.2.0 to get the same change.
 
+- **Helpers are no longer part of the API.** In 0.1.0 every helper in
+  `plimsoll.wand`, `app.wand` and `cli.wand` was public, such as
+  `plimsoll.pow10`, `app.container` and `cli.fetch!`. They are now in
+  `_lib/`, which is private. The API is what the README describes: the
+  `plimsoll` functions and types, `App` and its functions, and the `cli`
+  command. If you used a helper, copy it into your own code.
+
 - **A decode error from `get!` or `list!` says what to do.** When the
   cluster returns a value that your types do not have, the error now says
   that the cluster may be newer than the types in `k8s/`, and tells you to

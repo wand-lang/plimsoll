@@ -1,6 +1,6 @@
 uses {IO, Proc, Shell}
 
--- The Widget round trip, for tools/e2e.wand. It imports the module that
+-- The Widget round trip, for tools/_e2e.wand. It imports the module that
 -- `gen` writes for testdata/widget-crd.yaml, so it runs only in the copy
 -- that e2e.wand makes, never in this directory. The `.in` keeps `wand t .`
 -- (and so `upgrade`) from reading it here; e2e.wand copies it as

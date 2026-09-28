@@ -28,7 +28,7 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Typecheck the sources
-        run: wand t app.wand _gen.wand _drift.wand cli.wand plimsoll.wand test_*.wand examples/*.wand tools/*.wand
+        run: wand t app.wand _gen.wand _drift.wand cli.wand plimsoll.wand _lib/*.wand test_*.wand examples/*.wand tools/*.wand
 
       - name: Run the tests
         run: wand s
@@ -49,13 +49,13 @@ jobs:
       # The hand-written files are wand f fixed points too.
       - name: The sources are wand f fixed points
         run: |
-          for f in *.wand examples/*.wand tools/*.wand; do
+          for f in *.wand _lib/*.wand examples/*.wand tools/*.wand; do
             cp "$f" "$RUNNER_TEMP/x.wand"
             wand f "$RUNNER_TEMP/x.wand" > /dev/null
             cmp "$f" "$RUNNER_TEMP/x.wand"
           done
 
-  # The end-to-end test against a real API server: tools/e2e.wand on a kind
+  # The end-to-end test against a real API server: tools/_e2e.wand on a kind
   # cluster. kind v0.33.0 runs Kubernetes v1.37.0, which is what k8s/ was
   # generated from, so `check` has to match.
   cluster:
@@ -82,4 +82,4 @@ jobs:
           kubectl version
 
       - name: The end-to-end test
-        run: wand tools/e2e.wand
+        run: wand tools/_e2e.wand

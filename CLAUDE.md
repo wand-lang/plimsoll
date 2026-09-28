@@ -8,7 +8,7 @@ Obey them here.
 ## Layout
 
 - `plimsoll.wand` — the hand-written types that generated modules use
-  (`IntOrString`, `Quantity`), the quantity helpers, and the runtime API:
+  (`IntOrString`, `Quantity`), `millicores` and `bytes`, and the runtime API:
   `apply!`, `check!`, `get!`, `list!`, `delete!`, `manifest`. It reaches the
   cluster only through kubectl.
 - `app.wand` — the ergonomic layer: `App` (a name, an image, a port and a
@@ -21,17 +21,21 @@ Obey them here.
   `gen` would write now. It is pure. `check` and `upgrade` print it.
 - `cli.wand` — the command: `gen [group-version ...]`, `check [--contexts
   a,b,c]` and `upgrade [--contexts a,b,c]`. Run it here as
-  `wand cli.wand gen`.
+  `wand cli.wand gen`. It holds only `main!`; the work is in `_lib/cli.wand`.
+- `_lib/` — helpers that are not API: `quantity.wand`, `decode.wand`,
+  `app.wand` and `cli.wand`. A path with a `_` part is not in the package's
+  interface, so put a helper here, not at the top level of a public module.
 - `k8s/` — generated modules. Do not edit them. Run `gen` again.
 - `test_*.wand` — tests, run with `wand s`. `testdata/` holds fixtures cut
   from a real schema.
-- `examples/` — scripts that use the generated types and `app.wand`.
-- `tools/e2e.wand` — the end-to-end test against the cluster kubectl points
+- `examples/` — scripts that use the generated types and `app.wand`. Each
+  file name starts with `_`, so its bindings are not in the interface.
+- `tools/_e2e.wand` — the end-to-end test against the cluster kubectl points
   at: `check`, the Deployment round trip, and a CRD from
   `testdata/widget-crd.yaml` round-tripped by `testdata/widget.wand.in` in a
   copy of the package. It leaves the cluster as it was.
 - `.github/workflows/ci.yml` — CI: the checks below with no cluster, and
-  `tools/e2e.wand` on a kind cluster. It installs the wand that `wand.pkg`
+  `tools/_e2e.wand` on a kind cluster. It installs the wand that `wand.pkg`
   names.
 - `docs/llm-authoring.md` — the authoring log. See below.
 
@@ -40,11 +44,11 @@ Obey them here.
 Check by exit code.
 
 ```sh
-wand t app.wand _gen.wand _drift.wand cli.wand plimsoll.wand test_*.wand examples/*.wand tools/*.wand   # no findings
+wand t app.wand _gen.wand _drift.wand cli.wand plimsoll.wand _lib/*.wand test_*.wand examples/*.wand tools/*.wand   # no findings
 wand s                                                  # all tests pass
 wand t k8s/*/*.wand                                     # generated modules
 for f in k8s/*/*.wand; do cp $f /tmp/x.wand; wand f /tmp/x.wand; cmp $f /tmp/x.wand; done
-for f in *.wand examples/*.wand tools/*.wand; do cp $f /tmp/x.wand; wand f /tmp/x.wand; cmp $f /tmp/x.wand; done
+for f in *.wand _lib/*.wand examples/*.wand tools/*.wand; do cp $f /tmp/x.wand; wand f /tmp/x.wand; cmp $f /tmp/x.wand; done
 ```
 
 The generated modules must be `wand f` fixed points. If `wand f` changes
@@ -55,9 +59,9 @@ run `wand f` on each file that you change.
 schema is read with `Shell.inspect!`, which a rehearsal runs, and the files
 are reported, not written.
 
-`wand tools/e2e.wand` runs every check that needs a cluster.
+`wand tools/_e2e.wand` runs every check that needs a cluster.
 
-`examples/deployment.wand` is the round trip: it builds a Deployment,
+`examples/_deployment.wand` is the round trip: it builds a Deployment,
 encodes it, has the API server validate it with `--dry-run=server`, and
 decodes the object the server would store. Run it after a change to the
 generator.
