@@ -14,7 +14,6 @@ type app.App(
   cpu: Option plimsoll.Quantity = None,
   memory: Option plimsoll.Quantity = None
 )
-type cli.Diagnostic(severity: String, file: String, line: Int, col: Int, message: String)
 type k8s/admissionregistration/v1.ApplyConfiguration(expression: Option String = None)
 type k8s/admissionregistration/v1.AuditAnnotation(key: String, valueExpression: String)
 type k8s/admissionregistration/v1.ExpressionWarning(fieldRef: String, warning: String)
@@ -3595,54 +3594,16 @@ type plimsoll.IntOrString = I Int | S String
 type plimsoll.Quantity = String
 
 app.apply!     : App -> List String ! {Raise, Shell}
-app.container  : App -> Container
 app.deployment : App -> Deployment
-app.env_vars   : App -> Option (List EnvVar)
 app.labels     : App -> Map String
 app.manifest   : App -> String
-app.requests   : App -> Option (Map String)
 app.service    : App -> Service
-cli.broken_scripts! : Unit -> List Diagnostic ! {Raise, Shell}
-cli.bullet          : Diagnostic -> String
-cli.check_one!      : List (String, String) -> List String -> Option String -> Bool ! {FS.Read, IO, Raise, Shell}
-cli.contexts_of     : List String -> Result String (List (Option String))
-cli.fetch!          : Option 'a -> String -> JSON ! {Raise, Shell}
-cli.generate!       : Option 'a -> List String -> Output ! {FS.Read, Raise, Shell}
-cli.group_versions! : Option 'a -> List String ! {Raise, Shell}
-cli.label           : Option String -> String
-cli.main!           : Unit -> Unit ! {FS.Read, FS.Write, IO, Proc, Raise, Shell}
-cli.on_disk!        : Unit -> List (String, String) ! {FS.Read, Raise}
-cli.plimsoll_target : Unit -> String ! {FS.Read}
-cli.raw!            : Option 'a -> 'b -> String ! {Raise, Shell}
-cli.remove_stale!   : List File -> Unit ! {FS.Read, FS.Write, IO, Raise}
-cli.report          : Option String -> Version -> List (Option String, Version) -> List String -> List Diagnostic -> String
-cli.run_check!      : List (Option String) -> Unit ! {FS.Read, IO, Proc, Raise, Shell}
-cli.run_gen!        : List String -> Unit ! {FS.Read, FS.Write, IO, Raise, Shell}
-cli.run_upgrade!    : List (Option String) -> Unit ! {FS.Read, FS.Write, IO, Proc, Raise, Shell}
-cli.sources_in      : List ('a, String) -> List String ! {IO, Proc}
-cli.usage           : String
-cli.version!        : Option 'a -> Version ! {Raise, Shell}
-cli.with_contexts   : List String -> (List (Option String) -> 'a ! 'e) -> 'a ! {IO, Proc | 'e}
-cli.write!          : File -> Unit ! {FS.Write, Raise}
-examples/app.d          : Deployment
-examples/app.deployment : Result String Deployment
-examples/app.service    : Result String Service
-examples/app.settled    : Deployment
-examples/app.web        : App
-examples/deployment.back   : Result String Deployment
-examples/deployment.labels : Map String
-examples/deployment.pull   : Deployment -> Option ContainerImagePullPolicy
-examples/deployment.sent   : String
-examples/deployment.stored : JSON
-examples/deployment.web    : Deployment
-plimsoll.amount     : String -> Result String (Int, Int)
+cli.main! : Unit -> Unit ! {FS.Read, FS.Write, IO, Proc, Raise, Shell}
 plimsoll.apply      : ('a -> JSON ! {Raise | 'e}) -> 'a -> Result String String ! {Shell | 'e}
 plimsoll.apply!     : ('a -> JSON ! 'e) -> 'a -> String ! {Raise, Shell | 'e}
 plimsoll.bytes      : String -> Result String Int
-plimsoll.ceil_div   : Int -> Int -> Int
 plimsoll.check      : ('a -> JSON ! {Raise | 'e}) -> 'a -> Result String JSON ! {Shell | 'e}
 plimsoll.check!     : ('a -> JSON ! 'e) -> 'a -> JSON ! {Raise, Shell | 'e}
-plimsoll.decoded!   : Decoder 'a -> JSON -> 'a ! {Raise}
 plimsoll.delete     : 'a -> 'b -> Result String String ! {Shell}
 plimsoll.delete!    : 'a -> 'b -> String ! {Raise, Shell}
 plimsoll.delete_in  : 'a -> 'b -> 'c -> Result String String ! {Shell}
@@ -3657,11 +3618,3 @@ plimsoll.list_in    : Decoder 'a -> 'b -> 'c -> Result String (List 'a) ! {Shell
 plimsoll.list_in!   : Decoder 'a -> 'b -> 'c -> List 'a ! {Raise, Shell}
 plimsoll.manifest   : ('a -> JSON ! 'e) -> List 'a -> String ! 'e
 plimsoll.millicores : String -> Result String Int
-plimsoll.pow10      : Int -> Int
-plimsoll.scale      : String -> Result String (Int, Int)
-plimsoll.stale_hint : String
-tools/e2e.copy_into!       : Path -> String -> String -> Unit ! {FS.Write, Raise}
-tools/e2e.main!            : Unit -> Unit ! {Clock, FS.Read, FS.Write, IO, Proc, Raise, Shell}
-tools/e2e.sources          : List String
-tools/e2e.wait_for_schema! : Int -> Unit ! {Clock, Raise, Shell}
-tools/e2e.widget!          : Path -> Unit ! {Clock, FS.Write, IO, Raise, Shell}
