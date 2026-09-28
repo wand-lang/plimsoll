@@ -1,3 +1,3549 @@
 { package = github.com/wand-lang/plimsoll
 , wand    = 0.90.0
 }
+
+-- DO NOT EDIT: interface, written by `wand p`
+version 0.1.0
+
+type app.App(
+  name: String,
+  image: String,
+  port: Int,
+  replicas: Int = 1,
+  env: Map String = {},
+  cpu: Option plimsoll.Quantity = None,
+  memory: Option plimsoll.Quantity = None
+)
+type cli.Diagnostic(severity: String, file: String, line: Int, col: Int, message: String)
+type k8s/admissionregistration/v1.ApplyConfiguration(expression: Option String = None)
+type k8s/admissionregistration/v1.AuditAnnotation(key: String, valueExpression: String)
+type k8s/admissionregistration/v1.ExpressionWarning(fieldRef: String, warning: String)
+type k8s/admissionregistration/v1.JSONPatch(expression: Option String = None)
+type k8s/admissionregistration/v1.MatchCondition(expression: String, name: String)
+type k8s/admissionregistration/v1.MatchResources(
+  excludeResourceRules: Option (List NamedRuleWithOperations) = None,
+  matchPolicy: Option MatchResourcesMatchPolicy = None,
+  namespaceSelector: Option meta_v1.LabelSelector = None,
+  objectSelector: Option meta_v1.LabelSelector = None,
+  resourceRules: Option (List NamedRuleWithOperations) = None
+)
+type k8s/admissionregistration/v1.MatchResourcesMatchPolicy = Equivalent | Exact
+type k8s/admissionregistration/v1.MutatingAdmissionPolicy(
+  apiVersion: String = "admissionregistration.k8s.io/v1",
+  kind: String = "MutatingAdmissionPolicy",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option MutatingAdmissionPolicySpec = None
+)
+type k8s/admissionregistration/v1.MutatingAdmissionPolicyBinding(
+  apiVersion: String = "admissionregistration.k8s.io/v1",
+  kind: String = "MutatingAdmissionPolicyBinding",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option MutatingAdmissionPolicyBindingSpec = None
+)
+type k8s/admissionregistration/v1.MutatingAdmissionPolicyBindingList(
+  apiVersion: String = "admissionregistration.k8s.io/v1",
+  items: List MutatingAdmissionPolicyBinding,
+  kind: String = "MutatingAdmissionPolicyBindingList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/admissionregistration/v1.MutatingAdmissionPolicyBindingSpec(
+  matchResources: Option MatchResources = None,
+  paramRef: Option ParamRef = None,
+  policyName: Option String = None
+)
+type k8s/admissionregistration/v1.MutatingAdmissionPolicyList(
+  apiVersion: String = "admissionregistration.k8s.io/v1",
+  items: List MutatingAdmissionPolicy,
+  kind: String = "MutatingAdmissionPolicyList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/admissionregistration/v1.MutatingAdmissionPolicySpec(
+  failurePolicy: Option MutatingAdmissionPolicySpecFailurePolicy = None,
+  matchConditions: Option (List MatchCondition) = None,
+  matchConstraints: Option MatchResources = None,
+  mutations: Option (List Mutation) = None,
+  paramKind: Option ParamKind = None,
+  reinvocationPolicy: Option MutatingAdmissionPolicySpecReinvocationPolicy = None,
+  variables: Option (List Variable) = None
+)
+type k8s/admissionregistration/v1.MutatingAdmissionPolicySpecFailurePolicy = Fail | Ignore
+type k8s/admissionregistration/v1.MutatingAdmissionPolicySpecReinvocationPolicy = IfNeeded | Never
+type k8s/admissionregistration/v1.MutatingWebhook(
+  admissionReviewVersions: List String,
+  clientConfig: WebhookClientConfig,
+  failurePolicy: Option MutatingAdmissionPolicySpecFailurePolicy = None,
+  matchConditions: Option (List MatchCondition) = None,
+  matchPolicy: Option MatchResourcesMatchPolicy = None,
+  name: String,
+  namespaceSelector: Option meta_v1.LabelSelector = None,
+  objectSelector: Option meta_v1.LabelSelector = None,
+  reinvocationPolicy: Option MutatingAdmissionPolicySpecReinvocationPolicy = None,
+  rules: Option (List RuleWithOperations) = None,
+  sideEffects: String,
+  timeoutSeconds: Option Int = None
+)
+type k8s/admissionregistration/v1.MutatingWebhookConfiguration(
+  apiVersion: String = "admissionregistration.k8s.io/v1",
+  kind: String = "MutatingWebhookConfiguration",
+  metadata: Option meta_v1.ObjectMeta = None,
+  webhooks: Option (List MutatingWebhook) = None
+)
+type k8s/admissionregistration/v1.MutatingWebhookConfigurationList(
+  apiVersion: String = "admissionregistration.k8s.io/v1",
+  items: List MutatingWebhookConfiguration,
+  kind: String = "MutatingWebhookConfigurationList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/admissionregistration/v1.Mutation(
+  applyConfiguration: Option ApplyConfiguration = None,
+  jsonPatch: Option JSONPatch = None,
+  patchType: String
+)
+type k8s/admissionregistration/v1.NamedRuleWithOperations(
+  apiGroups: Option (List String) = None,
+  apiVersions: Option (List String) = None,
+  operations: Option (List String) = None,
+  resourceNames: Option (List String) = None,
+  resources: Option (List String) = None,
+  scope: Option String = None
+)
+type k8s/admissionregistration/v1.ParamKind(apiVersion: Option String = None, kind: Option String = None)
+type k8s/admissionregistration/v1.ParamRef(
+  name: Option String = None,
+  namespace: Option String = None,
+  parameterNotFoundAction: Option String = None,
+  selector: Option meta_v1.LabelSelector = None
+)
+type k8s/admissionregistration/v1.RuleWithOperations(
+  apiGroups: Option (List String) = None,
+  apiVersions: Option (List String) = None,
+  operations: Option (List String) = None,
+  resources: Option (List String) = None,
+  scope: Option String = None
+)
+type k8s/admissionregistration/v1.ServiceReference(
+  name: String,
+  namespace: String,
+  path: Option String = None,
+  port: Option Int = None
+)
+type k8s/admissionregistration/v1.TypeChecking(expressionWarnings: Option (List ExpressionWarning) = None)
+type k8s/admissionregistration/v1.ValidatingAdmissionPolicy(
+  apiVersion: String = "admissionregistration.k8s.io/v1",
+  kind: String = "ValidatingAdmissionPolicy",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option ValidatingAdmissionPolicySpec = None,
+  status: Option ValidatingAdmissionPolicyStatus = None
+)
+type k8s/admissionregistration/v1.ValidatingAdmissionPolicyBinding(
+  apiVersion: String = "admissionregistration.k8s.io/v1",
+  kind: String = "ValidatingAdmissionPolicyBinding",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: ValidatingAdmissionPolicyBindingSpec
+)
+type k8s/admissionregistration/v1.ValidatingAdmissionPolicyBindingList(
+  apiVersion: String = "admissionregistration.k8s.io/v1",
+  items: List ValidatingAdmissionPolicyBinding,
+  kind: String = "ValidatingAdmissionPolicyBindingList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/admissionregistration/v1.ValidatingAdmissionPolicyBindingSpec(
+  matchResources: Option MatchResources = None,
+  paramRef: Option ParamRef = None,
+  policyName: String,
+  validationActions: List ValidatingAdmissionPolicyBindingSpecValidationActions
+)
+type k8s/admissionregistration/v1.ValidatingAdmissionPolicyBindingSpecValidationActions = Audit | Deny | Warn
+type k8s/admissionregistration/v1.ValidatingAdmissionPolicyList(
+  apiVersion: String = "admissionregistration.k8s.io/v1",
+  items: List ValidatingAdmissionPolicy,
+  kind: String = "ValidatingAdmissionPolicyList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/admissionregistration/v1.ValidatingAdmissionPolicySpec(
+  auditAnnotations: Option (List AuditAnnotation) = None,
+  failurePolicy: Option MutatingAdmissionPolicySpecFailurePolicy = None,
+  matchConditions: Option (List MatchCondition) = None,
+  matchConstraints: Option MatchResources = None,
+  paramKind: Option ParamKind = None,
+  validations: Option (List Validation) = None,
+  variables: Option (List Variable) = None
+)
+type k8s/admissionregistration/v1.ValidatingAdmissionPolicyStatus(
+  conditions: Option (List meta_v1.Condition) = None,
+  observedGeneration: Option Int = None,
+  typeChecking: Option TypeChecking = None
+)
+type k8s/admissionregistration/v1.ValidatingWebhook(
+  admissionReviewVersions: List String,
+  clientConfig: WebhookClientConfig,
+  failurePolicy: Option MutatingAdmissionPolicySpecFailurePolicy = None,
+  matchConditions: Option (List MatchCondition) = None,
+  matchPolicy: Option MatchResourcesMatchPolicy = None,
+  name: String,
+  namespaceSelector: Option meta_v1.LabelSelector = None,
+  objectSelector: Option meta_v1.LabelSelector = None,
+  rules: Option (List RuleWithOperations) = None,
+  sideEffects: String,
+  timeoutSeconds: Option Int = None
+)
+type k8s/admissionregistration/v1.ValidatingWebhookConfiguration(
+  apiVersion: String = "admissionregistration.k8s.io/v1",
+  kind: String = "ValidatingWebhookConfiguration",
+  metadata: Option meta_v1.ObjectMeta = None,
+  webhooks: Option (List ValidatingWebhook) = None
+)
+type k8s/admissionregistration/v1.ValidatingWebhookConfigurationList(
+  apiVersion: String = "admissionregistration.k8s.io/v1",
+  items: List ValidatingWebhookConfiguration,
+  kind: String = "ValidatingWebhookConfigurationList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/admissionregistration/v1.Validation(
+  expression: String,
+  message: Option String = None,
+  messageExpression: Option String = None,
+  reason: Option String = None
+)
+type k8s/admissionregistration/v1.Variable(expression: String, name: String)
+type k8s/admissionregistration/v1.WebhookClientConfig(
+  caBundle: Option String = None,
+  service: Option ServiceReference = None,
+  url: Option String = None
+)
+type k8s/apiextensions/v1.CustomResourceColumnDefinition(
+  description: Option String = None,
+  format: Option String = None,
+  jsonPath: String,
+  name: String,
+  priority: Option Int = None,
+  type: String
+)
+type k8s/apiextensions/v1.CustomResourceConversion(strategy: String, webhook: Option WebhookConversion = None)
+type k8s/apiextensions/v1.CustomResourceDefinition(
+  apiVersion: String = "apiextensions.k8s.io/v1",
+  kind: String = "CustomResourceDefinition",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: CustomResourceDefinitionSpec,
+  status: Option CustomResourceDefinitionStatus = None
+)
+type k8s/apiextensions/v1.CustomResourceDefinitionCondition(
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  observedGeneration: Option Int = None,
+  reason: Option String = None,
+  status: String,
+  type: String
+)
+type k8s/apiextensions/v1.CustomResourceDefinitionList(
+  apiVersion: String = "apiextensions.k8s.io/v1",
+  items: List CustomResourceDefinition,
+  kind: String = "CustomResourceDefinitionList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/apiextensions/v1.CustomResourceDefinitionNames(
+  categories: Option (List String) = None,
+  kind: String,
+  listKind: Option String = None,
+  plural: String,
+  shortNames: Option (List String) = None,
+  singular: Option String = None
+)
+type k8s/apiextensions/v1.CustomResourceDefinitionSpec(
+  conversion: Option CustomResourceConversion = None,
+  group: String,
+  names: CustomResourceDefinitionNames,
+  preserveUnknownFields: Option Bool = None,
+  scope: String,
+  versions: List CustomResourceDefinitionVersion
+)
+type k8s/apiextensions/v1.CustomResourceDefinitionStatus(
+  acceptedNames: Option CustomResourceDefinitionNames = None,
+  conditions: Option (List CustomResourceDefinitionCondition) = None,
+  observedGeneration: Option Int = None,
+  storedVersions: Option (List String) = None
+)
+type k8s/apiextensions/v1.CustomResourceDefinitionVersion(
+  additionalPrinterColumns: Option (List CustomResourceColumnDefinition) = None,
+  deprecated: Option Bool = None,
+  deprecationWarning: Option String = None,
+  name: String,
+  schema: Option CustomResourceValidation = None,
+  selectableFields: Option (List SelectableField) = None,
+  served: Bool,
+  storage: Bool,
+  subresources: Option CustomResourceSubresources = None
+)
+type k8s/apiextensions/v1.CustomResourceSubresourceScale(
+  labelSelectorPath: Option String = None,
+  specReplicasPath: String,
+  statusReplicasPath: String
+)
+type k8s/apiextensions/v1.CustomResourceSubresources(
+  scale: Option CustomResourceSubresourceScale = None,
+  status: Option JSON = None
+)
+type k8s/apiextensions/v1.CustomResourceValidation(openAPIV3Schema: Option JSONSchemaProps = None)
+type k8s/apiextensions/v1.ExternalDocumentation(description: Option String = None, url: Option String = None)
+type k8s/apiextensions/v1.JSONSchemaProps(
+  ref "$ref": Option String = None,
+  schema "$schema": Option String = None,
+  additionalItems: Option JSON = None,
+  additionalProperties: Option JSON = None,
+  allOf: Option (List JSONSchemaProps) = None,
+  anyOf: Option (List JSONSchemaProps) = None,
+  default: Option JSON = None,
+  definitions: Option (Map JSONSchemaProps) = None,
+  dependencies: Option (Map JSON) = None,
+  description: Option String = None,
+  enum: Option (List JSON) = None,
+  example: Option JSON = None,
+  exclusiveMaximum: Option Bool = None,
+  exclusiveMinimum: Option Bool = None,
+  externalDocs: Option ExternalDocumentation = None,
+  format: Option String = None,
+  id: Option String = None,
+  items: Option JSON = None,
+  maxItems: Option Int = None,
+  maxLength: Option Int = None,
+  maxProperties: Option Int = None,
+  maximum: Option Float = None,
+  minItems: Option Int = None,
+  minLength: Option Int = None,
+  minProperties: Option Int = None,
+  minimum: Option Float = None,
+  multipleOf: Option Float = None,
+  not: Option JSONSchemaProps = None,
+  nullable: Option Bool = None,
+  oneOf: Option (List JSONSchemaProps) = None,
+  pattern: Option String = None,
+  patternProperties: Option (Map JSONSchemaProps) = None,
+  properties: Option (Map JSONSchemaProps) = None,
+  required: Option (List String) = None,
+  title: Option String = None,
+  type: Option String = None,
+  uniqueItems: Option Bool = None,
+  x_kubernetes_embedded_resource "x-kubernetes-embedded-resource": Option Bool = None,
+  x_kubernetes_int_or_string "x-kubernetes-int-or-string": Option Bool = None,
+  x_kubernetes_list_map_keys "x-kubernetes-list-map-keys": Option (List String) = None,
+  x_kubernetes_list_type "x-kubernetes-list-type": Option String = None,
+  x_kubernetes_map_type "x-kubernetes-map-type": Option String = None,
+  x_kubernetes_preserve_unknown_fields "x-kubernetes-preserve-unknown-fields": Option Bool = None,
+  x_kubernetes_validations "x-kubernetes-validations": Option (List ValidationRule) = None
+)
+type k8s/apiextensions/v1.SelectableField(jsonPath: String)
+type k8s/apiextensions/v1.ServiceReference(
+  name: String,
+  namespace: String,
+  path: Option String = None,
+  port: Option Int = None
+)
+type k8s/apiextensions/v1.ValidationRule(
+  fieldPath: Option String = None,
+  message: Option String = None,
+  messageExpression: Option String = None,
+  optionalOldSelf: Option Bool = None,
+  reason: Option ValidationRuleReason = None,
+  rule: String
+)
+type k8s/apiextensions/v1.ValidationRuleReason =
+  FieldValueDuplicate
+  | FieldValueForbidden
+  | FieldValueInvalid
+  | FieldValueRequired
+type k8s/apiextensions/v1.WebhookClientConfig(
+  caBundle: Option String = None,
+  service: Option ServiceReference = None,
+  url: Option String = None
+)
+type k8s/apiextensions/v1.WebhookConversion(
+  clientConfig: Option WebhookClientConfig = None,
+  conversionReviewVersions: List String
+)
+type k8s/apiregistration/v1.APIService(
+  apiVersion: String = "apiregistration.k8s.io/v1",
+  kind: String = "APIService",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option APIServiceSpec = None,
+  status: Option APIServiceStatus = None
+)
+type k8s/apiregistration/v1.APIServiceCondition(
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  status: String,
+  type: String
+)
+type k8s/apiregistration/v1.APIServiceList(
+  apiVersion: String = "apiregistration.k8s.io/v1",
+  items: List APIService,
+  kind: String = "APIServiceList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/apiregistration/v1.APIServiceSpec(
+  caBundle: Option String = None,
+  group: Option String = None,
+  groupPriorityMinimum: Int,
+  insecureSkipTLSVerify: Option Bool = None,
+  service: Option ServiceReference = None,
+  version: Option String = None,
+  versionPriority: Int
+)
+type k8s/apiregistration/v1.APIServiceStatus(conditions: Option (List APIServiceCondition) = None)
+type k8s/apiregistration/v1.ServiceReference(
+  name: Option String = None,
+  namespace: Option String = None,
+  port: Option Int = None
+)
+type k8s/apps/v1.ControllerRevision(
+  apiVersion: String = "apps/v1",
+  data: JSON,
+  kind: String = "ControllerRevision",
+  metadata: Option meta_v1.ObjectMeta = None,
+  revision: Option Int = None
+)
+type k8s/apps/v1.ControllerRevisionList(
+  apiVersion: String = "apps/v1",
+  items: List ControllerRevision,
+  kind: String = "ControllerRevisionList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/apps/v1.DaemonSet(
+  apiVersion: String = "apps/v1",
+  kind: String = "DaemonSet",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: DaemonSetSpec,
+  status: Option DaemonSetStatus = None
+)
+type k8s/apps/v1.DaemonSetCondition(
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  status: Option String = None,
+  type: Option String = None
+)
+type k8s/apps/v1.DaemonSetList(
+  apiVersion: String = "apps/v1",
+  items: List DaemonSet,
+  kind: String = "DaemonSetList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/apps/v1.DaemonSetSpec(
+  minReadySeconds: Option Int = None,
+  revisionHistoryLimit: Option Int = None,
+  selector: meta_v1.LabelSelector,
+  template: core_v1.PodTemplateSpec,
+  updateStrategy: Option DaemonSetUpdateStrategy = None
+)
+type k8s/apps/v1.DaemonSetStatus(
+  collisionCount: Option Int = None,
+  conditions: Option (List DaemonSetCondition) = None,
+  currentNumberScheduled: Int,
+  desiredNumberScheduled: Int,
+  numberAvailable: Option Int = None,
+  numberMisscheduled: Int,
+  numberReady: Int,
+  numberUnavailable: Option Int = None,
+  observedGeneration: Option Int = None,
+  updatedNumberScheduled: Option Int = None
+)
+type k8s/apps/v1.DaemonSetUpdateStrategy(
+  rollingUpdate: Option RollingUpdateDaemonSet = None,
+  type: Option DaemonSetUpdateStrategyType = None
+)
+type k8s/apps/v1.DaemonSetUpdateStrategyType = OnDelete | RollingUpdate
+type k8s/apps/v1.Deployment(
+  apiVersion: String = "apps/v1",
+  kind: String = "Deployment",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: DeploymentSpec,
+  status: Option DeploymentStatus = None
+)
+type k8s/apps/v1.DeploymentCondition(
+  lastTransitionTime: Option DateTime = None,
+  lastUpdateTime: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  status: Option String = None,
+  type: Option String = None
+)
+type k8s/apps/v1.DeploymentList(
+  apiVersion: String = "apps/v1",
+  items: List Deployment,
+  kind: String = "DeploymentList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/apps/v1.DeploymentSpec(
+  minReadySeconds: Option Int = None,
+  paused: Option Bool = None,
+  progressDeadlineSeconds: Option Int = None,
+  replicas: Option Int = None,
+  revisionHistoryLimit: Option Int = None,
+  selector: meta_v1.LabelSelector,
+  strategy: Option DeploymentStrategy = None,
+  template: core_v1.PodTemplateSpec
+)
+type k8s/apps/v1.DeploymentStatus(
+  availableReplicas: Option Int = None,
+  collisionCount: Option Int = None,
+  conditions: Option (List DeploymentCondition) = None,
+  observedGeneration: Option Int = None,
+  readyReplicas: Option Int = None,
+  replicas: Option Int = None,
+  terminatingReplicas: Option Int = None,
+  unavailableReplicas: Option Int = None,
+  updatedReplicas: Option Int = None
+)
+type k8s/apps/v1.DeploymentStrategy(
+  rollingUpdate: Option RollingUpdateDeployment = None,
+  type: Option DeploymentStrategyType = None
+)
+type k8s/apps/v1.DeploymentStrategyType = Recreate | RollingUpdate
+type k8s/apps/v1.ReplicaSet(
+  apiVersion: String = "apps/v1",
+  kind: String = "ReplicaSet",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: ReplicaSetSpec,
+  status: Option ReplicaSetStatus = None
+)
+type k8s/apps/v1.ReplicaSetCondition(
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  status: Option String = None,
+  type: Option String = None
+)
+type k8s/apps/v1.ReplicaSetList(
+  apiVersion: String = "apps/v1",
+  items: List ReplicaSet,
+  kind: String = "ReplicaSetList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/apps/v1.ReplicaSetSpec(
+  minReadySeconds: Option Int = None,
+  replicas: Option Int = None,
+  selector: meta_v1.LabelSelector,
+  template: Option core_v1.PodTemplateSpec = None
+)
+type k8s/apps/v1.ReplicaSetStatus(
+  availableReplicas: Option Int = None,
+  conditions: Option (List ReplicaSetCondition) = None,
+  fullyLabeledReplicas: Option Int = None,
+  observedGeneration: Option Int = None,
+  readyReplicas: Option Int = None,
+  replicas: Int,
+  terminatingReplicas: Option Int = None
+)
+type k8s/apps/v1.RollingUpdateDaemonSet(
+  maxSurge: Option plimsoll.IntOrString = None,
+  maxUnavailable: Option plimsoll.IntOrString = None
+)
+type k8s/apps/v1.RollingUpdateDeployment(
+  maxSurge: Option plimsoll.IntOrString = None,
+  maxUnavailable: Option plimsoll.IntOrString = None
+)
+type k8s/apps/v1.RollingUpdateStatefulSetStrategy(
+  maxUnavailable: Option plimsoll.IntOrString = None,
+  partition: Option Int = None
+)
+type k8s/apps/v1.StatefulSet(
+  apiVersion: String = "apps/v1",
+  kind: String = "StatefulSet",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: StatefulSetSpec,
+  status: Option StatefulSetStatus = None
+)
+type k8s/apps/v1.StatefulSetCondition(
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  status: Option String = None,
+  type: Option String = None
+)
+type k8s/apps/v1.StatefulSetList(
+  apiVersion: String = "apps/v1",
+  items: List StatefulSet,
+  kind: String = "StatefulSetList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/apps/v1.StatefulSetOrdinals(start: Option Int = None)
+type k8s/apps/v1.StatefulSetPersistentVolumeClaimRetentionPolicy(
+  whenDeleted: Option String = None,
+  whenScaled: Option String = None
+)
+type k8s/apps/v1.StatefulSetSpec(
+  minReadySeconds: Option Int = None,
+  ordinals: Option StatefulSetOrdinals = None,
+  persistentVolumeClaimRetentionPolicy: Option StatefulSetPersistentVolumeClaimRetentionPolicy = None,
+  podManagementPolicy: Option StatefulSetSpecPodManagementPolicy = None,
+  replicas: Option Int = None,
+  revisionHistoryLimit: Option Int = None,
+  selector: meta_v1.LabelSelector,
+  serviceName: Option String = None,
+  template: core_v1.PodTemplateSpec,
+  updateStrategy: Option StatefulSetUpdateStrategy = None,
+  volumeClaimTemplates: Option (List core_v1.PersistentVolumeClaim) = None
+)
+type k8s/apps/v1.StatefulSetSpecPodManagementPolicy = OrderedReady | Parallel
+type k8s/apps/v1.StatefulSetStatus(
+  availableReplicas: Option Int = None,
+  collisionCount: Option Int = None,
+  conditions: Option (List StatefulSetCondition) = None,
+  currentReplicas: Option Int = None,
+  currentRevision: Option String = None,
+  observedGeneration: Option Int = None,
+  readyReplicas: Option Int = None,
+  replicas: Int,
+  updateRevision: Option String = None,
+  updatedReplicas: Option Int = None
+)
+type k8s/apps/v1.StatefulSetUpdateStrategy(
+  rollingUpdate: Option RollingUpdateStatefulSetStrategy = None,
+  type: Option StatefulSetUpdateStrategyType = None
+)
+type k8s/apps/v1.StatefulSetUpdateStrategyType = OnDelete | Recreate | RollingUpdate
+type k8s/authentication/v1.BoundObjectReference(
+  apiVersion: Option String = None,
+  kind: Option String = None,
+  name: Option String = None,
+  uid: Option String = None
+)
+type k8s/authentication/v1.SelfSubjectReview(
+  apiVersion: String = "authentication.k8s.io/v1",
+  kind: String = "SelfSubjectReview",
+  metadata: Option meta_v1.ObjectMeta = None,
+  status: Option SelfSubjectReviewStatus = None
+)
+type k8s/authentication/v1.SelfSubjectReviewStatus(userInfo: Option UserInfo = None)
+type k8s/authentication/v1.TokenRequest(
+  apiVersion: String = "authentication.k8s.io/v1",
+  kind: String = "TokenRequest",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option TokenRequestSpec = None,
+  status: Option TokenRequestStatus = None
+)
+type k8s/authentication/v1.TokenRequestSpec(
+  attestations: Option (Map (List String)) = None,
+  audiences: Option (List String) = None,
+  boundObjectRef: Option BoundObjectReference = None,
+  expirationSeconds: Option Int = None
+)
+type k8s/authentication/v1.TokenRequestStatus(
+  expirationTimestamp: Option DateTime = None,
+  token: Option String = None
+)
+type k8s/authentication/v1.TokenReview(
+  apiVersion: String = "authentication.k8s.io/v1",
+  kind: String = "TokenReview",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: TokenReviewSpec,
+  status: Option TokenReviewStatus = None
+)
+type k8s/authentication/v1.TokenReviewSpec(audiences: Option (List String) = None, token: String)
+type k8s/authentication/v1.TokenReviewStatus(
+  audiences: Option (List String) = None,
+  authenticated: Option Bool = None,
+  error: Option String = None,
+  user: Option UserInfo = None
+)
+type k8s/authentication/v1.UserInfo(
+  extra: Option (Map (List String)) = None,
+  groups: Option (List String) = None,
+  uid: Option String = None,
+  username: Option String = None
+)
+type k8s/authorization/v1.FieldSelectorAttributes(
+  rawSelector: Option String = None,
+  requirements: Option (List meta_v1.FieldSelectorRequirement) = None
+)
+type k8s/authorization/v1.LabelSelectorAttributes(
+  rawSelector: Option String = None,
+  requirements: Option (List meta_v1.LabelSelectorRequirement) = None
+)
+type k8s/authorization/v1.LocalSubjectAccessReview(
+  apiVersion: String = "authorization.k8s.io/v1",
+  kind: String = "LocalSubjectAccessReview",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: SubjectAccessReviewSpec,
+  status: Option SubjectAccessReviewStatus = None
+)
+type k8s/authorization/v1.NonResourceAttributes(path: Option String = None, verb: Option String = None)
+type k8s/authorization/v1.NonResourceRule(nonResourceURLs: Option (List String) = None, verbs: List String)
+type k8s/authorization/v1.ResourceAttributes(
+  fieldSelector: Option FieldSelectorAttributes = None,
+  group: Option String = None,
+  labelSelector: Option LabelSelectorAttributes = None,
+  name: Option String = None,
+  namespace: Option String = None,
+  resource: Option String = None,
+  subresource: Option String = None,
+  verb: Option String = None,
+  version: Option String = None
+)
+type k8s/authorization/v1.ResourceRule(
+  apiGroups: Option (List String) = None,
+  resourceNames: Option (List String) = None,
+  resources: Option (List String) = None,
+  verbs: List String
+)
+type k8s/authorization/v1.SelfSubjectAccessReview(
+  apiVersion: String = "authorization.k8s.io/v1",
+  kind: String = "SelfSubjectAccessReview",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: SelfSubjectAccessReviewSpec,
+  status: Option SubjectAccessReviewStatus = None
+)
+type k8s/authorization/v1.SelfSubjectAccessReviewSpec(
+  nonResourceAttributes: Option NonResourceAttributes = None,
+  resourceAttributes: Option ResourceAttributes = None
+)
+type k8s/authorization/v1.SelfSubjectRulesReview(
+  apiVersion: String = "authorization.k8s.io/v1",
+  kind: String = "SelfSubjectRulesReview",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: SelfSubjectRulesReviewSpec,
+  status: Option SubjectRulesReviewStatus = None
+)
+type k8s/authorization/v1.SelfSubjectRulesReviewSpec(namespace: Option String = None)
+type k8s/authorization/v1.SubjectAccessReview(
+  apiVersion: String = "authorization.k8s.io/v1",
+  kind: String = "SubjectAccessReview",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: SubjectAccessReviewSpec,
+  status: Option SubjectAccessReviewStatus = None
+)
+type k8s/authorization/v1.SubjectAccessReviewSpec(
+  extra: Option (Map (List String)) = None,
+  groups: Option (List String) = None,
+  nonResourceAttributes: Option NonResourceAttributes = None,
+  resourceAttributes: Option ResourceAttributes = None,
+  uid: Option String = None,
+  user: Option String = None
+)
+type k8s/authorization/v1.SubjectAccessReviewStatus(
+  allowed: Bool,
+  denied: Option Bool = None,
+  evaluationError: Option String = None,
+  reason: Option String = None
+)
+type k8s/authorization/v1.SubjectRulesReviewStatus(
+  evaluationError: Option String = None,
+  incomplete: Bool,
+  nonResourceRules: List NonResourceRule,
+  resourceRules: List ResourceRule
+)
+type k8s/autoscaling/v1.CrossVersionObjectReference(
+  apiVersion: Option String = None,
+  kind: String,
+  name: String
+)
+type k8s/autoscaling/v1.HorizontalPodAutoscaler(
+  apiVersion: String = "autoscaling/v1",
+  kind: String = "HorizontalPodAutoscaler",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: HorizontalPodAutoscalerSpec,
+  status: Option HorizontalPodAutoscalerStatus = None
+)
+type k8s/autoscaling/v1.HorizontalPodAutoscalerList(
+  apiVersion: String = "autoscaling/v1",
+  items: List HorizontalPodAutoscaler,
+  kind: String = "HorizontalPodAutoscalerList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/autoscaling/v1.HorizontalPodAutoscalerSpec(
+  maxReplicas: Int,
+  minReplicas: Option Int = None,
+  scaleTargetRef: CrossVersionObjectReference,
+  targetCPUUtilizationPercentage: Option Int = None
+)
+type k8s/autoscaling/v1.HorizontalPodAutoscalerStatus(
+  currentCPUUtilizationPercentage: Option Int = None,
+  currentReplicas: Int,
+  desiredReplicas: Int,
+  lastScaleTime: Option DateTime = None,
+  observedGeneration: Option Int = None
+)
+type k8s/autoscaling/v1.Scale(
+  apiVersion: String = "autoscaling/v1",
+  kind: String = "Scale",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option ScaleSpec = None,
+  status: Option ScaleStatus = None
+)
+type k8s/autoscaling/v1.ScaleSpec(replicas: Option Int = None)
+type k8s/autoscaling/v1.ScaleStatus(replicas: Int, selector: Option String = None)
+type k8s/autoscaling/v2.ContainerResourceMetricSource(container: String, name: String, target: MetricTarget)
+type k8s/autoscaling/v2.ContainerResourceMetricStatus(
+  container: String,
+  current: MetricValueStatus,
+  name: String
+)
+type k8s/autoscaling/v2.CrossVersionObjectReference(
+  apiVersion: Option String = None,
+  kind: String,
+  name: String
+)
+type k8s/autoscaling/v2.ExternalMetricSource(metric: MetricIdentifier, target: MetricTarget)
+type k8s/autoscaling/v2.ExternalMetricStatus(current: MetricValueStatus, metric: MetricIdentifier)
+type k8s/autoscaling/v2.HPAScalingPolicy(periodSeconds: Int, type: String, value: Int)
+type k8s/autoscaling/v2.HPAScalingRules(
+  policies: Option (List HPAScalingPolicy) = None,
+  selectPolicy: Option String = None,
+  stabilizationWindowSeconds: Option Int = None,
+  tolerance: Option plimsoll.Quantity = None
+)
+type k8s/autoscaling/v2.HorizontalPodAutoscaler(
+  apiVersion: String = "autoscaling/v2",
+  kind: String = "HorizontalPodAutoscaler",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: HorizontalPodAutoscalerSpec,
+  status: Option HorizontalPodAutoscalerStatus = None
+)
+type k8s/autoscaling/v2.HorizontalPodAutoscalerBehavior(
+  scaleDown: Option HPAScalingRules = None,
+  scaleUp: Option HPAScalingRules = None
+)
+type k8s/autoscaling/v2.HorizontalPodAutoscalerCondition(
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  observedGeneration: Option Int = None,
+  reason: Option String = None,
+  status: String,
+  type: String
+)
+type k8s/autoscaling/v2.HorizontalPodAutoscalerList(
+  apiVersion: String = "autoscaling/v2",
+  items: List HorizontalPodAutoscaler,
+  kind: String = "HorizontalPodAutoscalerList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/autoscaling/v2.HorizontalPodAutoscalerSpec(
+  behavior: Option HorizontalPodAutoscalerBehavior = None,
+  maxReplicas: Int,
+  metrics: Option (List MetricSpec) = None,
+  minReplicas: Option Int = None,
+  scaleTargetRef: CrossVersionObjectReference
+)
+type k8s/autoscaling/v2.HorizontalPodAutoscalerStatus(
+  conditions: Option (List HorizontalPodAutoscalerCondition) = None,
+  currentMetrics: Option (List MetricStatus) = None,
+  currentReplicas: Option Int = None,
+  desiredReplicas: Int,
+  lastScaleTime: Option DateTime = None,
+  observedGeneration: Option Int = None
+)
+type k8s/autoscaling/v2.MetricIdentifier(name: String, selector: Option meta_v1.LabelSelector = None)
+type k8s/autoscaling/v2.MetricSpec(
+  containerResource: Option ContainerResourceMetricSource = None,
+  external: Option ExternalMetricSource = None,
+  object: Option ObjectMetricSource = None,
+  pods: Option PodsMetricSource = None,
+  resource: Option ResourceMetricSource = None,
+  type: String
+)
+type k8s/autoscaling/v2.MetricStatus(
+  containerResource: Option ContainerResourceMetricStatus = None,
+  external: Option ExternalMetricStatus = None,
+  object: Option ObjectMetricStatus = None,
+  pods: Option PodsMetricStatus = None,
+  resource: Option ResourceMetricStatus = None,
+  type: String
+)
+type k8s/autoscaling/v2.MetricTarget(
+  averageUtilization: Option Int = None,
+  averageValue: Option plimsoll.Quantity = None,
+  type: String,
+  value: Option plimsoll.Quantity = None
+)
+type k8s/autoscaling/v2.MetricValueStatus(
+  averageUtilization: Option Int = None,
+  averageValue: Option plimsoll.Quantity = None,
+  value: Option plimsoll.Quantity = None
+)
+type k8s/autoscaling/v2.ObjectMetricSource(
+  describedObject: CrossVersionObjectReference,
+  metric: MetricIdentifier,
+  target: MetricTarget
+)
+type k8s/autoscaling/v2.ObjectMetricStatus(
+  current: MetricValueStatus,
+  describedObject: CrossVersionObjectReference,
+  metric: MetricIdentifier
+)
+type k8s/autoscaling/v2.PodsMetricSource(metric: MetricIdentifier, target: MetricTarget)
+type k8s/autoscaling/v2.PodsMetricStatus(current: MetricValueStatus, metric: MetricIdentifier)
+type k8s/autoscaling/v2.ResourceMetricSource(name: String, target: MetricTarget)
+type k8s/autoscaling/v2.ResourceMetricStatus(current: MetricValueStatus, name: String)
+type k8s/batch/v1.CronJob(
+  apiVersion: String = "batch/v1",
+  kind: String = "CronJob",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: CronJobSpec,
+  status: Option CronJobStatus = None
+)
+type k8s/batch/v1.CronJobList(
+  apiVersion: String = "batch/v1",
+  items: List CronJob,
+  kind: String = "CronJobList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/batch/v1.CronJobSpec(
+  concurrencyPolicy: Option CronJobSpecConcurrencyPolicy = None,
+  failedJobsHistoryLimit: Option Int = None,
+  jobTemplate: JobTemplateSpec,
+  schedule: String,
+  startingDeadlineSeconds: Option Int = None,
+  successfulJobsHistoryLimit: Option Int = None,
+  suspend: Option Bool = None,
+  timeZone: Option String = None
+)
+type k8s/batch/v1.CronJobSpecConcurrencyPolicy = Allow | Forbid | Replace
+type k8s/batch/v1.CronJobStatus(
+  active: Option (List core_v1.ObjectReference) = None,
+  lastScheduleTime: Option DateTime = None,
+  lastSuccessfulTime: Option DateTime = None
+)
+type k8s/batch/v1.Job(
+  apiVersion: String = "batch/v1",
+  kind: String = "Job",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option JobSpec = None,
+  status: Option JobStatus = None
+)
+type k8s/batch/v1.JobCondition(
+  lastProbeTime: Option DateTime = None,
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  status: String,
+  type: String
+)
+type k8s/batch/v1.JobList(
+  apiVersion: String = "batch/v1",
+  items: List Job,
+  kind: String = "JobList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/batch/v1.JobSchedulingConfiguration(
+  disruptionMode: Option scheduling_v1alpha3.WorkloadPodGroupDisruptionMode = None,
+  resourceClaims: Option (List scheduling_v1alpha3.WorkloadPodGroupResourceClaim) = None,
+  schedulingConstraints: Option scheduling_v1alpha3.WorkloadPodGroupSchedulingConstraints = None,
+  schedulingPolicy: Option scheduling_v1alpha3.WorkloadPodGroupSchedulingPolicy = None
+)
+type k8s/batch/v1.JobSpec(
+  activeDeadlineSeconds: Option Int = None,
+  backoffLimit: Option Int = None,
+  backoffLimitPerIndex: Option Int = None,
+  completionMode: Option JobSpecCompletionMode = None,
+  completions: Option Int = None,
+  managedBy: Option String = None,
+  manualSelector: Option Bool = None,
+  maxFailedIndexes: Option Int = None,
+  parallelism: Option Int = None,
+  podFailurePolicy: Option PodFailurePolicy = None,
+  podReplacementPolicy: Option JobSpecPodReplacementPolicy = None,
+  scheduling: Option JobSchedulingConfiguration = None,
+  selector: Option meta_v1.LabelSelector = None,
+  successPolicy: Option SuccessPolicy = None,
+  suspend: Option Bool = None,
+  template: core_v1.PodTemplateSpec,
+  ttlSecondsAfterFinished: Option Int = None
+)
+type k8s/batch/v1.JobSpecCompletionMode = Indexed | NonIndexed
+type k8s/batch/v1.JobSpecPodReplacementPolicy = Failed | TerminatingOrFailed
+type k8s/batch/v1.JobStatus(
+  active: Option Int = None,
+  completedIndexes: Option String = None,
+  completionTime: Option DateTime = None,
+  conditions: Option (List JobCondition) = None,
+  failed: Option Int = None,
+  failedIndexes: Option String = None,
+  ready: Option Int = None,
+  startTime: Option DateTime = None,
+  succeeded: Option Int = None,
+  terminating: Option Int = None,
+  uncountedTerminatedPods: Option UncountedTerminatedPods = None
+)
+type k8s/batch/v1.JobTemplateSpec(
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option JobSpec = None
+)
+type k8s/batch/v1.PodFailurePolicy(rules: List PodFailurePolicyRule)
+type k8s/batch/v1.PodFailurePolicyOnExitCodesRequirement(
+  containerName: Option String = None,
+  operator: PodFailurePolicyOnExitCodesRequirementOperator,
+  values: List Int
+)
+type k8s/batch/v1.PodFailurePolicyOnExitCodesRequirementOperator = In | NotIn
+type k8s/batch/v1.PodFailurePolicyOnPodConditionsPattern(status: Option String = None, type: String)
+type k8s/batch/v1.PodFailurePolicyRule(
+  action: PodFailurePolicyRuleAction,
+  onExitCodes: Option PodFailurePolicyOnExitCodesRequirement = None,
+  onPodConditions: Option (List PodFailurePolicyOnPodConditionsPattern) = None
+)
+type k8s/batch/v1.PodFailurePolicyRuleAction = Count | FailIndex | FailJob | Ignore
+type k8s/batch/v1.SuccessPolicy(rules: List SuccessPolicyRule)
+type k8s/batch/v1.SuccessPolicyRule(
+  succeededCount: Option Int = None,
+  succeededIndexes: Option String = None
+)
+type k8s/batch/v1.UncountedTerminatedPods(
+  failed: Option (List String) = None,
+  succeeded: Option (List String) = None
+)
+type k8s/certificates/v1.CertificateSigningRequest(
+  apiVersion: String = "certificates.k8s.io/v1",
+  kind: String = "CertificateSigningRequest",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: CertificateSigningRequestSpec,
+  status: Option CertificateSigningRequestStatus = None
+)
+type k8s/certificates/v1.CertificateSigningRequestCondition(
+  lastTransitionTime: Option DateTime = None,
+  lastUpdateTime: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  status: String,
+  type: String
+)
+type k8s/certificates/v1.CertificateSigningRequestList(
+  apiVersion: String = "certificates.k8s.io/v1",
+  items: List CertificateSigningRequest,
+  kind: String = "CertificateSigningRequestList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/certificates/v1.CertificateSigningRequestSpec(
+  expirationSeconds: Option Int = None,
+  extra: Option (Map (List String)) = None,
+  groups: Option (List String) = None,
+  request: String,
+  signerName: String,
+  uid: Option String = None,
+  usages: Option (List String) = None,
+  username: Option String = None
+)
+type k8s/certificates/v1.CertificateSigningRequestStatus(
+  certificate: Option String = None,
+  conditions: Option (List CertificateSigningRequestCondition) = None
+)
+type k8s/certificates/v1.ClusterTrustBundle(
+  apiVersion: String = "certificates.k8s.io/v1",
+  kind: String = "ClusterTrustBundle",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: ClusterTrustBundleSpec
+)
+type k8s/certificates/v1.ClusterTrustBundleList(
+  apiVersion: String = "certificates.k8s.io/v1",
+  items: List ClusterTrustBundle,
+  kind: String = "ClusterTrustBundleList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/certificates/v1.ClusterTrustBundleSpec(signerName: Option String = None, trustBundle: String)
+type k8s/certificates/v1.PodCertificateRequest(
+  apiVersion: String = "certificates.k8s.io/v1",
+  kind: String = "PodCertificateRequest",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: PodCertificateRequestSpec,
+  status: Option PodCertificateRequestStatus = None
+)
+type k8s/certificates/v1.PodCertificateRequestList(
+  apiVersion: String = "certificates.k8s.io/v1",
+  items: List PodCertificateRequest,
+  kind: String = "PodCertificateRequestList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/certificates/v1.PodCertificateRequestSpec(
+  maxExpirationSeconds: Option Int = None,
+  nodeName: String,
+  nodeUID: String,
+  podName: String,
+  podUID: String,
+  serviceAccountName: String,
+  serviceAccountUID: String,
+  signerName: String,
+  stubPKCS10Request: String,
+  unverifiedUserAnnotations: Option (Map String) = None
+)
+type k8s/certificates/v1.PodCertificateRequestStatus(
+  beginRefreshAt: Option DateTime = None,
+  certificateChain: Option String = None,
+  conditions: Option (List meta_v1.Condition) = None,
+  notAfter: Option DateTime = None,
+  notBefore: Option DateTime = None
+)
+type k8s/coordination/v1.Lease(
+  apiVersion: String = "coordination.k8s.io/v1",
+  kind: String = "Lease",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option LeaseSpec = None
+)
+type k8s/coordination/v1.LeaseList(
+  apiVersion: String = "coordination.k8s.io/v1",
+  items: List Lease,
+  kind: String = "LeaseList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/coordination/v1.LeaseSpec(
+  acquireTime: Option DateTime = None,
+  holderIdentity: Option String = None,
+  leaseDurationSeconds: Option Int = None,
+  leaseTransitions: Option Int = None,
+  preferredHolder: Option String = None,
+  renewTime: Option DateTime = None,
+  strategy: Option String = None
+)
+type k8s/core/v1.AWSElasticBlockStoreVolumeSource(
+  fsType: Option String = None,
+  partition: Option Int = None,
+  readOnly: Option Bool = None,
+  volumeID: String
+)
+type k8s/core/v1.Affinity(
+  nodeAffinity: Option NodeAffinity = None,
+  podAffinity: Option PodAffinity = None,
+  podAntiAffinity: Option PodAntiAffinity = None
+)
+type k8s/core/v1.AppArmorProfile(localhostProfile: Option String = None, type: AppArmorProfileType)
+type k8s/core/v1.AppArmorProfileType = Localhost | RuntimeDefault | Unconfined
+type k8s/core/v1.AttachedVolume(devicePath: String, name: String)
+type k8s/core/v1.AzureDiskVolumeSource(
+  cachingMode: Option String = None,
+  diskName: String,
+  diskURI: String,
+  fsType: Option String = None,
+  kind: Option String = None,
+  readOnly: Option Bool = None
+)
+type k8s/core/v1.AzureFilePersistentVolumeSource(
+  readOnly: Option Bool = None,
+  secretName: String,
+  secretNamespace: Option String = None,
+  shareName: String
+)
+type k8s/core/v1.AzureFileVolumeSource(
+  readOnly: Option Bool = None,
+  secretName: String,
+  shareName: String
+)
+type k8s/core/v1.Binding(
+  apiVersion: String = "v1",
+  kind: String = "Binding",
+  metadata: Option meta_v1.ObjectMeta = None,
+  target: ObjectReference
+)
+type k8s/core/v1.CSIPersistentVolumeSource(
+  controllerExpandSecretRef: Option SecretReference = None,
+  controllerPublishSecretRef: Option SecretReference = None,
+  driver: String,
+  fsType: Option String = None,
+  nodeExpandSecretRef: Option SecretReference = None,
+  nodePublishSecretRef: Option SecretReference = None,
+  nodeStageSecretRef: Option SecretReference = None,
+  readOnly: Option Bool = None,
+  volumeAttributes: Option (Map String) = None,
+  volumeHandle: String
+)
+type k8s/core/v1.CSIVolumeSource(
+  driver: String,
+  fsType: Option String = None,
+  nodePublishSecretRef: Option LocalObjectReference = None,
+  readOnly: Option Bool = None,
+  volumeAttributes: Option (Map String) = None
+)
+type k8s/core/v1.Capabilities(add: Option (List String) = None, drop: Option (List String) = None)
+type k8s/core/v1.CephFSPersistentVolumeSource(
+  monitors: List String,
+  path: Option String = None,
+  readOnly: Option Bool = None,
+  secretFile: Option String = None,
+  secretRef: Option SecretReference = None,
+  user: Option String = None
+)
+type k8s/core/v1.CephFSVolumeSource(
+  monitors: List String,
+  path: Option String = None,
+  readOnly: Option Bool = None,
+  secretFile: Option String = None,
+  secretRef: Option LocalObjectReference = None,
+  user: Option String = None
+)
+type k8s/core/v1.CinderPersistentVolumeSource(
+  fsType: Option String = None,
+  readOnly: Option Bool = None,
+  secretRef: Option SecretReference = None,
+  volumeID: String
+)
+type k8s/core/v1.CinderVolumeSource(
+  fsType: Option String = None,
+  readOnly: Option Bool = None,
+  secretRef: Option LocalObjectReference = None,
+  volumeID: String
+)
+type k8s/core/v1.ClientIPConfig(timeoutSeconds: Option Int = None)
+type k8s/core/v1.ClusterTrustBundleProjection(
+  labelSelector: Option meta_v1.LabelSelector = None,
+  name: Option String = None,
+  optional: Option Bool = None,
+  path: String,
+  signerName: Option String = None,
+  user: Option Int = None
+)
+type k8s/core/v1.ComponentCondition(
+  error: Option String = None,
+  message: Option String = None,
+  status: String,
+  type: String
+)
+type k8s/core/v1.ComponentStatus(
+  apiVersion: String = "v1",
+  conditions: Option (List ComponentCondition) = None,
+  kind: String = "ComponentStatus",
+  metadata: Option meta_v1.ObjectMeta = None
+)
+type k8s/core/v1.ComponentStatusList(
+  apiVersion: String = "v1",
+  items: List ComponentStatus,
+  kind: String = "ComponentStatusList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.ConfigMap(
+  apiVersion: String = "v1",
+  binaryData: Option (Map String) = None,
+  data: Option (Map String) = None,
+  immutable: Option Bool = None,
+  kind: String = "ConfigMap",
+  metadata: Option meta_v1.ObjectMeta = None
+)
+type k8s/core/v1.ConfigMapEnvSource(name: Option String = None, optional: Option Bool = None)
+type k8s/core/v1.ConfigMapKeySelector(
+  key: String,
+  name: Option String = None,
+  optional: Option Bool = None
+)
+type k8s/core/v1.ConfigMapList(
+  apiVersion: String = "v1",
+  items: List ConfigMap,
+  kind: String = "ConfigMapList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.ConfigMapNodeConfigSource(
+  kubeletConfigKey: String,
+  name: String,
+  namespace: String,
+  resourceVersion: Option String = None,
+  uid: Option String = None
+)
+type k8s/core/v1.ConfigMapProjection(
+  items: Option (List KeyToPath) = None,
+  name: Option String = None,
+  optional: Option Bool = None
+)
+type k8s/core/v1.ConfigMapVolumeSource(
+  defaultMode: Option Int = None,
+  defaultUser: Option Int = None,
+  items: Option (List KeyToPath) = None,
+  name: Option String = None,
+  optional: Option Bool = None
+)
+type k8s/core/v1.Container(
+  args: Option (List String) = None,
+  command: Option (List String) = None,
+  env: Option (List EnvVar) = None,
+  envFrom: Option (List EnvFromSource) = None,
+  image: Option String = None,
+  imagePullPolicy: Option ContainerImagePullPolicy = None,
+  lifecycle: Option Lifecycle = None,
+  livenessProbe: Option Probe = None,
+  name: String,
+  ports: Option (List ContainerPort) = None,
+  readinessProbe: Option Probe = None,
+  resizePolicy: Option (List ContainerResizePolicy) = None,
+  resources: Option ResourceRequirements = None,
+  restartPolicy: Option String = None,
+  restartPolicyRules: Option (List ContainerRestartRule) = None,
+  securityContext: Option SecurityContext = None,
+  startupProbe: Option Probe = None,
+  stdin: Option Bool = None,
+  stdinOnce: Option Bool = None,
+  terminationMessagePath: Option String = None,
+  terminationMessagePolicy: Option ContainerTerminationMessagePolicy = None,
+  tty: Option Bool = None,
+  volumeDevices: Option (List VolumeDevice) = None,
+  volumeMounts: Option (List VolumeMount) = None,
+  workingDir: Option String = None
+)
+type k8s/core/v1.ContainerExtendedResourceRequest(
+  containerName: String,
+  requestName: String,
+  resourceName: String
+)
+type k8s/core/v1.ContainerImage(names: Option (List String) = None, sizeBytes: Option Int = None)
+type k8s/core/v1.ContainerImagePullPolicy = Always | IfNotPresent | Never
+type k8s/core/v1.ContainerPort(
+  containerPort: Int,
+  hostIP: Option String = None,
+  hostPort: Option Int = None,
+  name: Option String = None,
+  protocol: Option ContainerPortProtocol = None
+)
+type k8s/core/v1.ContainerPortProtocol = SCTP | TCP | UDP
+type k8s/core/v1.ContainerResizePolicy(resourceName: String, restartPolicy: String)
+type k8s/core/v1.ContainerRestartRule(
+  action: String,
+  exitCodes: Option ContainerRestartRuleOnExitCodes = None
+)
+type k8s/core/v1.ContainerRestartRuleOnExitCodes(operator: String, values: Option (List Int) = None)
+type k8s/core/v1.ContainerState(
+  running: Option ContainerStateRunning = None,
+  terminated: Option ContainerStateTerminated = None,
+  waiting: Option ContainerStateWaiting = None
+)
+type k8s/core/v1.ContainerStateRunning(startedAt: Option DateTime = None)
+type k8s/core/v1.ContainerStateTerminated(
+  containerID: Option String = None,
+  exitCode: Int,
+  finishedAt: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  signal: Option Int = None,
+  startedAt: Option DateTime = None
+)
+type k8s/core/v1.ContainerStateWaiting(message: Option String = None, reason: Option String = None)
+type k8s/core/v1.ContainerStatus(
+  allocatedResources: Option (Map plimsoll.Quantity) = None,
+  allocatedResourcesStatus: Option (List ResourceStatus) = None,
+  containerID: Option String = None,
+  image: String,
+  imageID: String,
+  lastState: Option ContainerState = None,
+  name: String,
+  ready: Bool,
+  resources: Option ResourceRequirements = None,
+  restartCount: Int,
+  started: Option Bool = None,
+  state: Option ContainerState = None,
+  stopSignal: Option String = None,
+  user: Option ContainerUser = None,
+  volumeMounts: Option (List VolumeMountStatus) = None
+)
+type k8s/core/v1.ContainerTerminationMessagePolicy = FallbackToLogsOnError | File
+type k8s/core/v1.ContainerUser(linux: Option LinuxContainerUser = None)
+type k8s/core/v1.DaemonEndpoint(port "Port": Int)
+type k8s/core/v1.DownwardAPIProjection(items: Option (List DownwardAPIVolumeFile) = None)
+type k8s/core/v1.DownwardAPIVolumeFile(
+  fieldRef: Option ObjectFieldSelector = None,
+  mode: Option Int = None,
+  path: String,
+  resourceFieldRef: Option ResourceFieldSelector = None,
+  user: Option Int = None
+)
+type k8s/core/v1.DownwardAPIVolumeSource(
+  defaultMode: Option Int = None,
+  defaultUser: Option Int = None,
+  items: Option (List DownwardAPIVolumeFile) = None
+)
+type k8s/core/v1.EmptyDirVolumeSource(
+  medium: Option String = None,
+  mode: Option Int = None,
+  sizeLimit: Option plimsoll.Quantity = None
+)
+type k8s/core/v1.EndpointAddress(
+  hostname: Option String = None,
+  ip: String,
+  nodeName: Option String = None,
+  targetRef: Option ObjectReference = None
+)
+type k8s/core/v1.EndpointPort(
+  appProtocol: Option String = None,
+  name: Option String = None,
+  port: Int,
+  protocol: Option ContainerPortProtocol = None
+)
+type k8s/core/v1.EndpointSubset(
+  addresses: Option (List EndpointAddress) = None,
+  notReadyAddresses: Option (List EndpointAddress) = None,
+  ports: Option (List EndpointPort) = None
+)
+type k8s/core/v1.Endpoints(
+  apiVersion: String = "v1",
+  kind: String = "Endpoints",
+  metadata: Option meta_v1.ObjectMeta = None,
+  subsets: Option (List EndpointSubset) = None
+)
+type k8s/core/v1.EndpointsList(
+  apiVersion: String = "v1",
+  items: List Endpoints,
+  kind: String = "EndpointsList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.EnvFromSource(
+  configMapRef: Option ConfigMapEnvSource = None,
+  prefix: Option String = None,
+  secretRef: Option SecretEnvSource = None
+)
+type k8s/core/v1.EnvVar(
+  name: String,
+  value: Option String = None,
+  valueFrom: Option EnvVarSource = None
+)
+type k8s/core/v1.EnvVarSource(
+  configMapKeyRef: Option ConfigMapKeySelector = None,
+  fieldRef: Option ObjectFieldSelector = None,
+  fileKeyRef: Option FileKeySelector = None,
+  resourceFieldRef: Option ResourceFieldSelector = None,
+  secretKeyRef: Option SecretKeySelector = None
+)
+type k8s/core/v1.EphemeralContainer(
+  args: Option (List String) = None,
+  command: Option (List String) = None,
+  env: Option (List EnvVar) = None,
+  envFrom: Option (List EnvFromSource) = None,
+  image: Option String = None,
+  imagePullPolicy: Option ContainerImagePullPolicy = None,
+  lifecycle: Option Lifecycle = None,
+  livenessProbe: Option Probe = None,
+  name: String,
+  ports: Option (List ContainerPort) = None,
+  readinessProbe: Option Probe = None,
+  resizePolicy: Option (List ContainerResizePolicy) = None,
+  resources: Option ResourceRequirements = None,
+  restartPolicy: Option String = None,
+  restartPolicyRules: Option (List ContainerRestartRule) = None,
+  securityContext: Option SecurityContext = None,
+  startupProbe: Option Probe = None,
+  stdin: Option Bool = None,
+  stdinOnce: Option Bool = None,
+  targetContainerName: Option String = None,
+  terminationMessagePath: Option String = None,
+  terminationMessagePolicy: Option ContainerTerminationMessagePolicy = None,
+  tty: Option Bool = None,
+  volumeDevices: Option (List VolumeDevice) = None,
+  volumeMounts: Option (List VolumeMount) = None,
+  workingDir: Option String = None
+)
+type k8s/core/v1.EphemeralVolumeSource(volumeClaimTemplate: Option PersistentVolumeClaimTemplate = None)
+type k8s/core/v1.Event(
+  action: Option String = None,
+  apiVersion: String = "v1",
+  count: Option Int = None,
+  eventTime: Option DateTime = None,
+  firstTimestamp: Option DateTime = None,
+  involvedObject: ObjectReference,
+  kind: String = "Event",
+  lastTimestamp: Option DateTime = None,
+  message: Option String = None,
+  metadata: meta_v1.ObjectMeta,
+  reason: Option String = None,
+  related: Option ObjectReference = None,
+  reportingComponent: Option String = None,
+  reportingInstance: Option String = None,
+  series: Option EventSeries = None,
+  source: Option EventSource = None,
+  type: Option String = None
+)
+type k8s/core/v1.EventList(
+  apiVersion: String = "v1",
+  items: List Event,
+  kind: String = "EventList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.EventSeries(count: Option Int = None, lastObservedTime: Option DateTime = None)
+type k8s/core/v1.EventSource(component: Option String = None, host: Option String = None)
+type k8s/core/v1.EvictionResponder(name: String, priority: Int)
+type k8s/core/v1.ExecAction(command: Option (List String) = None)
+type k8s/core/v1.FCVolumeSource(
+  fsType: Option String = None,
+  lun: Option Int = None,
+  readOnly: Option Bool = None,
+  targetWWNs: Option (List String) = None,
+  wwids: Option (List String) = None
+)
+type k8s/core/v1.FileKeySelector(
+  key: String,
+  optional: Option Bool = None,
+  path: String,
+  volumeName: String
+)
+type k8s/core/v1.FlexPersistentVolumeSource(
+  driver: String,
+  fsType: Option String = None,
+  options: Option (Map String) = None,
+  readOnly: Option Bool = None,
+  secretRef: Option SecretReference = None
+)
+type k8s/core/v1.FlexVolumeSource(
+  driver: String,
+  fsType: Option String = None,
+  options: Option (Map String) = None,
+  readOnly: Option Bool = None,
+  secretRef: Option LocalObjectReference = None
+)
+type k8s/core/v1.FlockerVolumeSource(
+  datasetName: Option String = None,
+  datasetUUID: Option String = None
+)
+type k8s/core/v1.GCEPersistentDiskVolumeSource(
+  fsType: Option String = None,
+  partition: Option Int = None,
+  pdName: String,
+  readOnly: Option Bool = None
+)
+type k8s/core/v1.GRPCAction(
+  mode: Option GRPCActionMode = None,
+  port: Int,
+  service: Option String = None
+)
+type k8s/core/v1.GRPCActionMode = Plaintext | TLS
+type k8s/core/v1.GitRepoVolumeSource(
+  directory: Option String = None,
+  repository: String,
+  revision: Option String = None
+)
+type k8s/core/v1.GlusterfsPersistentVolumeSource(
+  endpoints: String,
+  endpointsNamespace: Option String = None,
+  path: String,
+  readOnly: Option Bool = None
+)
+type k8s/core/v1.GlusterfsVolumeSource(endpoints: String, path: String, readOnly: Option Bool = None)
+type k8s/core/v1.HTTPGetAction(
+  host: Option String = None,
+  httpHeaders: Option (List HTTPHeader) = None,
+  path: Option String = None,
+  port: plimsoll.IntOrString,
+  protocol: Option HTTPGetActionProtocol = None,
+  scheme: Option HTTPGetActionScheme = None
+)
+type k8s/core/v1.HTTPGetActionProtocol = HTTP1 | HTTP2
+type k8s/core/v1.HTTPGetActionScheme = HTTP | HTTPS
+type k8s/core/v1.HTTPHeader(name: String, value: String)
+type k8s/core/v1.HostAlias(hostnames: Option (List String) = None, ip: String)
+type k8s/core/v1.HostIP(ip: String)
+type k8s/core/v1.HostPathVolumeSource(path: String, type: Option String = None)
+type k8s/core/v1.ISCSIPersistentVolumeSource(
+  chapAuthDiscovery: Option Bool = None,
+  chapAuthSession: Option Bool = None,
+  fsType: Option String = None,
+  initiatorName: Option String = None,
+  iqn: String,
+  iscsiInterface: Option String = None,
+  lun: Int,
+  portals: Option (List String) = None,
+  readOnly: Option Bool = None,
+  secretRef: Option SecretReference = None,
+  targetPortal: String
+)
+type k8s/core/v1.ISCSIVolumeSource(
+  chapAuthDiscovery: Option Bool = None,
+  chapAuthSession: Option Bool = None,
+  fsType: Option String = None,
+  initiatorName: Option String = None,
+  iqn: String,
+  iscsiInterface: Option String = None,
+  lun: Int,
+  portals: Option (List String) = None,
+  readOnly: Option Bool = None,
+  secretRef: Option LocalObjectReference = None,
+  targetPortal: String
+)
+type k8s/core/v1.ImageVolumeSource(
+  pullPolicy: Option ContainerImagePullPolicy = None,
+  reference: Option String = None
+)
+type k8s/core/v1.ImageVolumeStatus(imageRef: String)
+type k8s/core/v1.KeyToPath(key: String, mode: Option Int = None, path: String, user: Option Int = None)
+type k8s/core/v1.Lifecycle(
+  postStart: Option LifecycleHandler = None,
+  preStop: Option LifecycleHandler = None,
+  stopSignal: Option String = None
+)
+type k8s/core/v1.LifecycleHandler(
+  exec: Option ExecAction = None,
+  httpGet: Option HTTPGetAction = None,
+  sleep: Option SleepAction = None,
+  tcpSocket: Option TCPSocketAction = None
+)
+type k8s/core/v1.LimitRange(
+  apiVersion: String = "v1",
+  kind: String = "LimitRange",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option LimitRangeSpec = None
+)
+type k8s/core/v1.LimitRangeItem(
+  default: Option (Map plimsoll.Quantity) = None,
+  defaultRequest: Option (Map plimsoll.Quantity) = None,
+  max: Option (Map plimsoll.Quantity) = None,
+  maxLimitRequestRatio: Option (Map plimsoll.Quantity) = None,
+  min: Option (Map plimsoll.Quantity) = None,
+  type: String
+)
+type k8s/core/v1.LimitRangeList(
+  apiVersion: String = "v1",
+  items: List LimitRange,
+  kind: String = "LimitRangeList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.LimitRangeSpec(limits: List LimitRangeItem)
+type k8s/core/v1.LinuxContainerUser(gid: Int, supplementalGroups: Option (List Int) = None, uid: Int)
+type k8s/core/v1.LoadBalancerIngress(
+  hostname: Option String = None,
+  ip: Option String = None,
+  ipMode: Option String = None,
+  ports: Option (List PortStatus) = None
+)
+type k8s/core/v1.LoadBalancerStatus(ingress: Option (List LoadBalancerIngress) = None)
+type k8s/core/v1.LocalObjectReference(name: Option String = None)
+type k8s/core/v1.LocalVolumeSource(fsType: Option String = None, path: String)
+type k8s/core/v1.ModifyVolumeStatus(
+  status: ModifyVolumeStatusStatus,
+  targetVolumeAttributesClassName: Option String = None
+)
+type k8s/core/v1.ModifyVolumeStatusStatus = InProgress | Infeasible | Pending
+type k8s/core/v1.NFSVolumeSource(path: String, readOnly: Option Bool = None, server: String)
+type k8s/core/v1.Namespace(
+  apiVersion: String = "v1",
+  kind: String = "Namespace",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option NamespaceSpec = None,
+  status: Option NamespaceStatus = None
+)
+type k8s/core/v1.NamespaceCondition(
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  status: String,
+  type: String
+)
+type k8s/core/v1.NamespaceList(
+  apiVersion: String = "v1",
+  items: List Namespace,
+  kind: String = "NamespaceList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.NamespaceSpec(finalizers: Option (List String) = None)
+type k8s/core/v1.NamespaceStatus(
+  conditions: Option (List NamespaceCondition) = None,
+  phase: Option NamespaceStatusPhase = None
+)
+type k8s/core/v1.NamespaceStatusPhase = Active | Terminating
+type k8s/core/v1.Node(
+  apiVersion: String = "v1",
+  kind: String = "Node",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option NodeSpec = None,
+  status: Option NodeStatus = None
+)
+type k8s/core/v1.NodeAddress(address: String, type: String)
+type k8s/core/v1.NodeAffinity(
+  preferredDuringSchedulingIgnoredDuringExecution: Option (List PreferredSchedulingTerm) = None,
+  requiredDuringSchedulingIgnoredDuringExecution: Option NodeSelector = None
+)
+type k8s/core/v1.NodeAllocatableMappedResources(name: String, quantity: plimsoll.Quantity)
+type k8s/core/v1.NodeAllocatableOverheadResources(
+  name: String,
+  perContainer: Option plimsoll.Quantity = None,
+  perPod: Option plimsoll.Quantity = None
+)
+type k8s/core/v1.NodeAllocatableResourceClaimStatus(
+  containers: Option (List String) = None,
+  mapping: Option (List NodeAllocatableMappedResources) = None,
+  overhead: Option (List NodeAllocatableOverheadResources) = None,
+  resourceClaimName: String
+)
+type k8s/core/v1.NodeCondition(
+  lastHeartbeatTime: Option DateTime = None,
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  status: String,
+  type: String
+)
+type k8s/core/v1.NodeConfigSource(configMap: Option ConfigMapNodeConfigSource = None)
+type k8s/core/v1.NodeConfigStatus(
+  active: Option NodeConfigSource = None,
+  assigned: Option NodeConfigSource = None,
+  error: Option String = None,
+  lastKnownGood: Option NodeConfigSource = None
+)
+type k8s/core/v1.NodeDaemonEndpoints(kubeletEndpoint: Option DaemonEndpoint = None)
+type k8s/core/v1.NodeFeatures(supplementalGroupsPolicy: Option Bool = None)
+type k8s/core/v1.NodeList(
+  apiVersion: String = "v1",
+  items: List Node,
+  kind: String = "NodeList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.NodePodPreemptionPolicy(disableResizePreemption: Option (List String) = None)
+type k8s/core/v1.NodeRuntimeHandler(
+  features: Option NodeRuntimeHandlerFeatures = None,
+  name: Option String = None
+)
+type k8s/core/v1.NodeRuntimeHandlerFeatures(
+  recursiveReadOnlyMounts: Option Bool = None,
+  userNamespaces: Option Bool = None
+)
+type k8s/core/v1.NodeSelector(nodeSelectorTerms: List NodeSelectorTerm)
+type k8s/core/v1.NodeSelectorRequirement(
+  key: String,
+  operator: NodeSelectorRequirementOperator,
+  values: Option (List String) = None
+)
+type k8s/core/v1.NodeSelectorRequirementOperator = DoesNotExist | Exists | Gt | In | Lt | NotIn
+type k8s/core/v1.NodeSelectorTerm(
+  matchExpressions: Option (List NodeSelectorRequirement) = None,
+  matchFields: Option (List NodeSelectorRequirement) = None
+)
+type k8s/core/v1.NodeSpec(
+  configSource: Option NodeConfigSource = None,
+  externalID: Option String = None,
+  podCIDR: Option String = None,
+  podCIDRs: Option (List String) = None,
+  podPreemptionPolicy: Option NodePodPreemptionPolicy = None,
+  providerID: Option String = None,
+  taints: Option (List Taint) = None,
+  unschedulable: Option Bool = None
+)
+type k8s/core/v1.NodeStatus(
+  addresses: Option (List NodeAddress) = None,
+  allocatable: Option (Map plimsoll.Quantity) = None,
+  capacity: Option (Map plimsoll.Quantity) = None,
+  conditions: Option (List NodeCondition) = None,
+  config: Option NodeConfigStatus = None,
+  daemonEndpoints: Option NodeDaemonEndpoints = None,
+  declaredFeatures: Option (List String) = None,
+  features: Option NodeFeatures = None,
+  images: Option (List ContainerImage) = None,
+  nodeInfo: Option NodeSystemInfo = None,
+  phase: Option NodeStatusPhase = None,
+  runtimeHandlers: Option (List NodeRuntimeHandler) = None,
+  volumesAttached: Option (List AttachedVolume) = None,
+  volumesInUse: Option (List String) = None
+)
+type k8s/core/v1.NodeStatusPhase = Pending | Running | Terminated
+type k8s/core/v1.NodeSwapStatus(capacity: Option Int = None)
+type k8s/core/v1.NodeSystemInfo(
+  architecture: String,
+  bootID: String,
+  containerRuntimeVersion: String,
+  kernelVersion: String,
+  kubeProxyVersion: String,
+  kubeletVersion: String,
+  machineID: String,
+  operatingSystem: String,
+  osImage: String,
+  runningInUserNamespace: Option Bool = None,
+  swap: Option NodeSwapStatus = None,
+  systemUUID: String
+)
+type k8s/core/v1.ObjectFieldSelector(apiVersion: Option String = None, fieldPath: String)
+type k8s/core/v1.ObjectReference(
+  apiVersion: Option String = None,
+  fieldPath: Option String = None,
+  kind: Option String = None,
+  name: Option String = None,
+  namespace: Option String = None,
+  resourceVersion: Option String = None,
+  uid: Option String = None
+)
+type k8s/core/v1.PersistentVolume(
+  apiVersion: String = "v1",
+  kind: String = "PersistentVolume",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option PersistentVolumeSpec = None,
+  status: Option PersistentVolumeStatus = None
+)
+type k8s/core/v1.PersistentVolumeClaim(
+  apiVersion: String = "v1",
+  kind: String = "PersistentVolumeClaim",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option PersistentVolumeClaimSpec = None,
+  status: Option PersistentVolumeClaimStatus = None
+)
+type k8s/core/v1.PersistentVolumeClaimCondition(
+  lastProbeTime: Option DateTime = None,
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  status: String,
+  type: String
+)
+type k8s/core/v1.PersistentVolumeClaimList(
+  apiVersion: String = "v1",
+  items: List PersistentVolumeClaim,
+  kind: String = "PersistentVolumeClaimList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.PersistentVolumeClaimSpec(
+  accessModes: Option (List PersistentVolumeClaimSpecAccessModes) = None,
+  dataSource: Option TypedLocalObjectReference = None,
+  dataSourceRef: Option TypedObjectReference = None,
+  resources: Option VolumeResourceRequirements = None,
+  selector: Option meta_v1.LabelSelector = None,
+  storageClassName: Option String = None,
+  volumeAttributesClassName: Option String = None,
+  volumeMode: Option PersistentVolumeClaimSpecVolumeMode = None,
+  volumeName: Option String = None
+)
+type k8s/core/v1.PersistentVolumeClaimSpecAccessModes =
+  ReadOnlyMany
+  | ReadWriteMany
+  | ReadWriteOnce
+  | ReadWriteOncePod
+type k8s/core/v1.PersistentVolumeClaimSpecVolumeMode = Block | Filesystem
+type k8s/core/v1.PersistentVolumeClaimStatus(
+  accessModes: Option (List PersistentVolumeClaimSpecAccessModes) = None,
+  allocatedResourceStatuses: Option (Map String) = None,
+  allocatedResources: Option (Map plimsoll.Quantity) = None,
+  capacity: Option (Map plimsoll.Quantity) = None,
+  conditions: Option (List PersistentVolumeClaimCondition) = None,
+  currentVolumeAttributesClassName: Option String = None,
+  healthStatus: Option VolumeHealthStatus = None,
+  modifyVolumeStatus: Option ModifyVolumeStatus = None,
+  phase: Option PersistentVolumeClaimStatusPhase = None
+)
+type k8s/core/v1.PersistentVolumeClaimStatusPhase = Bound | Lost | Pending
+type k8s/core/v1.PersistentVolumeClaimTemplate(
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: PersistentVolumeClaimSpec
+)
+type k8s/core/v1.PersistentVolumeClaimVolumeSource(claimName: String, readOnly: Option Bool = None)
+type k8s/core/v1.PersistentVolumeList(
+  apiVersion: String = "v1",
+  items: List PersistentVolume,
+  kind: String = "PersistentVolumeList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.PersistentVolumeSpec(
+  accessModes: Option (List PersistentVolumeClaimSpecAccessModes) = None,
+  awsElasticBlockStore: Option AWSElasticBlockStoreVolumeSource = None,
+  azureDisk: Option AzureDiskVolumeSource = None,
+  azureFile: Option AzureFilePersistentVolumeSource = None,
+  capacity: Option (Map plimsoll.Quantity) = None,
+  cephfs: Option CephFSPersistentVolumeSource = None,
+  cinder: Option CinderPersistentVolumeSource = None,
+  claimRef: Option ObjectReference = None,
+  csi: Option CSIPersistentVolumeSource = None,
+  fc: Option FCVolumeSource = None,
+  flexVolume: Option FlexPersistentVolumeSource = None,
+  flocker: Option FlockerVolumeSource = None,
+  gcePersistentDisk: Option GCEPersistentDiskVolumeSource = None,
+  glusterfs: Option GlusterfsPersistentVolumeSource = None,
+  hostPath: Option HostPathVolumeSource = None,
+  iscsi: Option ISCSIPersistentVolumeSource = None,
+  local: Option LocalVolumeSource = None,
+  mountOptions: Option (List String) = None,
+  nfs: Option NFSVolumeSource = None,
+  nodeAffinity: Option VolumeNodeAffinity = None,
+  persistentVolumeReclaimPolicy: Option PersistentVolumeSpecPersistentVolumeReclaimPolicy = None,
+  photonPersistentDisk: Option PhotonPersistentDiskVolumeSource = None,
+  portworxVolume: Option PortworxVolumeSource = None,
+  quobyte: Option QuobyteVolumeSource = None,
+  rbd: Option RBDPersistentVolumeSource = None,
+  scaleIO: Option ScaleIOPersistentVolumeSource = None,
+  storageClassName: Option String = None,
+  storageos: Option StorageOSPersistentVolumeSource = None,
+  volumeAttributesClassName: Option String = None,
+  volumeMode: Option PersistentVolumeClaimSpecVolumeMode = None,
+  vsphereVolume: Option VsphereVirtualDiskVolumeSource = None
+)
+type k8s/core/v1.PersistentVolumeSpecPersistentVolumeReclaimPolicy = Delete | Recycle | Retain
+type k8s/core/v1.PersistentVolumeStatus(
+  lastPhaseTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  phase: Option PersistentVolumeStatusPhase = None,
+  reason: Option String = None
+)
+type k8s/core/v1.PersistentVolumeStatusPhase = Available | Bound | Failed | Pending | Released
+type k8s/core/v1.PhotonPersistentDiskVolumeSource(fsType: Option String = None, pdID: String)
+type k8s/core/v1.Pod(
+  apiVersion: String = "v1",
+  kind: String = "Pod",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option PodSpec = None,
+  status: Option PodStatus = None
+)
+type k8s/core/v1.PodAffinity(
+  preferredDuringSchedulingIgnoredDuringExecution: Option (List WeightedPodAffinityTerm) = None,
+  requiredDuringSchedulingIgnoredDuringExecution: Option (List PodAffinityTerm) = None
+)
+type k8s/core/v1.PodAffinityTerm(
+  labelSelector: Option meta_v1.LabelSelector = None,
+  matchLabelKeys: Option (List String) = None,
+  mismatchLabelKeys: Option (List String) = None,
+  namespaceSelector: Option meta_v1.LabelSelector = None,
+  namespaces: Option (List String) = None,
+  topologyKey: String
+)
+type k8s/core/v1.PodAntiAffinity(
+  preferredDuringSchedulingIgnoredDuringExecution: Option (List WeightedPodAffinityTerm) = None,
+  requiredDuringSchedulingIgnoredDuringExecution: Option (List PodAffinityTerm) = None
+)
+type k8s/core/v1.PodCertificateProjection(
+  certificateChainPath: Option String = None,
+  credentialBundlePath: Option String = None,
+  keyPath: Option String = None,
+  keyType: String,
+  maxExpirationSeconds: Option Int = None,
+  signerName: String,
+  user: Option Int = None,
+  userAnnotations: Option (Map String) = None
+)
+type k8s/core/v1.PodCondition(
+  lastProbeTime: Option DateTime = None,
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  observedGeneration: Option Int = None,
+  reason: Option String = None,
+  status: String,
+  type: String
+)
+type k8s/core/v1.PodDNSConfig(
+  nameservers: Option (List String) = None,
+  options: Option (List PodDNSConfigOption) = None,
+  searches: Option (List String) = None
+)
+type k8s/core/v1.PodDNSConfigOption(name: Option String = None, value: Option String = None)
+type k8s/core/v1.PodExtendedResourceClaimStatus(
+  requestMappings: List ContainerExtendedResourceRequest,
+  resourceClaimName: String
+)
+type k8s/core/v1.PodIP(ip: String)
+type k8s/core/v1.PodList(
+  apiVersion: String = "v1",
+  items: List Pod,
+  kind: String = "PodList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.PodOS(name: String)
+type k8s/core/v1.PodReadinessGate(conditionType: String)
+type k8s/core/v1.PodResourceClaim(
+  name: String,
+  resourceClaimName: Option String = None,
+  resourceClaimTemplateName: Option String = None
+)
+type k8s/core/v1.PodResourceClaimStatus(name: String, resourceClaimName: Option String = None)
+type k8s/core/v1.PodSchedulingGate(name: String)
+type k8s/core/v1.PodSchedulingGroup(podGroupName: Option String = None)
+type k8s/core/v1.PodSecurityContext(
+  appArmorProfile: Option AppArmorProfile = None,
+  fsGroup: Option Int = None,
+  fsGroupChangePolicy: Option PodSecurityContextFsGroupChangePolicy = None,
+  runAsGroup: Option Int = None,
+  runAsNonRoot: Option Bool = None,
+  runAsUser: Option Int = None,
+  seLinuxChangePolicy: Option String = None,
+  seLinuxOptions: Option SELinuxOptions = None,
+  seccompProfile: Option SeccompProfile = None,
+  supplementalGroups: Option (List Int) = None,
+  supplementalGroupsPolicy: Option PodSecurityContextSupplementalGroupsPolicy = None,
+  sysctls: Option (List Sysctl) = None,
+  windowsOptions: Option WindowsSecurityContextOptions = None
+)
+type k8s/core/v1.PodSecurityContextFsGroupChangePolicy = Always | OnRootMismatch
+type k8s/core/v1.PodSecurityContextSupplementalGroupsPolicy = Merge | Strict
+type k8s/core/v1.PodSpec(
+  activeDeadlineSeconds: Option Int = None,
+  affinity: Option Affinity = None,
+  automountServiceAccountToken: Option Bool = None,
+  containers: List Container,
+  dnsConfig: Option PodDNSConfig = None,
+  dnsPolicy: Option String = None,
+  enableServiceLinks: Option Bool = None,
+  ephemeralContainers: Option (List EphemeralContainer) = None,
+  evictionResponders: Option (List EvictionResponder) = None,
+  hostAliases: Option (List HostAlias) = None,
+  hostIPC: Option Bool = None,
+  hostNetwork: Option Bool = None,
+  hostPID: Option Bool = None,
+  hostUsers: Option Bool = None,
+  hostname: Option String = None,
+  hostnameOverride: Option String = None,
+  imagePullSecrets: Option (List LocalObjectReference) = None,
+  initContainers: Option (List Container) = None,
+  nodeName: Option String = None,
+  nodeSelector: Option (Map String) = None,
+  os: Option PodOS = None,
+  overhead: Option (Map plimsoll.Quantity) = None,
+  preemptionPolicy: Option PodSpecPreemptionPolicy = None,
+  priority: Option Int = None,
+  priorityClassName: Option String = None,
+  readinessGates: Option (List PodReadinessGate) = None,
+  resourceClaims: Option (List PodResourceClaim) = None,
+  resources: Option ResourceRequirements = None,
+  restartPolicy: Option PodSpecRestartPolicy = None,
+  runtimeClassName: Option String = None,
+  schedulerName: Option String = None,
+  schedulingGates: Option (List PodSchedulingGate) = None,
+  schedulingGroup: Option PodSchedulingGroup = None,
+  securityContext: Option PodSecurityContext = None,
+  serviceAccount: Option String = None,
+  serviceAccountName: Option String = None,
+  setHostnameAsFQDN: Option Bool = None,
+  shareProcessNamespace: Option Bool = None,
+  subdomain: Option String = None,
+  terminationGracePeriodSeconds: Option Int = None,
+  tolerations: Option (List Toleration) = None,
+  topologySpreadConstraints: Option (List TopologySpreadConstraint) = None,
+  volumes: Option (List Volume) = None
+)
+type k8s/core/v1.PodSpecPreemptionPolicy = Never | PreemptLowerPriority
+type k8s/core/v1.PodSpecRestartPolicy = Always | Never | OnFailure
+type k8s/core/v1.PodStatus(
+  allocatedResources: Option (Map plimsoll.Quantity) = None,
+  conditions: Option (List PodCondition) = None,
+  containerStatuses: Option (List ContainerStatus) = None,
+  ephemeralContainerStatuses: Option (List ContainerStatus) = None,
+  extendedResourceClaimStatus: Option PodExtendedResourceClaimStatus = None,
+  hostIP: Option String = None,
+  hostIPs: Option (List HostIP) = None,
+  initContainerStatuses: Option (List ContainerStatus) = None,
+  message: Option String = None,
+  nodeAllocatableResourceClaimStatuses: Option (List NodeAllocatableResourceClaimStatus) = None,
+  nominatedNodeName: Option String = None,
+  observedGeneration: Option Int = None,
+  phase: Option PodStatusPhase = None,
+  podIP: Option String = None,
+  podIPs: Option (List PodIP) = None,
+  qosClass: Option PodStatusQosClass = None,
+  reason: Option String = None,
+  resize: Option String = None,
+  resourceClaimStatuses: Option (List PodResourceClaimStatus) = None,
+  resources: Option ResourceRequirements = None,
+  startTime: Option DateTime = None,
+  volumeHealth: Option (List PodVolumeHealth) = None
+)
+type k8s/core/v1.PodStatusPhase = Failed | Pending | Running | Succeeded | Unknown
+type k8s/core/v1.PodStatusQosClass = BestEffort | Burstable | Guaranteed
+type k8s/core/v1.PodTemplate(
+  apiVersion: String = "v1",
+  kind: String = "PodTemplate",
+  metadata: Option meta_v1.ObjectMeta = None,
+  template: Option PodTemplateSpec = None
+)
+type k8s/core/v1.PodTemplateList(
+  apiVersion: String = "v1",
+  items: List PodTemplate,
+  kind: String = "PodTemplateList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.PodTemplateSpec(
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option PodSpec = None
+)
+type k8s/core/v1.PodVolumeHealth(
+  healthConditions: Option (List VolumeHealthCondition) = None,
+  lastTransitionTime: Option DateTime = None,
+  name: String
+)
+type k8s/core/v1.PortStatus(error: Option String = None, port: Int, protocol: ContainerPortProtocol)
+type k8s/core/v1.PortworxVolumeSource(
+  fsType: Option String = None,
+  readOnly: Option Bool = None,
+  volumeID: String
+)
+type k8s/core/v1.PreferredSchedulingTerm(preference: NodeSelectorTerm, weight: Int)
+type k8s/core/v1.Probe(
+  exec: Option ExecAction = None,
+  failureThreshold: Option Int = None,
+  grpc: Option GRPCAction = None,
+  httpGet: Option HTTPGetAction = None,
+  initialDelaySeconds: Option Int = None,
+  periodSeconds: Option Int = None,
+  successThreshold: Option Int = None,
+  tcpSocket: Option TCPSocketAction = None,
+  terminationGracePeriodSeconds: Option Int = None,
+  timeoutSeconds: Option Int = None
+)
+type k8s/core/v1.ProjectedVolumeSource(
+  defaultMode: Option Int = None,
+  defaultUser: Option Int = None,
+  sources: Option (List VolumeProjection) = None
+)
+type k8s/core/v1.QuobyteVolumeSource(
+  group: Option String = None,
+  readOnly: Option Bool = None,
+  registry: String,
+  tenant: Option String = None,
+  user: Option String = None,
+  volume: String
+)
+type k8s/core/v1.RBDPersistentVolumeSource(
+  fsType: Option String = None,
+  image: String,
+  keyring: Option String = None,
+  monitors: List String,
+  pool: Option String = None,
+  readOnly: Option Bool = None,
+  secretRef: Option SecretReference = None,
+  user: Option String = None
+)
+type k8s/core/v1.RBDVolumeSource(
+  fsType: Option String = None,
+  image: String,
+  keyring: Option String = None,
+  monitors: List String,
+  pool: Option String = None,
+  readOnly: Option Bool = None,
+  secretRef: Option LocalObjectReference = None,
+  user: Option String = None
+)
+type k8s/core/v1.ReplicationController(
+  apiVersion: String = "v1",
+  kind: String = "ReplicationController",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option ReplicationControllerSpec = None,
+  status: Option ReplicationControllerStatus = None
+)
+type k8s/core/v1.ReplicationControllerCondition(
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  status: String,
+  type: String
+)
+type k8s/core/v1.ReplicationControllerList(
+  apiVersion: String = "v1",
+  items: List ReplicationController,
+  kind: String = "ReplicationControllerList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.ReplicationControllerSpec(
+  minReadySeconds: Option Int = None,
+  replicas: Option Int = None,
+  selector: Option (Map String) = None,
+  template: Option PodTemplateSpec = None
+)
+type k8s/core/v1.ReplicationControllerStatus(
+  availableReplicas: Option Int = None,
+  conditions: Option (List ReplicationControllerCondition) = None,
+  fullyLabeledReplicas: Option Int = None,
+  observedGeneration: Option Int = None,
+  readyReplicas: Option Int = None,
+  replicas: Int
+)
+type k8s/core/v1.ResourceClaim(name: String, request: Option String = None)
+type k8s/core/v1.ResourceFieldSelector(
+  containerName: Option String = None,
+  divisor: Option plimsoll.Quantity = None,
+  resource: String
+)
+type k8s/core/v1.ResourceHealth(
+  health: Option String = None,
+  message: Option String = None,
+  resourceID: String
+)
+type k8s/core/v1.ResourceQuota(
+  apiVersion: String = "v1",
+  kind: String = "ResourceQuota",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option ResourceQuotaSpec = None,
+  status: Option ResourceQuotaStatus = None
+)
+type k8s/core/v1.ResourceQuotaList(
+  apiVersion: String = "v1",
+  items: List ResourceQuota,
+  kind: String = "ResourceQuotaList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.ResourceQuotaSpec(
+  hard: Option (Map plimsoll.Quantity) = None,
+  scopeSelector: Option ScopeSelector = None,
+  scopes: Option (List ResourceQuotaSpecScopes) = None
+)
+type k8s/core/v1.ResourceQuotaSpecScopes =
+  BestEffort
+  | CrossNamespacePodAffinity
+  | NotBestEffort
+  | NotTerminating
+  | PriorityClass
+  | Terminating
+  | VolumeAttributesClass
+type k8s/core/v1.ResourceQuotaStatus(
+  hard: Option (Map plimsoll.Quantity) = None,
+  used: Option (Map plimsoll.Quantity) = None
+)
+type k8s/core/v1.ResourceRequirements(
+  claims: Option (List ResourceClaim) = None,
+  limits: Option (Map plimsoll.Quantity) = None,
+  requests: Option (Map plimsoll.Quantity) = None
+)
+type k8s/core/v1.ResourceStatus(name: String, resources: Option (List ResourceHealth) = None)
+type k8s/core/v1.SELinuxOptions(
+  level: Option String = None,
+  role: Option String = None,
+  type: Option String = None,
+  user: Option String = None
+)
+type k8s/core/v1.ScaleIOPersistentVolumeSource(
+  fsType: Option String = None,
+  gateway: String,
+  protectionDomain: Option String = None,
+  readOnly: Option Bool = None,
+  secretRef: SecretReference,
+  sslEnabled: Option Bool = None,
+  storageMode: Option String = None,
+  storagePool: Option String = None,
+  system: String,
+  volumeName: Option String = None
+)
+type k8s/core/v1.ScaleIOVolumeSource(
+  fsType: Option String = None,
+  gateway: String,
+  protectionDomain: Option String = None,
+  readOnly: Option Bool = None,
+  secretRef: LocalObjectReference,
+  sslEnabled: Option Bool = None,
+  storageMode: Option String = None,
+  storagePool: Option String = None,
+  system: String,
+  volumeName: Option String = None
+)
+type k8s/core/v1.ScopeSelector(matchExpressions: Option (List ScopedResourceSelectorRequirement) = None)
+type k8s/core/v1.ScopedResourceSelectorRequirement(
+  operator: ScopedResourceSelectorRequirementOperator,
+  scopeName: ResourceQuotaSpecScopes,
+  values: Option (List String) = None
+)
+type k8s/core/v1.ScopedResourceSelectorRequirementOperator = DoesNotExist | Exists | In | NotIn
+type k8s/core/v1.SeccompProfile(localhostProfile: Option String = None, type: AppArmorProfileType)
+type k8s/core/v1.Secret(
+  apiVersion: String = "v1",
+  data: Option (Map String) = None,
+  immutable: Option Bool = None,
+  kind: String = "Secret",
+  metadata: Option meta_v1.ObjectMeta = None,
+  stringData: Option (Map String) = None,
+  type: Option String = None
+)
+type k8s/core/v1.SecretEnvSource(name: Option String = None, optional: Option Bool = None)
+type k8s/core/v1.SecretKeySelector(
+  key: String,
+  name: Option String = None,
+  optional: Option Bool = None
+)
+type k8s/core/v1.SecretList(
+  apiVersion: String = "v1",
+  items: List Secret,
+  kind: String = "SecretList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.SecretProjection(
+  items: Option (List KeyToPath) = None,
+  name: Option String = None,
+  optional: Option Bool = None
+)
+type k8s/core/v1.SecretReference(name: Option String = None, namespace: Option String = None)
+type k8s/core/v1.SecretVolumeSource(
+  defaultMode: Option Int = None,
+  defaultUser: Option Int = None,
+  items: Option (List KeyToPath) = None,
+  optional: Option Bool = None,
+  secretName: Option String = None
+)
+type k8s/core/v1.SecurityContext(
+  allowPrivilegeEscalation: Option Bool = None,
+  appArmorProfile: Option AppArmorProfile = None,
+  capabilities: Option Capabilities = None,
+  privileged: Option Bool = None,
+  procMount: Option SecurityContextProcMount = None,
+  readOnlyRootFilesystem: Option Bool = None,
+  runAsGroup: Option Int = None,
+  runAsNonRoot: Option Bool = None,
+  runAsUser: Option Int = None,
+  seLinuxOptions: Option SELinuxOptions = None,
+  seccompProfile: Option SeccompProfile = None,
+  windowsOptions: Option WindowsSecurityContextOptions = None
+)
+type k8s/core/v1.SecurityContextProcMount = Default | Unmasked
+type k8s/core/v1.Service(
+  apiVersion: String = "v1",
+  kind: String = "Service",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option ServiceSpec = None,
+  status: Option ServiceStatus = None
+)
+type k8s/core/v1.ServiceAccount(
+  apiVersion: String = "v1",
+  automountServiceAccountToken: Option Bool = None,
+  imagePullSecrets: Option (List LocalObjectReference) = None,
+  kind: String = "ServiceAccount",
+  metadata: Option meta_v1.ObjectMeta = None,
+  secrets: Option (List ObjectReference) = None
+)
+type k8s/core/v1.ServiceAccountList(
+  apiVersion: String = "v1",
+  items: List ServiceAccount,
+  kind: String = "ServiceAccountList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.ServiceAccountTokenProjection(
+  audience: Option String = None,
+  expirationSeconds: Option Int = None,
+  path: String,
+  user: Option Int = None
+)
+type k8s/core/v1.ServiceList(
+  apiVersion: String = "v1",
+  items: List Service,
+  kind: String = "ServiceList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/core/v1.ServicePort(
+  appProtocol: Option String = None,
+  name: Option String = None,
+  nodePort: Option Int = None,
+  port: Int,
+  protocol: Option ContainerPortProtocol = None,
+  targetPort: Option plimsoll.IntOrString = None
+)
+type k8s/core/v1.ServiceSpec(
+  allocateLoadBalancerNodePorts: Option Bool = None,
+  clusterIP: Option String = None,
+  clusterIPs: Option (List String) = None,
+  externalIPs: Option (List String) = None,
+  externalName: Option String = None,
+  externalTrafficPolicy: Option ServiceSpecExternalTrafficPolicy = None,
+  healthCheckNodePort: Option Int = None,
+  internalTrafficPolicy: Option ServiceSpecExternalTrafficPolicy = None,
+  ipFamilies: Option (List String) = None,
+  ipFamilyPolicy: Option ServiceSpecIpFamilyPolicy = None,
+  loadBalancerClass: Option String = None,
+  loadBalancerIP: Option String = None,
+  loadBalancerSourceRanges: Option (List String) = None,
+  ports: Option (List ServicePort) = None,
+  publishNotReadyAddresses: Option Bool = None,
+  selector: Option (Map String) = None,
+  sessionAffinity: Option String = None,
+  sessionAffinityConfig: Option SessionAffinityConfig = None,
+  trafficDistribution: Option String = None,
+  type: Option ServiceSpecType = None
+)
+type k8s/core/v1.ServiceSpecExternalTrafficPolicy = Cluster | Local
+type k8s/core/v1.ServiceSpecIpFamilyPolicy = PreferDualStack | RequireDualStack | SingleStack
+type k8s/core/v1.ServiceSpecType = ClusterIP | ExternalName | LoadBalancer | NodePort
+type k8s/core/v1.ServiceStatus(
+  conditions: Option (List meta_v1.Condition) = None,
+  loadBalancer: Option LoadBalancerStatus = None
+)
+type k8s/core/v1.SessionAffinityConfig(clientIP: Option ClientIPConfig = None)
+type k8s/core/v1.SleepAction(seconds: Int)
+type k8s/core/v1.StorageOSPersistentVolumeSource(
+  fsType: Option String = None,
+  readOnly: Option Bool = None,
+  secretRef: Option ObjectReference = None,
+  volumeName: Option String = None,
+  volumeNamespace: Option String = None
+)
+type k8s/core/v1.StorageOSVolumeSource(
+  fsType: Option String = None,
+  readOnly: Option Bool = None,
+  secretRef: Option LocalObjectReference = None,
+  volumeName: Option String = None,
+  volumeNamespace: Option String = None
+)
+type k8s/core/v1.Sysctl(name: String, value: String)
+type k8s/core/v1.TCPSocketAction(host: Option String = None, port: plimsoll.IntOrString)
+type k8s/core/v1.Taint(
+  effect: TaintEffect,
+  key: String,
+  timeAdded: Option DateTime = None,
+  value: Option String = None
+)
+type k8s/core/v1.TaintEffect = NoExecute | NoSchedule | PreferNoSchedule
+type k8s/core/v1.Toleration(
+  effect: Option TaintEffect = None,
+  key: Option String = None,
+  operator: Option TolerationOperator = None,
+  tolerationSeconds: Option Int = None,
+  value: Option String = None
+)
+type k8s/core/v1.TolerationOperator = Equal | Exists | Gt | Lt
+type k8s/core/v1.TopologySelectorLabelRequirement(key: String, values: List String)
+type k8s/core/v1.TopologySelectorTerm(
+  matchLabelExpressions: Option (List TopologySelectorLabelRequirement) = None
+)
+type k8s/core/v1.TopologySpreadConstraint(
+  labelSelector: Option meta_v1.LabelSelector = None,
+  matchLabelKeys: Option (List String) = None,
+  maxSkew: Int,
+  minDomains: Option Int = None,
+  nodeAffinityPolicy: Option TopologySpreadConstraintNodeAffinityPolicy = None,
+  nodeTaintsPolicy: Option TopologySpreadConstraintNodeAffinityPolicy = None,
+  topologyKey: String,
+  whenUnsatisfiable: TopologySpreadConstraintWhenUnsatisfiable
+)
+type k8s/core/v1.TopologySpreadConstraintNodeAffinityPolicy = Honor | Ignore
+type k8s/core/v1.TopologySpreadConstraintWhenUnsatisfiable = DoNotSchedule | ScheduleAnyway
+type k8s/core/v1.TypedLocalObjectReference(apiGroup: Option String = None, kind: String, name: String)
+type k8s/core/v1.TypedObjectReference(
+  apiGroup: Option String = None,
+  kind: String,
+  name: String,
+  namespace: Option String = None
+)
+type k8s/core/v1.Volume(
+  awsElasticBlockStore: Option AWSElasticBlockStoreVolumeSource = None,
+  azureDisk: Option AzureDiskVolumeSource = None,
+  azureFile: Option AzureFileVolumeSource = None,
+  cephfs: Option CephFSVolumeSource = None,
+  cinder: Option CinderVolumeSource = None,
+  configMap: Option ConfigMapVolumeSource = None,
+  csi: Option CSIVolumeSource = None,
+  downwardAPI: Option DownwardAPIVolumeSource = None,
+  emptyDir: Option EmptyDirVolumeSource = None,
+  ephemeral: Option EphemeralVolumeSource = None,
+  fc: Option FCVolumeSource = None,
+  flexVolume: Option FlexVolumeSource = None,
+  flocker: Option FlockerVolumeSource = None,
+  gcePersistentDisk: Option GCEPersistentDiskVolumeSource = None,
+  gitRepo: Option GitRepoVolumeSource = None,
+  glusterfs: Option GlusterfsVolumeSource = None,
+  hostPath: Option HostPathVolumeSource = None,
+  image: Option ImageVolumeSource = None,
+  iscsi: Option ISCSIVolumeSource = None,
+  name: String,
+  nfs: Option NFSVolumeSource = None,
+  persistentVolumeClaim: Option PersistentVolumeClaimVolumeSource = None,
+  photonPersistentDisk: Option PhotonPersistentDiskVolumeSource = None,
+  portworxVolume: Option PortworxVolumeSource = None,
+  projected: Option ProjectedVolumeSource = None,
+  quobyte: Option QuobyteVolumeSource = None,
+  rbd: Option RBDVolumeSource = None,
+  scaleIO: Option ScaleIOVolumeSource = None,
+  secret: Option SecretVolumeSource = None,
+  storageos: Option StorageOSVolumeSource = None,
+  vsphereVolume: Option VsphereVirtualDiskVolumeSource = None
+)
+type k8s/core/v1.VolumeDevice(devicePath: String, name: String)
+type k8s/core/v1.VolumeHealthCondition(
+  message: Option String = None,
+  reason: String,
+  status: VolumeHealthConditionStatus
+)
+type k8s/core/v1.VolumeHealthConditionStatus = DataLoss | Degraded | Inaccessible
+type k8s/core/v1.VolumeHealthStatus(
+  healthConditions: Option (List VolumeHealthCondition) = None,
+  lastTransitionTime: Option DateTime = None
+)
+type k8s/core/v1.VolumeMount(
+  bindMountOptions: Option (List String) = None,
+  mountPath: String,
+  mountPropagation: Option String = None,
+  name: String,
+  readOnly: Option Bool = None,
+  recursiveReadOnly: Option String = None,
+  subPath: Option String = None,
+  subPathExpr: Option String = None
+)
+type k8s/core/v1.VolumeMountStatus(
+  mountPath: String,
+  name: String,
+  readOnly: Option Bool = None,
+  recursiveReadOnly: Option String = None,
+  volumeStatus: Option VolumeStatus = None
+)
+type k8s/core/v1.VolumeNodeAffinity(required: Option NodeSelector = None)
+type k8s/core/v1.VolumeProjection(
+  clusterTrustBundle: Option ClusterTrustBundleProjection = None,
+  configMap: Option ConfigMapProjection = None,
+  downwardAPI: Option DownwardAPIProjection = None,
+  podCertificate: Option PodCertificateProjection = None,
+  secret: Option SecretProjection = None,
+  serviceAccountToken: Option ServiceAccountTokenProjection = None
+)
+type k8s/core/v1.VolumeResourceRequirements(
+  limits: Option (Map plimsoll.Quantity) = None,
+  requests: Option (Map plimsoll.Quantity) = None
+)
+type k8s/core/v1.VolumeStatus(image: Option ImageVolumeStatus = None)
+type k8s/core/v1.VsphereVirtualDiskVolumeSource(
+  fsType: Option String = None,
+  storagePolicyID: Option String = None,
+  storagePolicyName: Option String = None,
+  volumePath: String
+)
+type k8s/core/v1.WeightedPodAffinityTerm(podAffinityTerm: PodAffinityTerm, weight: Int)
+type k8s/core/v1.WindowsSecurityContextOptions(
+  gmsaCredentialSpec: Option String = None,
+  gmsaCredentialSpecName: Option String = None,
+  hostProcess: Option Bool = None,
+  runAsUserName: Option String = None
+)
+type k8s/discovery/v1.Endpoint(
+  addresses: List String,
+  conditions: Option EndpointConditions = None,
+  deprecatedTopology: Option (Map String) = None,
+  hints: Option EndpointHints = None,
+  hostname: Option String = None,
+  nodeName: Option String = None,
+  targetRef: Option core_v1.ObjectReference = None,
+  zone: Option String = None
+)
+type k8s/discovery/v1.EndpointConditions(
+  ready: Option Bool = None,
+  serving: Option Bool = None,
+  terminating: Option Bool = None
+)
+type k8s/discovery/v1.EndpointHints(
+  forNodes: Option (List ForNode) = None,
+  forZones: Option (List ForZone) = None
+)
+type k8s/discovery/v1.EndpointPort(
+  appProtocol: Option String = None,
+  name: Option String = None,
+  port: Option Int = None,
+  protocol: Option EndpointPortProtocol = None
+)
+type k8s/discovery/v1.EndpointPortProtocol = SCTP | TCP | UDP
+type k8s/discovery/v1.EndpointSlice(
+  addressType: String,
+  apiVersion: String = "discovery.k8s.io/v1",
+  endpoints: Option (List Endpoint) = None,
+  kind: String = "EndpointSlice",
+  metadata: Option meta_v1.ObjectMeta = None,
+  ports: Option (List EndpointPort) = None
+)
+type k8s/discovery/v1.EndpointSliceList(
+  apiVersion: String = "discovery.k8s.io/v1",
+  items: List EndpointSlice,
+  kind: String = "EndpointSliceList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/discovery/v1.ForNode(name: String)
+type k8s/discovery/v1.ForZone(name: String)
+type k8s/events/v1.Event(
+  action: Option String = None,
+  apiVersion: String = "events.k8s.io/v1",
+  deprecatedCount: Option Int = None,
+  deprecatedFirstTimestamp: Option DateTime = None,
+  deprecatedLastTimestamp: Option DateTime = None,
+  deprecatedSource: Option core_v1.EventSource = None,
+  eventTime: DateTime,
+  kind: String = "Event",
+  metadata: Option meta_v1.ObjectMeta = None,
+  note: Option String = None,
+  reason: Option String = None,
+  regarding: Option core_v1.ObjectReference = None,
+  related: Option core_v1.ObjectReference = None,
+  reportingController: Option String = None,
+  reportingInstance: Option String = None,
+  series: Option EventSeries = None,
+  type: Option String = None
+)
+type k8s/events/v1.EventList(
+  apiVersion: String = "events.k8s.io/v1",
+  items: List Event,
+  kind: String = "EventList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/events/v1.EventSeries(count: Int, lastObservedTime: DateTime)
+type k8s/flowcontrol/v1.ExemptPriorityLevelConfiguration(
+  lendablePercent: Option Int = None,
+  nominalConcurrencyShares: Option Int = None
+)
+type k8s/flowcontrol/v1.FlowDistinguisherMethod(type: String)
+type k8s/flowcontrol/v1.FlowSchema(
+  apiVersion: String = "flowcontrol.apiserver.k8s.io/v1",
+  kind: String = "FlowSchema",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: FlowSchemaSpec,
+  status: Option FlowSchemaStatus = None
+)
+type k8s/flowcontrol/v1.FlowSchemaCondition(
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  status: Option String = None,
+  type: String
+)
+type k8s/flowcontrol/v1.FlowSchemaList(
+  apiVersion: String = "flowcontrol.apiserver.k8s.io/v1",
+  items: List FlowSchema,
+  kind: String = "FlowSchemaList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/flowcontrol/v1.FlowSchemaSpec(
+  distinguisherMethod: Option FlowDistinguisherMethod = None,
+  matchingPrecedence: Option Int = None,
+  priorityLevelConfiguration: PriorityLevelConfigurationReference,
+  rules: Option (List PolicyRulesWithSubjects) = None
+)
+type k8s/flowcontrol/v1.FlowSchemaStatus(conditions: Option (List FlowSchemaCondition) = None)
+type k8s/flowcontrol/v1.GroupSubject(name: String)
+type k8s/flowcontrol/v1.LimitResponse(queuing: Option QueuingConfiguration = None, type: String)
+type k8s/flowcontrol/v1.LimitedPriorityLevelConfiguration(
+  borrowingLimitPercent: Option Int = None,
+  lendablePercent: Option Int = None,
+  limitResponse: LimitResponse,
+  nominalConcurrencyShares: Option Int = None
+)
+type k8s/flowcontrol/v1.NonResourcePolicyRule(nonResourceURLs: List String, verbs: List String)
+type k8s/flowcontrol/v1.PolicyRulesWithSubjects(
+  nonResourceRules: Option (List NonResourcePolicyRule) = None,
+  resourceRules: Option (List ResourcePolicyRule) = None,
+  subjects: List Subject
+)
+type k8s/flowcontrol/v1.PriorityLevelConfiguration(
+  apiVersion: String = "flowcontrol.apiserver.k8s.io/v1",
+  kind: String = "PriorityLevelConfiguration",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: PriorityLevelConfigurationSpec,
+  status: Option PriorityLevelConfigurationStatus = None
+)
+type k8s/flowcontrol/v1.PriorityLevelConfigurationCondition(
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  reason: Option String = None,
+  status: Option String = None,
+  type: String
+)
+type k8s/flowcontrol/v1.PriorityLevelConfigurationList(
+  apiVersion: String = "flowcontrol.apiserver.k8s.io/v1",
+  items: List PriorityLevelConfiguration,
+  kind: String = "PriorityLevelConfigurationList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/flowcontrol/v1.PriorityLevelConfigurationReference(name: String)
+type k8s/flowcontrol/v1.PriorityLevelConfigurationSpec(
+  exempt: Option ExemptPriorityLevelConfiguration = None,
+  limited: Option LimitedPriorityLevelConfiguration = None,
+  type: String
+)
+type k8s/flowcontrol/v1.PriorityLevelConfigurationStatus(
+  conditions: Option (List PriorityLevelConfigurationCondition) = None
+)
+type k8s/flowcontrol/v1.QueuingConfiguration(
+  handSize: Option Int = None,
+  queueLengthLimit: Option Int = None,
+  queues: Option Int = None
+)
+type k8s/flowcontrol/v1.ResourcePolicyRule(
+  apiGroups: List String,
+  clusterScope: Option Bool = None,
+  namespaces: Option (List String) = None,
+  resources: List String,
+  verbs: List String
+)
+type k8s/flowcontrol/v1.ServiceAccountSubject(name: String, namespace: String)
+type k8s/flowcontrol/v1.Subject(
+  group: Option GroupSubject = None,
+  kind: String,
+  serviceAccount: Option ServiceAccountSubject = None,
+  user: Option UserSubject = None
+)
+type k8s/flowcontrol/v1.UserSubject(name: String)
+type k8s/meta/v1.APIResource(
+  categories: Option (List String) = None,
+  group: Option String = None,
+  kind: String,
+  name: String,
+  namespaced: Bool,
+  shortNames: Option (List String) = None,
+  singularName: String,
+  storageVersionHash: Option String = None,
+  verbs: List String,
+  version: Option String = None
+)
+type k8s/meta/v1.APIResourceList(
+  apiVersion: String = "v1",
+  groupVersion: String,
+  kind: String = "APIResourceList",
+  resources: List APIResource
+)
+type k8s/meta/v1.Condition(
+  lastTransitionTime: DateTime,
+  message: String,
+  observedGeneration: Option Int = None,
+  reason: String,
+  status: String,
+  type: String
+)
+type k8s/meta/v1.DeleteOptions(
+  apiVersion: Option String = None,
+  dryRun: Option (List String) = None,
+  gracePeriodSeconds: Option Int = None,
+  ignoreStoreReadErrorWithClusterBreakingPotential: Option Bool = None,
+  kind: Option String = None,
+  orphanDependents: Option Bool = None,
+  preconditions: Option Preconditions = None,
+  propagationPolicy: Option String = None
+)
+type k8s/meta/v1.FieldSelectorRequirement(
+  key: String,
+  operator: String,
+  values: Option (List String) = None
+)
+type k8s/meta/v1.GroupResource(group: String, resource: String)
+type k8s/meta/v1.LabelSelector(
+  matchExpressions: Option (List LabelSelectorRequirement) = None,
+  matchLabels: Option (Map String) = None
+)
+type k8s/meta/v1.LabelSelectorRequirement(
+  key: String,
+  operator: String,
+  values: Option (List String) = None
+)
+type k8s/meta/v1.ListMeta(
+  continue: Option String = None,
+  remainingItemCount: Option Int = None,
+  resourceVersion: Option String = None,
+  selfLink: Option String = None,
+  shardInfo: Option ShardInfo = None
+)
+type k8s/meta/v1.ManagedFieldsEntry(
+  apiVersion: Option String = None,
+  fieldsType: Option String = None,
+  fieldsV1: Option JSON = None,
+  manager: Option String = None,
+  operation: Option String = None,
+  subresource: Option String = None,
+  time: Option DateTime = None
+)
+type k8s/meta/v1.ObjectMeta(
+  annotations: Option (Map String) = None,
+  creationTimestamp: Option DateTime = None,
+  deletionGracePeriodSeconds: Option Int = None,
+  deletionTimestamp: Option DateTime = None,
+  finalizers: Option (List String) = None,
+  generateName: Option String = None,
+  generation: Option Int = None,
+  labels: Option (Map String) = None,
+  managedFields: Option (List ManagedFieldsEntry) = None,
+  name: Option String = None,
+  namespace: Option String = None,
+  ownerReferences: Option (List OwnerReference) = None,
+  resourceVersion: Option String = None,
+  selfLink: Option String = None,
+  uid: Option String = None
+)
+type k8s/meta/v1.OwnerReference(
+  apiVersion: String,
+  blockOwnerDeletion: Option Bool = None,
+  controller: Option Bool = None,
+  kind: String,
+  name: String,
+  uid: String
+)
+type k8s/meta/v1.Preconditions(resourceVersion: Option String = None, uid: Option String = None)
+type k8s/meta/v1.ShardInfo(selector: String)
+type k8s/meta/v1.Status(
+  apiVersion: String = "v1",
+  code: Option Int = None,
+  details: Option StatusDetails = None,
+  kind: String = "Status",
+  message: Option String = None,
+  metadata: Option ListMeta = None,
+  reason: Option String = None,
+  status: Option String = None
+)
+type k8s/meta/v1.StatusCause(
+  field: Option String = None,
+  message: Option String = None,
+  reason: Option String = None
+)
+type k8s/meta/v1.StatusDetails(
+  causes: Option (List StatusCause) = None,
+  group: Option String = None,
+  kind: Option String = None,
+  name: Option String = None,
+  retryAfterSeconds: Option Int = None,
+  uid: Option String = None
+)
+type k8s/meta/v1.WatchEvent(object: JSON, type: String)
+type k8s/networking/v1.HTTPIngressPath(
+  backend: IngressBackend,
+  path: Option String = None,
+  pathType: HTTPIngressPathPathType
+)
+type k8s/networking/v1.HTTPIngressPathPathType = Exact | ImplementationSpecific | Prefix
+type k8s/networking/v1.HTTPIngressRuleValue(paths: List HTTPIngressPath)
+type k8s/networking/v1.IPAddress(
+  apiVersion: String = "networking.k8s.io/v1",
+  kind: String = "IPAddress",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: IPAddressSpec
+)
+type k8s/networking/v1.IPAddressList(
+  apiVersion: String = "networking.k8s.io/v1",
+  items: List IPAddress,
+  kind: String = "IPAddressList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/networking/v1.IPAddressSpec(parentRef: ParentReference)
+type k8s/networking/v1.IPBlock(cidr: String, except: Option (List String) = None)
+type k8s/networking/v1.Ingress(
+  apiVersion: String = "networking.k8s.io/v1",
+  kind: String = "Ingress",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option IngressSpec = None,
+  status: Option IngressStatus = None
+)
+type k8s/networking/v1.IngressBackend(
+  resource: Option core_v1.TypedLocalObjectReference = None,
+  service: Option IngressServiceBackend = None
+)
+type k8s/networking/v1.IngressClass(
+  apiVersion: String = "networking.k8s.io/v1",
+  kind: String = "IngressClass",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option IngressClassSpec = None
+)
+type k8s/networking/v1.IngressClassList(
+  apiVersion: String = "networking.k8s.io/v1",
+  items: List IngressClass,
+  kind: String = "IngressClassList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/networking/v1.IngressClassParametersReference(
+  apiGroup: Option String = None,
+  kind: String,
+  name: String,
+  namespace: Option String = None,
+  scope: Option String = None
+)
+type k8s/networking/v1.IngressClassSpec(
+  controller: Option String = None,
+  parameters: Option IngressClassParametersReference = None
+)
+type k8s/networking/v1.IngressList(
+  apiVersion: String = "networking.k8s.io/v1",
+  items: List Ingress,
+  kind: String = "IngressList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/networking/v1.IngressLoadBalancerIngress(
+  hostname: Option String = None,
+  ip: Option String = None,
+  ports: Option (List IngressPortStatus) = None
+)
+type k8s/networking/v1.IngressLoadBalancerStatus(ingress: Option (List IngressLoadBalancerIngress) = None)
+type k8s/networking/v1.IngressPortStatus(
+  error: Option String = None,
+  port: Int,
+  protocol: IngressPortStatusProtocol
+)
+type k8s/networking/v1.IngressPortStatusProtocol = SCTP | TCP | UDP
+type k8s/networking/v1.IngressRule(host: Option String = None, http: Option HTTPIngressRuleValue = None)
+type k8s/networking/v1.IngressServiceBackend(name: String, port: Option ServiceBackendPort = None)
+type k8s/networking/v1.IngressSpec(
+  defaultBackend: Option IngressBackend = None,
+  ingressClassName: Option String = None,
+  rules: Option (List IngressRule) = None,
+  tls: Option (List IngressTLS) = None
+)
+type k8s/networking/v1.IngressStatus(loadBalancer: Option IngressLoadBalancerStatus = None)
+type k8s/networking/v1.IngressTLS(hosts: Option (List String) = None, secretName: Option String = None)
+type k8s/networking/v1.NetworkPolicy(
+  apiVersion: String = "networking.k8s.io/v1",
+  kind: String = "NetworkPolicy",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option NetworkPolicySpec = None
+)
+type k8s/networking/v1.NetworkPolicyEgressRule(
+  ports: Option (List NetworkPolicyPort) = None,
+  to: Option (List NetworkPolicyPeer) = None
+)
+type k8s/networking/v1.NetworkPolicyIngressRule(
+  from: Option (List NetworkPolicyPeer) = None,
+  ports: Option (List NetworkPolicyPort) = None
+)
+type k8s/networking/v1.NetworkPolicyList(
+  apiVersion: String = "networking.k8s.io/v1",
+  items: List NetworkPolicy,
+  kind: String = "NetworkPolicyList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/networking/v1.NetworkPolicyPeer(
+  ipBlock: Option IPBlock = None,
+  namespaceSelector: Option meta_v1.LabelSelector = None,
+  podSelector: Option meta_v1.LabelSelector = None
+)
+type k8s/networking/v1.NetworkPolicyPort(
+  endPort: Option Int = None,
+  port: Option plimsoll.IntOrString = None,
+  protocol: Option IngressPortStatusProtocol = None
+)
+type k8s/networking/v1.NetworkPolicySpec(
+  egress: Option (List NetworkPolicyEgressRule) = None,
+  ingress: Option (List NetworkPolicyIngressRule) = None,
+  podSelector: Option meta_v1.LabelSelector = None,
+  policyTypes: Option (List String) = None
+)
+type k8s/networking/v1.ParentReference(
+  group: Option String = None,
+  name: String,
+  namespace: Option String = None,
+  resource: String
+)
+type k8s/networking/v1.ServiceBackendPort(name: Option String = None, number: Option Int = None)
+type k8s/networking/v1.ServiceCIDR(
+  apiVersion: String = "networking.k8s.io/v1",
+  kind: String = "ServiceCIDR",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option ServiceCIDRSpec = None,
+  status: Option ServiceCIDRStatus = None
+)
+type k8s/networking/v1.ServiceCIDRList(
+  apiVersion: String = "networking.k8s.io/v1",
+  items: List ServiceCIDR,
+  kind: String = "ServiceCIDRList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/networking/v1.ServiceCIDRSpec(cidrs: Option (List String) = None)
+type k8s/networking/v1.ServiceCIDRStatus(conditions: Option (List meta_v1.Condition) = None)
+type k8s/node/v1.Overhead(podFixed: Option (Map plimsoll.Quantity) = None)
+type k8s/node/v1.RuntimeClass(
+  apiVersion: String = "node.k8s.io/v1",
+  handler: String,
+  kind: String = "RuntimeClass",
+  metadata: Option meta_v1.ObjectMeta = None,
+  overhead: Option Overhead = None,
+  scheduling: Option Scheduling = None
+)
+type k8s/node/v1.RuntimeClassList(
+  apiVersion: String = "node.k8s.io/v1",
+  items: List RuntimeClass,
+  kind: String = "RuntimeClassList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/node/v1.Scheduling(
+  nodeSelector: Option (Map String) = None,
+  tolerations: Option (List core_v1.Toleration) = None
+)
+type k8s/policy/v1.Eviction(
+  apiVersion: String = "policy/v1",
+  deleteOptions: Option meta_v1.DeleteOptions = None,
+  kind: String = "Eviction",
+  metadata: Option meta_v1.ObjectMeta = None
+)
+type k8s/policy/v1.PodDisruptionBudget(
+  apiVersion: String = "policy/v1",
+  kind: String = "PodDisruptionBudget",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option PodDisruptionBudgetSpec = None,
+  status: Option PodDisruptionBudgetStatus = None
+)
+type k8s/policy/v1.PodDisruptionBudgetList(
+  apiVersion: String = "policy/v1",
+  items: List PodDisruptionBudget,
+  kind: String = "PodDisruptionBudgetList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/policy/v1.PodDisruptionBudgetSpec(
+  maxUnavailable: Option plimsoll.IntOrString = None,
+  minAvailable: Option plimsoll.IntOrString = None,
+  selector: Option meta_v1.LabelSelector = None,
+  unhealthyPodEvictionPolicy: Option PodDisruptionBudgetSpecUnhealthyPodEvictionPolicy = None
+)
+type k8s/policy/v1.PodDisruptionBudgetSpecUnhealthyPodEvictionPolicy = AlwaysAllow | IfHealthyBudget
+type k8s/policy/v1.PodDisruptionBudgetStatus(
+  conditions: Option (List meta_v1.Condition) = None,
+  currentHealthy: Option Int = None,
+  desiredHealthy: Option Int = None,
+  disruptedPods: Option (Map DateTime) = None,
+  disruptionsAllowed: Option Int = None,
+  expectedPods: Option Int = None,
+  observedGeneration: Option Int = None
+)
+type k8s/rbac/v1.AggregationRule(clusterRoleSelectors: Option (List meta_v1.LabelSelector) = None)
+type k8s/rbac/v1.ClusterRole(
+  aggregationRule: Option AggregationRule = None,
+  apiVersion: String = "rbac.authorization.k8s.io/v1",
+  kind: String = "ClusterRole",
+  metadata: Option meta_v1.ObjectMeta = None,
+  rules: Option (List PolicyRule) = None
+)
+type k8s/rbac/v1.ClusterRoleBinding(
+  apiVersion: String = "rbac.authorization.k8s.io/v1",
+  kind: String = "ClusterRoleBinding",
+  metadata: Option meta_v1.ObjectMeta = None,
+  roleRef: RoleRef,
+  subjects: Option (List Subject) = None
+)
+type k8s/rbac/v1.ClusterRoleBindingList(
+  apiVersion: String = "rbac.authorization.k8s.io/v1",
+  items: List ClusterRoleBinding,
+  kind: String = "ClusterRoleBindingList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/rbac/v1.ClusterRoleList(
+  apiVersion: String = "rbac.authorization.k8s.io/v1",
+  items: List ClusterRole,
+  kind: String = "ClusterRoleList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/rbac/v1.PolicyRule(
+  apiGroups: Option (List String) = None,
+  nonResourceURLs: Option (List String) = None,
+  resourceNames: Option (List String) = None,
+  resources: Option (List String) = None,
+  verbs: List String
+)
+type k8s/rbac/v1.Role(
+  apiVersion: String = "rbac.authorization.k8s.io/v1",
+  kind: String = "Role",
+  metadata: Option meta_v1.ObjectMeta = None,
+  rules: Option (List PolicyRule) = None
+)
+type k8s/rbac/v1.RoleBinding(
+  apiVersion: String = "rbac.authorization.k8s.io/v1",
+  kind: String = "RoleBinding",
+  metadata: Option meta_v1.ObjectMeta = None,
+  roleRef: RoleRef,
+  subjects: Option (List Subject) = None
+)
+type k8s/rbac/v1.RoleBindingList(
+  apiVersion: String = "rbac.authorization.k8s.io/v1",
+  items: List RoleBinding,
+  kind: String = "RoleBindingList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/rbac/v1.RoleList(
+  apiVersion: String = "rbac.authorization.k8s.io/v1",
+  items: List Role,
+  kind: String = "RoleList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/rbac/v1.RoleRef(apiGroup: Option String = None, kind: String, name: String)
+type k8s/rbac/v1.Subject(
+  apiGroup: Option String = None,
+  kind: String,
+  name: String,
+  namespace: Option String = None
+)
+type k8s/resource/v1.AllocatedDeviceStatus(
+  conditions: Option (List meta_v1.Condition) = None,
+  data: Option JSON = None,
+  device: String,
+  driver: String,
+  networkData: Option NetworkDeviceData = None,
+  pool: String,
+  shareID: Option String = None
+)
+type k8s/resource/v1.AllocationResult(
+  allocationTimestamp: Option DateTime = None,
+  devices: Option DeviceAllocationResult = None,
+  nodeSelector: Option core_v1.NodeSelector = None
+)
+type k8s/resource/v1.CELDeviceSelector(expression: String)
+type k8s/resource/v1.CapacityRequestPolicy(
+  default: Option plimsoll.Quantity = None,
+  validRange: Option CapacityRequestPolicyRange = None,
+  validValues: Option (List plimsoll.Quantity) = None
+)
+type k8s/resource/v1.CapacityRequestPolicyRange(
+  max: Option plimsoll.Quantity = None,
+  min: plimsoll.Quantity,
+  step: Option plimsoll.Quantity = None
+)
+type k8s/resource/v1.CapacityRequirements(requests: Option (Map plimsoll.Quantity) = None)
+type k8s/resource/v1.Counter(value: plimsoll.Quantity)
+type k8s/resource/v1.CounterSet(counters: Map Counter, name: String)
+type k8s/resource/v1.Device(
+  allNodes: Option Bool = None,
+  allowMultipleAllocations: Option Bool = None,
+  attributes: Option (Map DeviceAttribute) = None,
+  bindingConditions: Option (List String) = None,
+  bindingFailureConditions: Option (List String) = None,
+  bindsToNode: Option Bool = None,
+  capacity: Option (Map DeviceCapacity) = None,
+  consumesCounters: Option (List DeviceCounterConsumption) = None,
+  name: String,
+  nodeAllocatableResources: Option (Map NodeAllocatableResource) = None,
+  nodeName: Option String = None,
+  nodeSelector: Option core_v1.NodeSelector = None,
+  taints: Option (List DeviceTaint) = None
+)
+type k8s/resource/v1.DeviceAllocationConfiguration(
+  opaque: Option OpaqueDeviceConfiguration = None,
+  requests: Option (List String) = None,
+  source: DeviceAllocationConfigurationSource
+)
+type k8s/resource/v1.DeviceAllocationConfigurationSource = FromClaim | FromClass
+type k8s/resource/v1.DeviceAllocationResult(
+  config: Option (List DeviceAllocationConfiguration) = None,
+  results: Option (List DeviceRequestAllocationResult) = None
+)
+type k8s/resource/v1.DeviceAttribute(
+  bool: Option Bool = None,
+  bools: Option (List Bool) = None,
+  int: Option Int = None,
+  ints: Option (List Int) = None,
+  string: Option String = None,
+  strings: Option (List String) = None,
+  version: Option String = None,
+  versions: Option (List String) = None
+)
+type k8s/resource/v1.DeviceCapacity(
+  requestPolicy: Option CapacityRequestPolicy = None,
+  value: plimsoll.Quantity
+)
+type k8s/resource/v1.DeviceClaim(
+  config: Option (List DeviceClaimConfiguration) = None,
+  constraints: Option (List DeviceConstraint) = None,
+  requests: Option (List DeviceRequest) = None
+)
+type k8s/resource/v1.DeviceClaimConfiguration(
+  opaque: Option OpaqueDeviceConfiguration = None,
+  requests: Option (List String) = None
+)
+type k8s/resource/v1.DeviceClass(
+  apiVersion: String = "resource.k8s.io/v1",
+  kind: String = "DeviceClass",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option DeviceClassSpec = None
+)
+type k8s/resource/v1.DeviceClassConfiguration(opaque: Option OpaqueDeviceConfiguration = None)
+type k8s/resource/v1.DeviceClassList(
+  apiVersion: String = "resource.k8s.io/v1",
+  items: List DeviceClass,
+  kind: String = "DeviceClassList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/resource/v1.DeviceClassSpec(
+  config: Option (List DeviceClassConfiguration) = None,
+  extendedResourceName: Option String = None,
+  selectors: Option (List DeviceSelector) = None
+)
+type k8s/resource/v1.DeviceConstraint(
+  distinctAttribute: Option String = None,
+  matchAttribute: Option String = None,
+  requests: Option (List String) = None
+)
+type k8s/resource/v1.DeviceCounterConsumption(
+  compatibilityGroups: Option (List String) = None,
+  counterSet: String,
+  counters: Map Counter
+)
+type k8s/resource/v1.DeviceDerivedAttribute(expression: String, name: String)
+type k8s/resource/v1.DeviceRequest(
+  exactly: Option ExactDeviceRequest = None,
+  firstAvailable: Option (List DeviceSubRequest) = None,
+  name: String
+)
+type k8s/resource/v1.DeviceRequestAllocationResult(
+  adminAccess: Option Bool = None,
+  bindingConditions: Option (List String) = None,
+  bindingFailureConditions: Option (List String) = None,
+  consumedCapacity: Option (Map plimsoll.Quantity) = None,
+  device: String,
+  driver: String,
+  pool: String,
+  request: String,
+  shareID: Option String = None,
+  skipNodeOperations: Option (List String) = None,
+  tolerations: Option (List DeviceToleration) = None
+)
+type k8s/resource/v1.DeviceSelector(cel: Option CELDeviceSelector = None)
+type k8s/resource/v1.DeviceSubRequest(
+  allocationMode: Option DeviceSubRequestAllocationMode = None,
+  capacity: Option CapacityRequirements = None,
+  count: Option Int = None,
+  derivedAttributes: Option (List DeviceDerivedAttribute) = None,
+  deviceClassName: String,
+  name: String,
+  selectors: Option (List DeviceSelector) = None,
+  tolerations: Option (List DeviceToleration) = None
+)
+type k8s/resource/v1.DeviceSubRequestAllocationMode = All | ExactCount
+type k8s/resource/v1.DeviceTaint(
+  effect: String,
+  key: String,
+  timeAdded: Option DateTime = None,
+  value: Option String = None
+)
+type k8s/resource/v1.DeviceTaintRule(
+  apiVersion: String = "resource.k8s.io/v1",
+  kind: String = "DeviceTaintRule",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: DeviceTaintRuleSpec,
+  status: Option DeviceTaintRuleStatus = None
+)
+type k8s/resource/v1.DeviceTaintRuleList(
+  apiVersion: String = "resource.k8s.io/v1",
+  items: List DeviceTaintRule,
+  kind: String = "DeviceTaintRuleList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/resource/v1.DeviceTaintRuleSpec(
+  deviceSelector: Option DeviceTaintSelector = None,
+  taint: DeviceTaint
+)
+type k8s/resource/v1.DeviceTaintRuleStatus(conditions: Option (List meta_v1.Condition) = None)
+type k8s/resource/v1.DeviceTaintSelector(
+  device: Option String = None,
+  driver: Option String = None,
+  pool: Option String = None
+)
+type k8s/resource/v1.DeviceToleration(
+  effect: Option String = None,
+  key: Option String = None,
+  operator: Option DeviceTolerationOperator = None,
+  tolerationSeconds: Option Int = None,
+  value: Option String = None
+)
+type k8s/resource/v1.DeviceTolerationOperator = Equal | Exists
+type k8s/resource/v1.ExactDeviceRequest(
+  adminAccess: Option Bool = None,
+  allocationMode: Option DeviceSubRequestAllocationMode = None,
+  capacity: Option CapacityRequirements = None,
+  count: Option Int = None,
+  derivedAttributes: Option (List DeviceDerivedAttribute) = None,
+  deviceClassName: String,
+  selectors: Option (List DeviceSelector) = None,
+  tolerations: Option (List DeviceToleration) = None
+)
+type k8s/resource/v1.NetworkDeviceData(
+  hardwareAddress: Option String = None,
+  interfaceName: Option String = None,
+  ips: Option (List String) = None
+)
+type k8s/resource/v1.NodeAllocatableMapping(
+  capacityKey: Option String = None,
+  capacityMultiplier: Option plimsoll.Quantity = None,
+  deviceMultiplier: Option plimsoll.Quantity = None
+)
+type k8s/resource/v1.NodeAllocatableOverhead(
+  perContainer: Option plimsoll.Quantity = None,
+  perPod: Option plimsoll.Quantity = None
+)
+type k8s/resource/v1.NodeAllocatableResource(
+  mapping: Option NodeAllocatableMapping = None,
+  overhead: Option NodeAllocatableOverhead = None
+)
+type k8s/resource/v1.OpaqueDeviceConfiguration(driver: String, parameters: JSON)
+type k8s/resource/v1.ResourceClaim(
+  apiVersion: String = "resource.k8s.io/v1",
+  kind: String = "ResourceClaim",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option ResourceClaimSpec = None,
+  status: Option ResourceClaimStatus = None
+)
+type k8s/resource/v1.ResourceClaimConsumerReference(
+  apiGroup: Option String = None,
+  name: String,
+  resource: String,
+  uid: String
+)
+type k8s/resource/v1.ResourceClaimList(
+  apiVersion: String = "resource.k8s.io/v1",
+  items: List ResourceClaim,
+  kind: String = "ResourceClaimList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/resource/v1.ResourceClaimSpec(devices: Option DeviceClaim = None)
+type k8s/resource/v1.ResourceClaimStatus(
+  allocation: Option AllocationResult = None,
+  devices: Option (List AllocatedDeviceStatus) = None,
+  reservedFor: Option (List ResourceClaimConsumerReference) = None
+)
+type k8s/resource/v1.ResourceClaimTemplate(
+  apiVersion: String = "resource.k8s.io/v1",
+  kind: String = "ResourceClaimTemplate",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option ResourceClaimTemplateSpec = None
+)
+type k8s/resource/v1.ResourceClaimTemplateList(
+  apiVersion: String = "resource.k8s.io/v1",
+  items: List ResourceClaimTemplate,
+  kind: String = "ResourceClaimTemplateList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/resource/v1.ResourceClaimTemplateSpec(
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option ResourceClaimSpec = None
+)
+type k8s/resource/v1.ResourcePool(generation: Int, name: String, resourceSliceCount: Int)
+type k8s/resource/v1.ResourceSlice(
+  apiVersion: String = "resource.k8s.io/v1",
+  kind: String = "ResourceSlice",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: ResourceSliceSpec
+)
+type k8s/resource/v1.ResourceSliceList(
+  apiVersion: String = "resource.k8s.io/v1",
+  items: List ResourceSlice,
+  kind: String = "ResourceSliceList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/resource/v1.ResourceSliceSpec(
+  allNodes: Option Bool = None,
+  devices: Option (List Device) = None,
+  driver: String,
+  nodeName: Option String = None,
+  nodeSelector: Option core_v1.NodeSelector = None,
+  partitionTypeAttribute: Option String = None,
+  perDeviceNodeSelection: Option Bool = None,
+  pool: ResourcePool,
+  sharedCounters: Option (List CounterSet) = None,
+  skipNodeOperations: Option (List String) = None
+)
+type k8s/scheduling/v1.PriorityClass(
+  apiVersion: String = "scheduling.k8s.io/v1",
+  description: Option String = None,
+  globalDefault: Option Bool = None,
+  kind: String = "PriorityClass",
+  metadata: Option meta_v1.ObjectMeta = None,
+  preemptionPolicy: Option PriorityClassPreemptionPolicy = None,
+  value: Option Int = None
+)
+type k8s/scheduling/v1.PriorityClassList(
+  apiVersion: String = "scheduling.k8s.io/v1",
+  items: List PriorityClass,
+  kind: String = "PriorityClassList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/scheduling/v1.PriorityClassPreemptionPolicy = Never | PreemptLowerPriority
+type k8s/scheduling/v1alpha3.TopologyConstraint(key: String)
+type k8s/scheduling/v1alpha3.WorkloadPodGroupDisruptionMode(all: Option JSON = None, single: Option JSON = None)
+type k8s/scheduling/v1alpha3.WorkloadPodGroupGangSchedulingPolicy(minCount: Option Int = None)
+type k8s/scheduling/v1alpha3.WorkloadPodGroupResourceClaim(
+  name: String,
+  resourceClaimName: Option String = None,
+  resourceClaimTemplateName: Option String = None
+)
+type k8s/scheduling/v1alpha3.WorkloadPodGroupSchedulingConstraints(
+  topology: Option (List TopologyConstraint) = None
+)
+type k8s/scheduling/v1alpha3.WorkloadPodGroupSchedulingPolicy(
+  basic: Option JSON = None,
+  gang: Option WorkloadPodGroupGangSchedulingPolicy = None
+)
+type k8s/storage/v1.CSIDriver(
+  apiVersion: String = "storage.k8s.io/v1",
+  kind: String = "CSIDriver",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: CSIDriverSpec
+)
+type k8s/storage/v1.CSIDriverList(
+  apiVersion: String = "storage.k8s.io/v1",
+  items: List CSIDriver,
+  kind: String = "CSIDriverList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/storage/v1.CSIDriverSpec(
+  attachRequired: Option Bool = None,
+  fsGroupPolicy: Option String = None,
+  nodeAllocatableUpdatePeriodSeconds: Option Int = None,
+  podInfoOnMount: Option Bool = None,
+  preventPodSchedulingIfMissing: Option Bool = None,
+  requiresRepublish: Option Bool = None,
+  seLinuxMount: Option Bool = None,
+  serviceAccountTokenInSecrets: Option Bool = None,
+  storageCapacity: Option Bool = None,
+  tokenRequests: Option (List TokenRequest) = None,
+  volumeLifecycleModes: Option (List String) = None
+)
+type k8s/storage/v1.CSINode(
+  apiVersion: String = "storage.k8s.io/v1",
+  kind: String = "CSINode",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: CSINodeSpec,
+  status: Option CSINodeStatus = None
+)
+type k8s/storage/v1.CSINodeDriver(
+  allocatable: Option VolumeNodeResources = None,
+  name: String,
+  nodeID: String,
+  topologyKeys: Option (List String) = None
+)
+type k8s/storage/v1.CSINodeList(
+  apiVersion: String = "storage.k8s.io/v1",
+  items: List CSINode,
+  kind: String = "CSINodeList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/storage/v1.CSINodeSpec(drivers: List CSINodeDriver)
+type k8s/storage/v1.CSINodeStatus(storageHealth: Option (List StorageHealth) = None)
+type k8s/storage/v1.CSIStorageCapacity(
+  apiVersion: String = "storage.k8s.io/v1",
+  capacity: Option plimsoll.Quantity = None,
+  kind: String = "CSIStorageCapacity",
+  maximumVolumeSize: Option plimsoll.Quantity = None,
+  metadata: Option meta_v1.ObjectMeta = None,
+  nodeTopology: Option meta_v1.LabelSelector = None,
+  storageClassName: String
+)
+type k8s/storage/v1.CSIStorageCapacityList(
+  apiVersion: String = "storage.k8s.io/v1",
+  items: List CSIStorageCapacity,
+  kind: String = "CSIStorageCapacityList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/storage/v1.StorageClass(
+  allowVolumeExpansion: Option Bool = None,
+  allowedTopologies: Option (List core_v1.TopologySelectorTerm) = None,
+  apiVersion: String = "storage.k8s.io/v1",
+  kind: String = "StorageClass",
+  metadata: Option meta_v1.ObjectMeta = None,
+  mountOptions: Option (List String) = None,
+  parameters: Option (Map String) = None,
+  provisioner: String,
+  reclaimPolicy: Option StorageClassReclaimPolicy = None,
+  volumeBindingMode: Option StorageClassVolumeBindingMode = None
+)
+type k8s/storage/v1.StorageClassList(
+  apiVersion: String = "storage.k8s.io/v1",
+  items: List StorageClass,
+  kind: String = "StorageClassList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/storage/v1.StorageClassReclaimPolicy = Delete | Recycle | Retain
+type k8s/storage/v1.StorageClassVolumeBindingMode = Immediate | WaitForFirstConsumer
+type k8s/storage/v1.StorageHealth(
+  healthConditions: Option (List StorageHealthCondition) = None,
+  name: String
+)
+type k8s/storage/v1.StorageHealthCondition(
+  accessMode: Option StorageHealthConditionAccessMode = None,
+  lastTransitionTime: Option DateTime = None,
+  message: Option String = None,
+  reason: String,
+  status: StorageHealthConditionStatus,
+  volumeMode: Option StorageHealthConditionVolumeMode = None
+)
+type k8s/storage/v1.StorageHealthConditionAccessMode =
+  ReadOnlyMany
+  | ReadWriteMany
+  | ReadWriteOnce
+  | ReadWriteOncePod
+type k8s/storage/v1.StorageHealthConditionStatus = StorageDegraded | StorageUnreachable
+type k8s/storage/v1.StorageHealthConditionVolumeMode = Block | Filesystem
+type k8s/storage/v1.TokenRequest(audience: String, expirationSeconds: Option Int = None)
+type k8s/storage/v1.VolumeAttachment(
+  apiVersion: String = "storage.k8s.io/v1",
+  kind: String = "VolumeAttachment",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: VolumeAttachmentSpec,
+  status: Option VolumeAttachmentStatus = None
+)
+type k8s/storage/v1.VolumeAttachmentList(
+  apiVersion: String = "storage.k8s.io/v1",
+  items: List VolumeAttachment,
+  kind: String = "VolumeAttachmentList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/storage/v1.VolumeAttachmentSource(
+  inlineVolumeSpec: Option core_v1.PersistentVolumeSpec = None,
+  persistentVolumeName: Option String = None
+)
+type k8s/storage/v1.VolumeAttachmentSpec(
+  attacher: String,
+  nodeName: String,
+  source: VolumeAttachmentSource
+)
+type k8s/storage/v1.VolumeAttachmentStatus(
+  attachError: Option VolumeError = None,
+  attached: Bool,
+  attachmentMetadata: Option (Map String) = None,
+  detachError: Option VolumeError = None
+)
+type k8s/storage/v1.VolumeAttributesClass(
+  apiVersion: String = "storage.k8s.io/v1",
+  driverName: String,
+  kind: String = "VolumeAttributesClass",
+  metadata: Option meta_v1.ObjectMeta = None,
+  parameters: Option (Map String) = None
+)
+type k8s/storage/v1.VolumeAttributesClassList(
+  apiVersion: String = "storage.k8s.io/v1",
+  items: List VolumeAttributesClass,
+  kind: String = "VolumeAttributesClassList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/storage/v1.VolumeError(
+  errorCode: Option Int = None,
+  message: Option String = None,
+  time: Option DateTime = None
+)
+type k8s/storage/v1.VolumeNodeResources(count: Option Int = None)
+type k8s/storagemigration/v1.StorageVersionMigration(
+  apiVersion: String = "storagemigration.k8s.io/v1",
+  kind: String = "StorageVersionMigration",
+  metadata: Option meta_v1.ObjectMeta = None,
+  spec: Option StorageVersionMigrationSpec = None,
+  status: Option StorageVersionMigrationStatus = None
+)
+type k8s/storagemigration/v1.StorageVersionMigrationList(
+  apiVersion: String = "storagemigration.k8s.io/v1",
+  items: List StorageVersionMigration,
+  kind: String = "StorageVersionMigrationList",
+  metadata: Option meta_v1.ListMeta = None
+)
+type k8s/storagemigration/v1.StorageVersionMigrationSpec(resource: meta_v1.GroupResource)
+type k8s/storagemigration/v1.StorageVersionMigrationStatus(
+  conditions: Option (List meta_v1.Condition) = None,
+  resourceVersion: Option String = None
+)
+type plimsoll.IntOrString = I Int | S String
+type plimsoll.Quantity = String
+
+app.apply!     : App -> List String ! {Raise, Shell}
+app.container  : App -> Container
+app.deployment : App -> Deployment
+app.env_vars   : App -> Option (List EnvVar)
+app.labels     : App -> Map String
+app.manifest   : App -> String
+app.requests   : App -> Option (Map String)
+app.service    : App -> Service
+cli.broken_scripts! : Unit -> List Diagnostic ! {Raise, Shell}
+cli.bullet          : Diagnostic -> String
+cli.check_one!      : List (String, String) -> List String -> Option String -> Bool ! {FS.Read, IO, Raise, Shell}
+cli.contexts_of     : List String -> Result String (List (Option String))
+cli.fetch!          : Option 'a -> String -> JSON ! {Raise, Shell}
+cli.generate!       : Option 'a -> List String -> Output ! {FS.Read, Raise, Shell}
+cli.group_versions! : Option 'a -> List String ! {Raise, Shell}
+cli.label           : Option String -> String
+cli.main!           : Unit -> Unit ! {FS.Read, FS.Write, IO, Proc, Raise, Shell}
+cli.on_disk!        : Unit -> List (String, String) ! {FS.Read, Raise}
+cli.plimsoll_target : Unit -> String ! {FS.Read}
+cli.raw!            : Option 'a -> 'b -> String ! {Raise, Shell}
+cli.remove_stale!   : List File -> Unit ! {FS.Read, FS.Write, IO, Raise}
+cli.report          : Option String -> Version -> List (Option String, Version) -> List String -> List Diagnostic -> String
+cli.run_check!      : List (Option String) -> Unit ! {FS.Read, IO, Proc, Raise, Shell}
+cli.run_gen!        : List String -> Unit ! {FS.Read, FS.Write, IO, Raise, Shell}
+cli.run_upgrade!    : List (Option String) -> Unit ! {FS.Read, FS.Write, IO, Proc, Raise, Shell}
+cli.sources_in      : List ('a, String) -> List String ! {IO, Proc}
+cli.usage           : String
+cli.version!        : Option 'a -> Version ! {Raise, Shell}
+cli.with_contexts   : List String -> (List (Option String) -> 'a ! 'e) -> 'a ! {IO, Proc | 'e}
+cli.write!          : File -> Unit ! {FS.Write, Raise}
+examples/app.d          : Deployment
+examples/app.deployment : Result String Deployment
+examples/app.service    : Result String Service
+examples/app.settled    : Deployment
+examples/app.web        : App
+examples/deployment.back   : Result String Deployment
+examples/deployment.labels : Map String
+examples/deployment.pull   : Deployment -> Option ContainerImagePullPolicy
+examples/deployment.sent   : String
+examples/deployment.stored : JSON
+examples/deployment.web    : Deployment
+plimsoll.amount     : String -> Result String (Int, Int)
+plimsoll.apply      : ('a -> JSON ! {Raise | 'e}) -> 'a -> Result String String ! {Shell | 'e}
+plimsoll.apply!     : ('a -> JSON ! 'e) -> 'a -> String ! {Raise, Shell | 'e}
+plimsoll.bytes      : String -> Result String Int
+plimsoll.ceil_div   : Int -> Int -> Int
+plimsoll.check      : ('a -> JSON ! {Raise | 'e}) -> 'a -> Result String JSON ! {Shell | 'e}
+plimsoll.check!     : ('a -> JSON ! 'e) -> 'a -> JSON ! {Raise, Shell | 'e}
+plimsoll.delete     : 'a -> 'b -> Result String String ! {Shell}
+plimsoll.delete!    : 'a -> 'b -> String ! {Raise, Shell}
+plimsoll.delete_in  : 'a -> 'b -> 'c -> Result String String ! {Shell}
+plimsoll.delete_in! : 'a -> 'b -> 'c -> String ! {Raise, Shell}
+plimsoll.get        : Decoder 'a -> 'b -> 'c -> Result String 'a ! {Shell}
+plimsoll.get!       : Decoder 'a -> 'b -> 'c -> 'a ! {Raise, Shell}
+plimsoll.get_in     : Decoder 'a -> 'b -> 'c -> 'd -> Result String 'a ! {Shell}
+plimsoll.get_in!    : Decoder 'a -> 'b -> 'c -> 'd -> 'a ! {Raise, Shell}
+plimsoll.list       : Decoder 'a -> 'b -> Result String (List 'a) ! {Shell}
+plimsoll.list!      : Decoder 'a -> 'b -> List 'a ! {Raise, Shell}
+plimsoll.list_in    : Decoder 'a -> 'b -> 'c -> Result String (List 'a) ! {Shell}
+plimsoll.list_in!   : Decoder 'a -> 'b -> 'c -> List 'a ! {Raise, Shell}
+plimsoll.manifest   : ('a -> JSON ! 'e) -> List 'a -> String ! 'e
+plimsoll.millicores : String -> Result String Int
+plimsoll.pow10      : Int -> Int
+plimsoll.scale      : String -> Result String (Int, Int)
+tools/e2e.copy_into!       : Path -> String -> String -> Unit ! {FS.Write, Raise}
+tools/e2e.main!            : Unit -> Unit ! {Clock, FS.Read, FS.Write, IO, Proc, Raise, Shell}
+tools/e2e.sources          : List String
+tools/e2e.wait_for_schema! : Int -> Unit ! {Clock, Raise, Shell}
+tools/e2e.widget!          : Path -> Unit ! {Clock, FS.Write, IO, Raise, Shell}
