@@ -8,10 +8,9 @@ uses {FS.Read, FS.Write, IO, Proc, Shell(kubectl, wand)}
 --
 -- `gen` reads the OpenAPI v3 schema of each group-version from the cluster
 -- that kubectl points at, and writes one wand module per group-version
--- under k8s/. With no group-version, it reads apis/apps/v1. A document
--- holds every definition its kinds name, so k8s/core/v1 and k8s/meta/v1
--- come with apps/v1. Each module's first line names the group-versions it
--- came from.
+-- under k8s/. With no group-version, it reads every one the server lists,
+-- CRDs included. Each module's first line names the group-versions it came
+-- from, and `check` and `upgrade` read those again.
 --
 -- `check` generates again, in memory, from each kubectl context, and
 -- compares with k8s/. It prints what differs, and exits 1 when anything
@@ -27,9 +26,11 @@ import FS
 import IO
 import JSON
 import List
+import Map
 import Option
 import Path
 import Proc
+import Regex
 import Result
 import Shell
 import String
@@ -62,6 +63,18 @@ let raw! ctx path =
 
 -- One group-version's schema, as the API server serves it.
 let fetch! ctx group_version = JSON.parse! (raw! ctx ("/openapi/v3/" ++ group_version))
+
+-- Every group-version the API server serves a schema for: `api/v1`, and
+-- each `apis/<group>/<version>`, CRDs included. The paths that name only a
+-- group, such as `apis/apps`, are left out.
+let group_versions! ctx =
+  JSON.parse! (raw! ctx "/openapi/v3")
+  |> JSON.field! "paths"
+  |> JSON.get_object
+  |> Result.get!
+  |> Map.keys
+  |> List.filter (fn p -> p == "api/v1" || Regex.match? r/^apis\/[^\/]+\/[^\/]+$/ p)
+  |> List.sort
 
 -- The Kubernetes version of a context's API server.
 let version! ctx =
@@ -216,7 +229,7 @@ let with_contexts args k =
 
 let main! () =
   match Proc.args () with
-  | ["gen"] -> run_gen! ["apis/apps/v1"]
+  | ["gen"] -> run_gen! (group_versions! None)
   | ["gen" :: gvs] -> run_gen! gvs
   | ["check" :: rest] -> with_contexts rest run_check!
   | ["upgrade" :: rest] -> with_contexts rest run_upgrade!

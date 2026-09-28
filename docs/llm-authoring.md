@@ -363,3 +363,25 @@ and a CRD from a server-side dry run decoded and encoded with its
 |---|---|---|---|
 | `_gen.wand` | 2 | 0 | 1 |
 | `test_gen.wand` | 1, then 2 runs of `wand s` (2 failures by design, then 0) | 0 | 1 |
+
+## 2026-09-27 — gen reads every group-version
+
+**Task.** `gen` with no group-version reads every one the API server
+lists at `/openapi/v3`, CRDs included. `k8s/` now holds 25 modules
+(956 KB) for Kubernetes v1.37.0. wand 0.89.0.
+
+### Easy
+
+- **The change was one function and one line.** `group_versions!` reads the
+  paths with `Shell.inspect!`, keeps `api/v1` and `apis/<group>/<version>`
+  with one `Regex.match?`, and `gen` calls it. `wand t --fix` added the two
+  imports it named (`Map`, `Regex`).
+- **Nothing else needed a change.** All 25 modules typecheck and are
+  `wand f` fixed points; `check` matched, and the round trip still decoded
+  the server's object.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `cli.wand` | 2 | 2 (imports) | 0 |

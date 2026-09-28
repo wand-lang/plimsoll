@@ -1,0 +1,45 @@
+-- DO NOT EDIT: written by plimsoll gen from api/v1, apis/admissionregistration.k8s.io/v1, apis/apiextensions.k8s.io/v1, apis/apiregistration.k8s.io/v1, apis/apps/v1, apis/authentication.k8s.io/v1, apis/authorization.k8s.io/v1, apis/autoscaling/v1, apis/autoscaling/v2, apis/batch/v1, apis/certificates.k8s.io/v1, apis/coordination.k8s.io/v1, apis/discovery.k8s.io/v1, apis/events.k8s.io/v1, apis/flowcontrol.apiserver.k8s.io/v1, apis/networking.k8s.io/v1, apis/node.k8s.io/v1, apis/policy/v1, apis/rbac.authorization.k8s.io/v1, apis/resource.k8s.io/v1, apis/scheduling.k8s.io/v1, apis/storage.k8s.io/v1, apis/storagemigration.k8s.io/v1
+
+-- TopologyConstraint defines a topology constraint for a PodGroup.
+type TopologyConstraint(
+  -- key specifies the key of the node label representing the topology domain. All pods within the PodGroup must be colocated within the same domain instance. Different PodGroups can land on different domain instances even if they derive from the same PodGroupTemplate. Examples: "topology.kubernetes.io/rack"
+  key: String
+)
+
+-- WorkloadPodGroupDisruptionMode defines how individual pods within a group can be disrupted. Exactly one mode must be set.
+type WorkloadPodGroupDisruptionMode(
+  -- all specifies that all pods in the group must be disrupted together.
+  all: Option JSON = None,
+  -- single specifies that pods can be disrupted independently from each other.
+  single: Option JSON = None
+)
+
+-- WorkloadPodGroupGangSchedulingPolicy defines the parameters for gang (all-or-nothing) scheduling.
+type WorkloadPodGroupGangSchedulingPolicy(
+  -- minCount is the minimum number of pods that must be scheduled at the same time for the scheduler to admit the entire group. This field is optional. If it is not specified, the controller should inject a context-specific sane default (e.g., parallelism for a Job). If set, it must be a positive integer.
+  minCount: Option Int = None
+)
+
+-- WorkloadPodGroupResourceClaim references a dynamic resource claim that is shared across pods in the group.
+type WorkloadPodGroupResourceClaim(
+  -- name uniquely identifies this resource claim inside the group. This field is required. It must be a DNS_LABEL.
+  name: String,
+  -- resourceClaimName is the name of a ResourceClaim object in the same namespace. This field is optional. If it is not specified, no resource claim is used. If set, it must be a DNS subdomain.
+  resourceClaimName: Option String = None,
+  -- resourceClaimTemplateName is the name of a ResourceClaimTemplate object in the same namespace. This field is optional. If it is not specified, no resource claim template is used. If set, it must be a DNS subdomain.
+  resourceClaimTemplateName: Option String = None
+)
+
+-- WorkloadPodGroupSchedulingConstraints defines leaf-level scheduling constraints, such as topology.
+type WorkloadPodGroupSchedulingConstraints(
+  -- topology specifies desired topological placements for all pods within the pod group. If unset, no topology placement is requested.
+  topology: Option (List TopologyConstraint) = None
+)
+
+-- WorkloadPodGroupSchedulingPolicy defines the scheduling policy for a group of pods managed by a workload controller. Exactly one policy must be set.
+type WorkloadPodGroupSchedulingPolicy(
+  -- basic specifies that standard, pod-by-pod Kubernetes scheduling behavior should be used.
+  basic: Option JSON = None,
+  -- gang specifies all-or-nothing scheduling semantics.
+  gang: Option WorkloadPodGroupGangSchedulingPolicy = None
+)

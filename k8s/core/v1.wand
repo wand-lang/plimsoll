@@ -1,4 +1,4 @@
--- DO NOT EDIT: written by plimsoll gen from apis/apps/v1
+-- DO NOT EDIT: written by plimsoll gen from api/v1, apis/admissionregistration.k8s.io/v1, apis/apiextensions.k8s.io/v1, apis/apiregistration.k8s.io/v1, apis/apps/v1, apis/authentication.k8s.io/v1, apis/authorization.k8s.io/v1, apis/autoscaling/v1, apis/autoscaling/v2, apis/batch/v1, apis/certificates.k8s.io/v1, apis/coordination.k8s.io/v1, apis/discovery.k8s.io/v1, apis/events.k8s.io/v1, apis/flowcontrol.apiserver.k8s.io/v1, apis/networking.k8s.io/v1, apis/node.k8s.io/v1, apis/policy/v1, apis/rbac.authorization.k8s.io/v1, apis/resource.k8s.io/v1, apis/scheduling.k8s.io/v1, apis/storage.k8s.io/v1, apis/storagemigration.k8s.io/v1
 
 let meta_v1 = import ../meta/v1
 let plimsoll = import ../../plimsoll
@@ -27,8 +27,14 @@ type HTTPGetActionScheme = HTTP | HTTPS
 -- The values of ModifyVolumeStatus.status.
 type ModifyVolumeStatusStatus = InProgress | Infeasible | Pending
 
+-- The values of NamespaceStatus.phase.
+type NamespaceStatusPhase = Active | Terminating
+
 -- The values of NodeSelectorRequirement.operator.
 type NodeSelectorRequirementOperator = DoesNotExist | Exists | Gt | In | Lt | NotIn
+
+-- The values of NodeStatus.phase.
+type NodeStatusPhase = Pending | Running | Terminated
 
 -- The values of PersistentVolumeClaimSpec.accessModes.
 type PersistentVolumeClaimSpecAccessModes =
@@ -43,6 +49,12 @@ type PersistentVolumeClaimSpecVolumeMode = Block | Filesystem
 -- The values of PersistentVolumeClaimStatus.phase.
 type PersistentVolumeClaimStatusPhase = Bound | Lost | Pending
 
+-- The values of PersistentVolumeSpec.persistentVolumeReclaimPolicy.
+type PersistentVolumeSpecPersistentVolumeReclaimPolicy = Delete | Recycle | Retain
+
+-- The values of PersistentVolumeStatus.phase.
+type PersistentVolumeStatusPhase = Available | Bound | Failed | Pending | Released
+
 -- The values of PodSecurityContext.fsGroupChangePolicy.
 type PodSecurityContextFsGroupChangePolicy = Always | OnRootMismatch
 
@@ -55,11 +67,39 @@ type PodSpecPreemptionPolicy = Never | PreemptLowerPriority
 -- The values of PodSpec.restartPolicy.
 type PodSpecRestartPolicy = Always | Never | OnFailure
 
+-- The values of PodStatus.phase.
+type PodStatusPhase = Failed | Pending | Running | Succeeded | Unknown
+
+-- The values of PodStatus.qosClass.
+type PodStatusQosClass = BestEffort | Burstable | Guaranteed
+
+-- The values of ResourceQuotaSpec.scopes.
+type ResourceQuotaSpecScopes =
+  BestEffort
+  | CrossNamespacePodAffinity
+  | NotBestEffort
+  | NotTerminating
+  | PriorityClass
+  | Terminating
+  | VolumeAttributesClass
+
+-- The values of ScopedResourceSelectorRequirement.operator.
+type ScopedResourceSelectorRequirementOperator = DoesNotExist | Exists | In | NotIn
+
 -- The values of SecurityContext.procMount.
 type SecurityContextProcMount = Default | Unmasked
 
--- The values of Toleration.effect.
-type TolerationEffect = NoExecute | NoSchedule | PreferNoSchedule
+-- The values of ServiceSpec.externalTrafficPolicy.
+type ServiceSpecExternalTrafficPolicy = Cluster | Local
+
+-- The values of ServiceSpec.ipFamilyPolicy.
+type ServiceSpecIpFamilyPolicy = PreferDualStack | RequireDualStack | SingleStack
+
+-- The values of ServiceSpec.type.
+type ServiceSpecType = ClusterIP | ExternalName | LoadBalancer | NodePort
+
+-- The values of Taint.effect.
+type TaintEffect = NoExecute | NoSchedule | PreferNoSchedule
 
 -- The values of Toleration.operator.
 type TolerationOperator = Equal | Exists | Gt | Lt
@@ -103,6 +143,14 @@ type AppArmorProfile(
   type: AppArmorProfileType
 )
 
+-- AttachedVolume describes a volume attached to a node
+type AttachedVolume(
+  -- DevicePath represents the device path where the volume should be available
+  devicePath: String,
+  -- Name of the attached volume
+  name: String
+)
+
 -- AzureDisk represents an Azure Data Disk mount on the host and bind mount to the pod.
 type AzureDiskVolumeSource(
   -- cachingMode is the Host Caching mode: None, Read Only, Read Write.
@@ -130,6 +178,18 @@ type AzureDiskVolumeSource(
 )
 
 -- AzureFile represents an Azure File Service mount on the host and bind mount to the pod.
+type AzureFilePersistentVolumeSource(
+  -- readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.
+  readOnly: Option Bool = None,
+  -- secretName is the name of secret that contains Azure Storage Account Name and Key
+  secretName: String,
+  -- secretNamespace is the namespace of the secret that contains Azure Storage Account Name and Key default is the same as the Pod
+  secretNamespace: Option String = None,
+  -- shareName is the azure Share Name
+  shareName: String
+)
+
+-- AzureFile represents an Azure File Service mount on the host and bind mount to the pod.
 type AzureFileVolumeSource(
   -- readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.
   readOnly: Option Bool = None,
@@ -147,6 +207,12 @@ type Capabilities(
   drop: Option (List String) = None
 )
 
+-- ClientIPConfig represents the configurations of Client IP based session affinity.
+type ClientIPConfig(
+  -- timeoutSeconds specifies the seconds of ClientIP type session sticky time. The value must be >0 && <=86400(for 1 day) if ServiceAffinity == "ClientIP". Default value is 10800(for 3 hours).
+  timeoutSeconds: Option Int = None
+)
+
 -- ClusterTrustBundleProjection describes how to select a set of ClusterTrustBundle objects and project their contents into the pod filesystem.
 type ClusterTrustBundleProjection(
   -- Select all ClusterTrustBundles that match this label selector.  Only has effect if signerName is set.  Mutually-exclusive with name.  If unset, interpreted as "match nothing".  If set but empty, interpreted as "match everything".
@@ -161,6 +227,58 @@ type ClusterTrustBundleProjection(
   signerName: Option String = None,
   -- user is Optional: The owner UID of the created file. If specified, the item-level user field takes precedence over defaultUser. (Alpha) This field requires the AtomicWriteVolumeUserFields feature gate to be enabled.
   user: Option Int = None
+)
+
+-- Information about the condition of a component.
+type ComponentCondition(
+  -- Condition error code for a component. For example, a health check error code.
+  error: Option String = None,
+  -- Message about the condition for a component. For example, information about a health check.
+  message: Option String = None,
+  -- Status of the condition for a component. Valid values for "Healthy": "True", "False", or "Unknown".
+  status: String,
+  -- Type of condition for a component. Valid value: "Healthy"
+  type: String
+)
+
+-- ComponentStatus (and ComponentStatusList) holds the cluster validation info. Deprecated: This API is deprecated in v1.19+
+type ComponentStatus(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- List of component conditions observed
+  conditions: Option (List ComponentCondition) = None,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "ComponentStatus",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None
+)
+
+-- Status of all the conditions for the component as a list of ComponentStatus objects. Deprecated: This API is deprecated in v1.19+
+type ComponentStatusList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- List of ComponentStatus objects.
+  items: List ComponentStatus,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "ComponentStatusList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
+)
+
+-- ConfigMap holds configuration data for pods to consume.
+type ConfigMap(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- BinaryData contains the binary data. Each key must consist of alphanumeric characters, '-', '_' or '.'. BinaryData can contain byte sequences that are not in the UTF-8 range. The keys stored in BinaryData must not overlap with the ones in the Data field, this is enforced during validation process. Using this field will require 1.10+ apiserver and kubelet. Note: BinaryData keys are not currently propagated to container env vars via ConfigMapKeyRef or ConfigMapRef env sources; only Data keys are used.
+  binaryData: Option (Map String) = None,
+  -- Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.
+  data: Option (Map String) = None,
+  -- Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.
+  immutable: Option Bool = None,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "ConfigMap",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None
 )
 
 -- ConfigMapEnvSource selects a ConfigMap to populate the environment variables with.
@@ -181,6 +299,50 @@ type ConfigMapKeySelector(
   name: Option String = None,
   -- Specify whether the ConfigMap or its key must be defined
   optional: Option Bool = None
+)
+
+-- ConfigMapList is a resource containing a list of ConfigMap objects.
+type ConfigMapList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Items is the list of ConfigMaps.
+  items: List ConfigMap,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "ConfigMapList",
+  -- More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ListMeta = None
+)
+
+-- ConfigMapNodeConfigSource contains the information to reference a ConfigMap as a config source for the Node. This API is deprecated since 1.22: https://git.k8s.io/enhancements/keps/sig-node/281-dynamic-kubelet-configuration
+type ConfigMapNodeConfigSource(
+  -- KubeletConfigKey declares which key of the referenced ConfigMap corresponds to the KubeletConfiguration structure This field is required in all cases.
+  kubeletConfigKey: String,
+  -- Name is the metadata.name of the referenced ConfigMap. This field is required in all cases.
+  name: String,
+  -- Namespace is the metadata.namespace of the referenced ConfigMap. This field is required in all cases.
+  namespace: String,
+  -- ResourceVersion is the metadata.ResourceVersion of the referenced ConfigMap. This field is forbidden in Node.Spec, and required in Node.Status.
+  resourceVersion: Option String = None,
+  -- UID is the metadata.UID of the referenced ConfigMap. This field is forbidden in Node.Spec, and required in Node.Status.
+  uid: Option String = None
+)
+
+-- ContainerExtendedResourceRequest has the mapping of container name, extended resource name to the device request name.
+type ContainerExtendedResourceRequest(
+  -- The name of the container requesting resources.
+  containerName: String,
+  -- The name of the request in the special ResourceClaim which corresponds to the extended resource.
+  requestName: String,
+  -- The name of the extended resource in that container which gets backed by DRA.
+  resourceName: String
+)
+
+-- Describe a container image
+type ContainerImage(
+  -- Names by which this image is known. e.g. ["kubernetes.example/hyperkube:v1.0.7", "cloud-vendor.registry.example/cloud-vendor/hyperkube:v1.0.7"]
+  names: Option (List String) = None,
+  -- The size of the image in bytes.
+  sizeBytes: Option Int = None
 )
 
 -- ContainerPort represents a network port in a single container.
@@ -229,6 +391,54 @@ type ContainerRestartRule(
   exitCodes: Option ContainerRestartRuleOnExitCodes = None
 )
 
+-- ContainerStateRunning is a running state of a container.
+type ContainerStateRunning(
+  -- Time at which the container was last (re-)started
+  startedAt: Option DateTime = None
+)
+
+-- ContainerStateTerminated is a terminated state of a container.
+type ContainerStateTerminated(
+  -- Container's ID in the format '<type>://<container_id>'
+  containerID: Option String = None,
+  -- Exit status from the last termination of the container
+  exitCode: Int,
+  -- Time at which the container last terminated
+  finishedAt: Option DateTime = None,
+  -- Message regarding the last termination of the container
+  message: Option String = None,
+  -- (brief) reason from the last termination of the container
+  reason: Option String = None,
+  -- Signal from the last termination of the container
+  signal: Option Int = None,
+  -- Time at which previous execution of the container started
+  startedAt: Option DateTime = None
+)
+
+-- ContainerStateWaiting is a waiting state of a container.
+type ContainerStateWaiting(
+  -- Message regarding why the container is not yet running.
+  message: Option String = None,
+  -- (brief) reason the container is not yet running.
+  reason: Option String = None
+)
+
+-- ContainerState holds a possible state of container. Only one of its members may be specified. If none of them is specified, the default one is ContainerStateWaiting.
+type ContainerState(
+  -- Details about a running container
+  running: Option ContainerStateRunning = None,
+  -- Details about a terminated container
+  terminated: Option ContainerStateTerminated = None,
+  -- Details about a waiting container
+  waiting: Option ContainerStateWaiting = None
+)
+
+-- DaemonEndpoint contains information about a single Daemon endpoint.
+type DaemonEndpoint(
+  -- Port number of the given endpoint.
+  port "Port": Int
+)
+
 -- Represents an empty directory for a pod. Empty directory volumes support ownership management and SELinux relabeling.
 type EmptyDirVolumeSource(
   -- medium represents what type of storage medium should back this directory. The default is "" which means to use the node's default medium. Must be an empty string (default) or Memory. More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir
@@ -237,6 +447,48 @@ type EmptyDirVolumeSource(
   mode: Option Int = None,
   -- sizeLimit is the total amount of local storage required for this EmptyDir volume. The size limit is also applicable for memory medium. The maximum usage on memory medium EmptyDir would be the minimum value between the SizeLimit specified here and the sum of memory limits of all containers in a pod. The default is nil which means that the limit is undefined. More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir
   sizeLimit: Option plimsoll.Quantity = None
+)
+
+-- EndpointPort is a tuple that describes a single port. Deprecated: This API is deprecated in v1.33+.
+type EndpointPort(
+  -- The application protocol for this port. This is used as a hint for implementations to offer richer behavior for protocols that they understand. This field follows standard Kubernetes label syntax. Valid values are either:
+  --
+  -- * Un-prefixed protocol names - reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names).
+  --
+  -- * Kubernetes-defined prefixed names:
+  --   * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior-
+  --   * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455
+  --   * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455
+  --
+  -- * Other protocols should use implementation-defined prefixed names such as mycompany.com/my-custom-protocol.
+  appProtocol: Option String = None,
+  -- The name of this port.  This must match the 'name' field in the corresponding ServicePort. Must be a DNS_LABEL. Optional only if one port is defined.
+  name: Option String = None,
+  -- The port number of the endpoint.
+  port: Int,
+  -- The IP protocol for this port. Must be UDP, TCP, or SCTP. Default is TCP.
+  --
+  -- Possible enum values:
+  --  - `"SCTP"` is the SCTP protocol.
+  --  - `"TCP"` is the TCP protocol.
+  --  - `"UDP"` is the UDP protocol.
+  protocol: Option ContainerPortProtocol = None
+)
+
+-- EventSeries contain information on series of events, i.e. thing that was/is happening continuously for some time.
+type EventSeries(
+  -- Number of occurrences in this series up to the last heartbeat time
+  count: Option Int = None,
+  -- Time of the last occurrence observed
+  lastObservedTime: Option DateTime = None
+)
+
+-- EventSource contains information for an event.
+type EventSource(
+  -- Component from which the event is generated.
+  component: Option String = None,
+  -- Node name on which the event is generated.
+  host: Option String = None
 )
 
 -- EvictionResponder allows you to specify the responder reacting to an Eviction. Responders should observe and communicate through the Eviction Resource API to help with the graceful eviction of a target (e.g. termination of a pod).
@@ -338,6 +590,18 @@ type GitRepoVolumeSource(
 )
 
 -- Represents a Glusterfs mount that lasts the lifetime of a pod. Glusterfs volumes do not support ownership management or SELinux relabeling.
+type GlusterfsPersistentVolumeSource(
+  -- endpoints is the endpoint name that details Glusterfs topology. More info: https://examples.k8s.io/volumes/glusterfs/README.md#create-a-pod
+  endpoints: String,
+  -- endpointsNamespace is the namespace that contains Glusterfs endpoint. If this field is empty, the EndpointNamespace defaults to the same namespace as the bound PVC. More info: https://examples.k8s.io/volumes/glusterfs/README.md#create-a-pod
+  endpointsNamespace: Option String = None,
+  -- path is the Glusterfs volume path. More info: https://examples.k8s.io/volumes/glusterfs/README.md#create-a-pod
+  path: String,
+  -- readOnly here will force the Glusterfs volume to be mounted with read-only permissions. Defaults to false. More info: https://examples.k8s.io/volumes/glusterfs/README.md#create-a-pod
+  readOnly: Option Bool = None
+)
+
+-- Represents a Glusterfs mount that lasts the lifetime of a pod. Glusterfs volumes do not support ownership management or SELinux relabeling.
 type GlusterfsVolumeSource(
   -- endpoints is the endpoint name that details Glusterfs topology.
   endpoints: String,
@@ -387,6 +651,12 @@ type HostAlias(
   ip: String
 )
 
+-- HostIP represents a single IP address allocated to the host.
+type HostIP(
+  -- IP is the IP address assigned to the host
+  ip: String
+)
+
 -- Represents a host path mapped into a pod. Host path volumes do not support ownership management or SELinux relabeling.
 type HostPathVolumeSource(
   -- path of the directory on the host. If the path is a symlink, it will follow the link to the real path. More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath
@@ -416,6 +686,12 @@ type ImageVolumeSource(
   pullPolicy: Option ContainerImagePullPolicy = None,
   -- Required: Image or artifact reference to be used. Behaves in the same way as pod.spec.containers[*].image. Pull secrets will be assembled in the same way as for the container image by looking up node credentials, SA image pull secrets, and pod spec image pull secrets. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.
   reference: Option String = None
+)
+
+-- ImageVolumeStatus represents the image-based volume status.
+type ImageVolumeStatus(
+  -- ImageRef is the digest of the image used for this volume. It should have a value that's similar to the pod's status.containerStatuses[i].imageID. The ImageRef length should not exceed 256 characters.
+  imageRef: String
 )
 
 -- Maps a string key to a path within a volume.
@@ -456,6 +732,68 @@ type ConfigMapVolumeSource(
   name: Option String = None,
   -- optional specify whether the ConfigMap or its keys must be defined
   optional: Option Bool = None
+)
+
+-- LimitRangeItem defines a min/max usage limit for any resource that matches on kind.
+type LimitRangeItem(
+  -- Default resource requirement limit value by resource name if resource limit is omitted.
+  default: Option (Map plimsoll.Quantity) = None,
+  -- DefaultRequest is the default resource requirement request value by resource name if resource request is omitted.
+  defaultRequest: Option (Map plimsoll.Quantity) = None,
+  -- Max usage constraints on this kind by resource name.
+  max: Option (Map plimsoll.Quantity) = None,
+  -- MaxLimitRequestRatio if specified, the named resource must have a request and limit that are both non-zero where limit divided by request is less than or equal to the enumerated value; this represents the max burst for the named resource.
+  maxLimitRequestRatio: Option (Map plimsoll.Quantity) = None,
+  -- Min usage constraints on this kind by resource name.
+  min: Option (Map plimsoll.Quantity) = None,
+  -- Type of resource that this limit applies to.
+  type: String
+)
+
+-- LimitRangeSpec defines a min/max usage limit for resources that match on kind.
+type LimitRangeSpec(
+  -- Limits is the list of LimitRangeItem objects that are enforced.
+  limits: List LimitRangeItem
+)
+
+-- LimitRange sets resource usage limits for each kind of resource in a Namespace.
+type LimitRange(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "LimitRange",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- Spec defines the limits enforced. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  spec: Option LimitRangeSpec = None
+)
+
+-- LimitRangeList is a list of LimitRange items.
+type LimitRangeList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Items is a list of LimitRange objects. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+  items: List LimitRange,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "LimitRangeList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
+)
+
+-- LinuxContainerUser represents user identity information in Linux containers
+type LinuxContainerUser(
+  -- GID is the primary gid initially attached to the first process in the container
+  gid: Int,
+  -- SupplementalGroups are the supplemental groups initially attached to the first process in the container
+  supplementalGroups: Option (List Int) = None,
+  -- UID is the primary uid initially attached to the first process in the container
+  uid: Int
+)
+
+-- ContainerUser represents user identity information
+type ContainerUser(
+  -- Linux holds user identity information initially attached to the first process of the containers in Linux. Note that the actual running identity can be changed if the process has enough privilege to do so.
+  linux: Option LinuxContainerUser = None
 )
 
 -- LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.
@@ -546,6 +884,14 @@ type ISCSIVolumeSource(
   targetPortal: String
 )
 
+-- Local represents directly-attached storage with node affinity
+type LocalVolumeSource(
+  -- fsType is the filesystem type to mount. It applies only when the Path is a block device. Must be a filesystem type supported by the host operating system. Ex. "ext4", "xfs", "ntfs". The default value is to auto-select a filesystem if unspecified.
+  fsType: Option String = None,
+  -- path of the full path to the volume on the node. It can be either a directory or block device (disk, partition, ...).
+  path: String
+)
+
 -- ModifyVolumeStatus represents the status object of ControllerModifyVolume operation
 type ModifyVolumeStatus(
   -- status is the status of the ControllerModifyVolume operation. It can be in any of following states:
@@ -576,6 +922,170 @@ type NFSVolumeSource(
   readOnly: Option Bool = None,
   -- server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs
   server: String
+)
+
+-- NamespaceCondition contains details about state of namespace.
+type NamespaceCondition(
+  -- Last time the condition transitioned from one status to another.
+  lastTransitionTime: Option DateTime = None,
+  -- Human-readable message indicating details about last transition.
+  message: Option String = None,
+  -- Unique, one-word, CamelCase reason for the condition's last transition.
+  reason: Option String = None,
+  -- Status of the condition, one of True, False, Unknown.
+  status: String,
+  -- Type of namespace controller condition.
+  type: String
+)
+
+-- NamespaceSpec describes the attributes on a Namespace.
+type NamespaceSpec(
+  -- Finalizers is an opaque list of values that must be empty to permanently remove object from storage. More info: https://kubernetes.io/docs/tasks/administer-cluster/namespaces/
+  finalizers: Option (List String) = None
+)
+
+-- NamespaceStatus is information about the current status of a Namespace.
+type NamespaceStatus(
+  -- Represents the latest available observations of a namespace's current state.
+  conditions: Option (List NamespaceCondition) = None,
+  -- Phase is the current lifecycle phase of the namespace. More info: https://kubernetes.io/docs/tasks/administer-cluster/namespaces/
+  --
+  -- Possible enum values:
+  --  - `"Active"` means the namespace is available for use in the system
+  --  - `"Terminating"` means the namespace is undergoing graceful termination
+  phase: Option NamespaceStatusPhase = None
+)
+
+-- Namespace provides a scope for Names. Use of multiple namespaces is optional.
+type Namespace(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "Namespace",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- Spec defines the behavior of the Namespace. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  spec: Option NamespaceSpec = None,
+  -- Status describes the current status of a Namespace. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  status: Option NamespaceStatus = None
+)
+
+-- NamespaceList is a list of Namespaces.
+type NamespaceList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Items is the list of Namespace objects in the list. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+  items: List Namespace,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "NamespaceList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
+)
+
+-- NodeAddress contains information for the node's address.
+type NodeAddress(
+  -- The node address.
+  address: String,
+  -- Node address type, one of Hostname, ExternalIP or InternalIP.
+  type: String
+)
+
+-- NodeAllocatableMappedResources describes mapped node allocatable resource allocations.
+type NodeAllocatableMappedResources(
+  -- Name is the name of the resource (e.g., cpu, memory).
+  name: String,
+  -- Quantity is the total node allocatable resource capacity allocated for the claim. This claim's allocated devices is shared by all the containers referencing the claim. Kubelet adds this value to both requests and limits at the pod-level cgroup, and to limits at the container-level cgroup for each container referencing the claim.
+  quantity: plimsoll.Quantity
+)
+
+-- NodeAllocatableOverheadResources describes auxiliary overhead resource allocations.
+type NodeAllocatableOverheadResources(
+  -- Name is the name of the resource (e.g., cpu, memory).
+  name: String,
+  -- PerContainer is the variable overhead quantity applied for each container referencing the claim. The container references are recorded in `nodeAllocatableResourceClaimStatuses.containers`. The total overhead quantity allocated for the claim is computed as: Quantity = PerPod + (PerContainer * NumReferences) Kubelet accounts for this overhead in cgroups: - Pod-level cgroup (requests and limits): Kubelet adds PerPod + (PerContainer * NumReferences). - Container-level cgroup (limits only): Kubelet adds PerPod + PerContainer for each referencing container. This allows any single container to access the pod-level overhead, while the parent cgroup caps the total usage to account for PerPod exactly once. At least one of PerPod or PerContainer must be specified. Specifying neither is an invalid configuration.
+  perContainer: Option plimsoll.Quantity = None,
+  -- PerPod is the flat overhead quantity allocated per pod. Adding to each container limit allows individual containers to utilize the overhead, while the parent pod-level cgroup limit caps the total usage at the pod boundary where the overhead is accounted for exactly once. At least one of PerPod or PerContainer must be specified. Specifying neither is an invalid configuration.
+  perPod: Option plimsoll.Quantity = None
+)
+
+-- NodeAllocatableResourceClaimStatus describes the status of node allocatable resources allocated via DRA.
+type NodeAllocatableResourceClaimStatus(
+  -- Containers lists the names of all containers in this pod that reference the claim.
+  containers: Option (List String) = None,
+  -- Mapping contains allocations through devices mapped in the device spec's `nodeAllocatableResources[...].mapping` field. This is used by kubelet for pod level and container-level cgroup enforcement.
+  mapping: Option (List NodeAllocatableMappedResources) = None,
+  -- Overhead contains allocations through devices mapped in the device spec's `nodeAllocatableResources[...].overhead` field. This is used by kubelet for pod level and container-level cgroup enforcement.
+  overhead: Option (List NodeAllocatableOverheadResources) = None,
+  -- ResourceClaimName is the resource claim referenced by the pod that resulted in this node allocatable resource allocation.
+  resourceClaimName: String
+)
+
+-- NodeCondition contains condition information for a node.
+type NodeCondition(
+  -- Last time we got an update on a given condition.
+  lastHeartbeatTime: Option DateTime = None,
+  -- Last time the condition transit from one status to another.
+  lastTransitionTime: Option DateTime = None,
+  -- Human readable message indicating details about last transition.
+  message: Option String = None,
+  -- (brief) reason for the condition's last transition.
+  reason: Option String = None,
+  -- Status of the condition, one of True, False, Unknown.
+  status: String,
+  -- Type of node condition.
+  type: String
+)
+
+-- NodeConfigSource specifies a source of node configuration. Exactly one subfield (excluding metadata) must be non-nil. This API is deprecated since 1.22
+type NodeConfigSource(
+  -- ConfigMap is a reference to a Node's ConfigMap
+  configMap: Option ConfigMapNodeConfigSource = None
+)
+
+-- NodeConfigStatus describes the status of the config assigned by Node.Spec.ConfigSource.
+type NodeConfigStatus(
+  -- Active reports the checkpointed config the node is actively using. Active will represent either the current version of the Assigned config, or the current LastKnownGood config, depending on whether attempting to use the Assigned config results in an error.
+  active: Option NodeConfigSource = None,
+  -- Assigned reports the checkpointed config the node will try to use. When Node.Spec.ConfigSource is updated, the node checkpoints the associated config payload to local disk, along with a record indicating intended config. The node refers to this record to choose its config checkpoint, and reports this record in Assigned. Assigned only updates in the status after the record has been checkpointed to disk. When the Kubelet is restarted, it tries to make the Assigned config the Active config by loading and validating the checkpointed payload identified by Assigned.
+  assigned: Option NodeConfigSource = None,
+  -- Error describes any problems reconciling the Spec.ConfigSource to the Active config. Errors may occur, for example, attempting to checkpoint Spec.ConfigSource to the local Assigned record, attempting to checkpoint the payload associated with Spec.ConfigSource, attempting to load or validate the Assigned config, etc. Errors may occur at different points while syncing config. Earlier errors (e.g. download or checkpointing errors) will not result in a rollback to LastKnownGood, and may resolve across Kubelet retries. Later errors (e.g. loading or validating a checkpointed config) will result in a rollback to LastKnownGood. In the latter case, it is usually possible to resolve the error by fixing the config assigned in Spec.ConfigSource. You can find additional information for debugging by searching the error message in the Kubelet log. Error is a human-readable description of the error state; machines can check whether or not Error is empty, but should not rely on the stability of the Error text across Kubelet versions.
+  error: Option String = None,
+  -- LastKnownGood reports the checkpointed config the node will fall back to when it encounters an error attempting to use the Assigned config. The Assigned config becomes the LastKnownGood config when the node determines that the Assigned config is stable and correct. This is currently implemented as a 10-minute soak period starting when the local record of Assigned config is updated. If the Assigned config is Active at the end of this period, it becomes the LastKnownGood. Note that if Spec.ConfigSource is reset to nil (use local defaults), the LastKnownGood is also immediately reset to nil, because the local default config is always assumed good. You should not make assumptions about the node's method of determining config stability and correctness, as this may change or become configurable in the future.
+  lastKnownGood: Option NodeConfigSource = None
+)
+
+-- NodeDaemonEndpoints lists ports opened by daemons running on the Node.
+type NodeDaemonEndpoints(
+  -- Endpoint on which Kubelet is listening.
+  kubeletEndpoint: Option DaemonEndpoint = None
+)
+
+-- NodeFeatures describes the set of features implemented by the CRI implementation. The features contained in the NodeFeatures should depend only on the cri implementation independent of runtime handlers.
+type NodeFeatures(
+  -- SupplementalGroupsPolicy is set to true if the runtime supports SupplementalGroupsPolicy and ContainerUser.
+  supplementalGroupsPolicy: Option Bool = None
+)
+
+-- NodePodPreemptionPolicy defines the node-level policies governing preemption for pods on this node.
+type NodePodPreemptionPolicy(
+  -- DisableResizePreemption lists the owners (e.g., autoscalers, operators, administrators) that have requested to disable scheduler and Kubelet preemption for in-place pod resize on this node. If this list is non-empty, resize-induced preemption is disabled on this node. This is an alpha field and requires enabling the InPlacePodVerticalScalingSchedulerPreemption feature gate.
+  disableResizePreemption: Option (List String) = None
+)
+
+-- NodeRuntimeHandlerFeatures is a set of features implemented by the runtime handler.
+type NodeRuntimeHandlerFeatures(
+  -- RecursiveReadOnlyMounts is set to true if the runtime handler supports RecursiveReadOnlyMounts.
+  recursiveReadOnlyMounts: Option Bool = None,
+  -- UserNamespaces is set to true if the runtime handler supports UserNamespaces, including for volumes.
+  userNamespaces: Option Bool = None
+)
+
+-- NodeRuntimeHandler is a set of runtime handler information.
+type NodeRuntimeHandler(
+  -- Supported features.
+  features: Option NodeRuntimeHandlerFeatures = None,
+  -- Runtime handler name. Empty for the default runtime handler.
+  name: Option String = None
 )
 
 -- A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.
@@ -610,12 +1120,237 @@ type NodeSelector(
   nodeSelectorTerms: List NodeSelectorTerm
 )
 
+-- NodeSwapStatus represents swap memory information.
+type NodeSwapStatus(
+  -- Total amount of swap memory in bytes.
+  capacity: Option Int = None
+)
+
+-- NodeSystemInfo is a set of ids/uuids to uniquely identify the node.
+type NodeSystemInfo(
+  -- The Architecture reported by the node
+  architecture: String,
+  -- Boot ID reported by the node.
+  bootID: String,
+  -- ContainerRuntime Version reported by the node through runtime remote API (e.g. containerd://1.4.2).
+  containerRuntimeVersion: String,
+  -- Kernel Version reported by the node from 'uname -r' (e.g. 3.16.0-0.bpo.4-amd64).
+  kernelVersion: String,
+  -- Deprecated: KubeProxy Version reported by the node.
+  kubeProxyVersion: String,
+  -- Kubelet Version reported by the node.
+  kubeletVersion: String,
+  -- MachineID reported by the node. For unique machine identification in the cluster this field is preferred. Learn more from man(5) machine-id: http://man7.org/linux/man-pages/man5/machine-id.5.html
+  machineID: String,
+  -- The Operating System reported by the node
+  operatingSystem: String,
+  -- OS Image reported by the node from /etc/os-release (e.g. Debian GNU/Linux 7 (wheezy)).
+  osImage: String,
+  -- Whether the node is running in a user namespace.
+  runningInUserNamespace: Option Bool = None,
+  -- Swap Info reported by the node.
+  swap: Option NodeSwapStatus = None,
+  -- SystemUUID reported by the node. For unique machine identification MachineID is preferred. This field is specific to Red Hat hosts https://access.redhat.com/documentation/en-us/red_hat_subscription_management/1/html/rhsm/uuid
+  systemUUID: String
+)
+
+-- NodeStatus is information about the current status of a node.
+type NodeStatus(
+  -- List of addresses reachable to the node. Queried from cloud provider, if available. More info: https://kubernetes.io/docs/reference/node/node-status/#addresses Note: This field is declared as mergeable, but the merge key is not sufficiently unique, which can cause data corruption when it is merged. Callers should instead use a full-replacement patch. See https://pr.k8s.io/79391 for an example. Consumers should assume that addresses can change during the lifetime of a Node. However, there are some exceptions where this may not be possible, such as Pods that inherit a Node's address in its own status or consumers of the downward API (status.hostIP).
+  addresses: Option (List NodeAddress) = None,
+  -- Allocatable represents the resources of a node that are available for scheduling. Defaults to Capacity.
+  allocatable: Option (Map plimsoll.Quantity) = None,
+  -- Capacity represents the total resources of a node. More info: https://kubernetes.io/docs/reference/node/node-status/#capacity
+  capacity: Option (Map plimsoll.Quantity) = None,
+  -- Conditions is an array of current observed node conditions. More info: https://kubernetes.io/docs/reference/node/node-status/#condition
+  conditions: Option (List NodeCondition) = None,
+  -- Status of the config assigned to the node via the dynamic Kubelet config feature.
+  config: Option NodeConfigStatus = None,
+  -- Endpoints of daemons running on the Node.
+  daemonEndpoints: Option NodeDaemonEndpoints = None,
+  -- DeclaredFeatures represents the features related to feature gates that are declared by the node.
+  declaredFeatures: Option (List String) = None,
+  -- Features describes the set of features implemented by the CRI implementation.
+  features: Option NodeFeatures = None,
+  -- List of container images on this node
+  images: Option (List ContainerImage) = None,
+  -- Set of ids/uuids to uniquely identify the node. More info: https://kubernetes.io/docs/reference/node/node-status/#info
+  nodeInfo: Option NodeSystemInfo = None,
+  -- NodePhase is the recently observed lifecycle phase of the node. More info: https://kubernetes.io/docs/concepts/nodes/node/#phase The field is never populated, and now is deprecated.
+  --
+  -- Possible enum values:
+  --  - `"Pending"` means the node has been created/added by the system, but not configured.
+  --  - `"Running"` means the node has been configured and has Kubernetes components running.
+  --  - `"Terminated"` means the node has been removed from the cluster.
+  phase: Option NodeStatusPhase = None,
+  -- The available runtime handlers.
+  runtimeHandlers: Option (List NodeRuntimeHandler) = None,
+  -- List of volumes that are attached to the node.
+  volumesAttached: Option (List AttachedVolume) = None,
+  -- List of attachable volumes in use (mounted) by the node.
+  volumesInUse: Option (List String) = None
+)
+
 -- ObjectFieldSelector selects an APIVersioned field of an object.
 type ObjectFieldSelector(
   -- Version of the schema the FieldPath is written in terms of, defaults to "v1".
   apiVersion: Option String = None,
   -- Path of the field to select in the specified API version.
   fieldPath: String
+)
+
+-- ObjectReference contains enough information to let you inspect or modify the referred object.
+type ObjectReference(
+  -- API version of the referent.
+  apiVersion: Option String = None,
+  -- If referring to a piece of an object instead of an entire object, this string should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2]. For example, if the object reference is to a container within a pod, this would take on a value like: "spec.containers{name}" (where "name" refers to the name of the container that triggered the event) or if no container name is specified "spec.containers[2]" (container with index 2 in this pod). This syntax is chosen only to have some well-defined way of referencing a part of an object.
+  fieldPath: Option String = None,
+  -- Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: Option String = None,
+  -- Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+  name: Option String = None,
+  -- Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+  namespace: Option String = None,
+  -- Specific resourceVersion to which this reference is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
+  resourceVersion: Option String = None,
+  -- UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
+  uid: Option String = None
+)
+
+-- Binding ties one object to another; for example, a pod is bound to a node by a scheduler.
+type Binding(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "Binding",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- The target object that you want to bind to the standard object.
+  target: ObjectReference
+)
+
+-- EndpointAddress is a tuple that describes single IP address. Deprecated: This API is deprecated in v1.33+.
+type EndpointAddress(
+  -- The Hostname of this endpoint
+  hostname: Option String = None,
+  -- The IP of this endpoint. May not be loopback (127.0.0.0/8 or ::1), link-local (169.254.0.0/16 or fe80::/10), or link-local multicast (224.0.0.0/24 or ff02::/16).
+  ip: String,
+  -- Optional: Node hosting this endpoint. This can be used to determine endpoints local to a node.
+  nodeName: Option String = None,
+  -- Reference to object providing the endpoint.
+  targetRef: Option ObjectReference = None
+)
+
+-- EndpointSubset is a group of addresses with a common set of ports. The expanded set of endpoints is the Cartesian product of Addresses x Ports. For example, given:
+--
+-- 	{
+-- 	  Addresses: [{"ip": "10.10.1.1"}, {"ip": "10.10.2.2"}],
+-- 	  Ports:     [{"name": "a", "port": 8675}, {"name": "b", "port": 309}]
+-- 	}
+--
+-- The resulting set of endpoints can be viewed as:
+--
+-- 	a: [ 10.10.1.1:8675, 10.10.2.2:8675 ],
+-- 	b: [ 10.10.1.1:309, 10.10.2.2:309 ]
+--
+-- Deprecated: This API is deprecated in v1.33+.
+type EndpointSubset(
+  -- IP addresses which offer the related ports that are marked as ready. These endpoints should be considered safe for load balancers and clients to utilize.
+  addresses: Option (List EndpointAddress) = None,
+  -- IP addresses which offer the related ports but are not currently marked as ready because they have not yet finished starting, have recently failed a readiness check, or have recently failed a liveness check.
+  notReadyAddresses: Option (List EndpointAddress) = None,
+  -- Port numbers available on the related IP addresses.
+  ports: Option (List EndpointPort) = None
+)
+
+-- Endpoints is a collection of endpoints that implement the actual service. Example:
+--
+-- 	 Name: "mysvc",
+-- 	 Subsets: [
+-- 	   {
+-- 	     Addresses: [{"ip": "10.10.1.1"}, {"ip": "10.10.2.2"}],
+-- 	     Ports: [{"name": "a", "port": 8675}, {"name": "b", "port": 309}]
+-- 	   },
+-- 	   {
+-- 	     Addresses: [{"ip": "10.10.3.3"}],
+-- 	     Ports: [{"name": "a", "port": 93}, {"name": "b", "port": 76}]
+-- 	   },
+-- 	]
+--
+-- Endpoints is a legacy API and does not contain information about all Service features. Use discoveryv1.EndpointSlice for complete information about Service endpoints.
+--
+-- Deprecated: This API is deprecated in v1.33+. Use discoveryv1.EndpointSlice.
+type Endpoints(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "Endpoints",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- The set of all endpoints is the union of all subsets. Addresses are placed into subsets according to the IPs they share. A single address with multiple ports, some of which are ready and some of which are not (because they come from different containers) will result in the address being displayed in different subsets for the different ports. No address will appear in both Addresses and NotReadyAddresses in the same subset. Sets of addresses and ports that comprise a service.
+  subsets: Option (List EndpointSubset) = None
+)
+
+-- EndpointsList is a list of endpoints. Deprecated: This API is deprecated in v1.33+.
+type EndpointsList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- List of endpoints.
+  items: List Endpoints,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "EndpointsList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
+)
+
+-- Event is a report of an event somewhere in the cluster.  Events have a limited retention time and triggers and messages may evolve with time.  Event consumers should not rely on the timing of an event with a given Reason reflecting a consistent underlying trigger, or the continued existence of events with that Reason.  Events should be treated as informative, best-effort, supplemental data.
+type Event(
+  -- What action was taken/failed regarding to the Regarding object.
+  action: Option String = None,
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- The number of times this event has occurred.
+  count: Option Int = None,
+  -- Time when this Event was first observed.
+  eventTime: Option DateTime = None,
+  -- The time at which the event was first recorded. (Time of server receipt is in TypeMeta.)
+  firstTimestamp: Option DateTime = None,
+  -- The object that this event is about.
+  involvedObject: ObjectReference,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "Event",
+  -- The time at which the most recent occurrence of this event was recorded.
+  lastTimestamp: Option DateTime = None,
+  -- A human-readable description of the status of this operation.
+  message: Option String = None,
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: meta_v1.ObjectMeta,
+  -- This should be a short, machine understandable string that gives the reason for the transition into the object's current status.
+  reason: Option String = None,
+  -- Optional secondary object for more complex actions.
+  related: Option ObjectReference = None,
+  -- Name of the controller that emitted this Event, e.g. `kubernetes.io/kubelet`.
+  reportingComponent: Option String = None,
+  -- ID of the controller instance, e.g. `kubelet-xyzf`.
+  reportingInstance: Option String = None,
+  -- Data about the Event series this event represents or nil if it's a singleton Event.
+  series: Option EventSeries = None,
+  -- The component reporting this event. Should be a short machine understandable string.
+  source: Option EventSource = None,
+  -- Type of this event (Normal, Warning), new types could be added in the future
+  type: Option String = None
+)
+
+-- EventList is a list of events.
+type EventList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- List of events
+  items: List Event,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "EventList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
 )
 
 -- PersistentVolumeClaimCondition contains details about state of pvc
@@ -640,6 +1375,25 @@ type PersistentVolumeClaimVolumeSource(
   claimName: String,
   -- readOnly Will force the ReadOnly setting in VolumeMounts. Default false.
   readOnly: Option Bool = None
+)
+
+-- PersistentVolumeStatus is the current status of a persistent volume.
+type PersistentVolumeStatus(
+  -- lastPhaseTransitionTime is the time the phase transitioned from one to another and automatically resets to current time everytime a volume phase transitions.
+  lastPhaseTransitionTime: Option DateTime = None,
+  -- message is a human-readable message indicating details about why the volume is in this state.
+  message: Option String = None,
+  -- phase indicates if a volume is available, bound to a claim, or released by a claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#phase
+  --
+  -- Possible enum values:
+  --  - `"Available"` used for PersistentVolumes that are not yet bound Available volumes are held by the binder and matched to PersistentVolumeClaims
+  --  - `"Bound"` used for PersistentVolumes that are bound
+  --  - `"Failed"` used for PersistentVolumes that failed to be correctly recycled or deleted after being released from a claim
+  --  - `"Pending"` used for PersistentVolumes that are not available
+  --  - `"Released"` used for PersistentVolumes where the bound PersistentVolumeClaim was deleted released volumes must be recycled before becoming available again this phase is used by the persistent volume claim binder to signal to another process to reclaim the resource
+  phase: Option PersistentVolumeStatusPhase = None,
+  -- reason is a brief CamelCase string that describes any failure and is meant for machine parsing and tidy display in the CLI.
+  reason: Option String = None
 )
 
 -- Represents a Photon Controller persistent disk resource.
@@ -710,6 +1464,24 @@ type PodCertificateProjection(
   userAnnotations: Option (Map String) = None
 )
 
+-- PodCondition contains details for the current condition of this pod.
+type PodCondition(
+  -- Last time we probed the condition.
+  lastProbeTime: Option DateTime = None,
+  -- Last time the condition transitioned from one status to another.
+  lastTransitionTime: Option DateTime = None,
+  -- Human-readable message indicating details about last transition.
+  message: Option String = None,
+  -- If set, this represents the .metadata.generation that the pod condition was set based upon.
+  observedGeneration: Option Int = None,
+  -- Unique, one-word, CamelCase reason for the condition's last transition.
+  reason: Option String = None,
+  -- Status is the status of the condition. Can be True, False, Unknown. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#pod-conditions
+  status: String,
+  -- Type is the type of the condition. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#pod-conditions
+  type: String
+)
+
 -- PodDNSConfigOption defines DNS resolver options of a pod.
 type PodDNSConfigOption(
   -- Name is this DNS resolver option's name. Required.
@@ -726,6 +1498,20 @@ type PodDNSConfig(
   options: Option (List PodDNSConfigOption) = None,
   -- A list of DNS search domains for host-name lookup. This will be appended to the base search paths generated from DNSPolicy. Duplicated search paths will be removed.
   searches: Option (List String) = None
+)
+
+-- PodExtendedResourceClaimStatus is stored in the PodStatus for the extended resource requests backed by DRA. It stores the generated name for the corresponding special ResourceClaim created by the scheduler.
+type PodExtendedResourceClaimStatus(
+  -- RequestMappings identifies the mapping of <container, extended resource backed by DRA> to  device request in the generated ResourceClaim.
+  requestMappings: List ContainerExtendedResourceRequest,
+  -- ResourceClaimName is the name of the ResourceClaim that was generated for the Pod in the namespace of the Pod.
+  resourceClaimName: String
+)
+
+-- PodIP represents a single IP address allocated to the pod.
+type PodIP(
+  -- IP is the IP address assigned to the pod
+  ip: String
 )
 
 -- PodOS defines the OS parameters of a pod.
@@ -764,6 +1550,18 @@ type PodResourceClaim(
   resourceClaimTemplateName: Option String = None
 )
 
+-- PodResourceClaimStatus is stored in the PodStatus for each PodResourceClaim which references a ResourceClaimTemplate. It stores the generated name for the corresponding ResourceClaim.
+type PodResourceClaimStatus(
+  -- Name uniquely identifies this resource claim inside the pod. This must match the name of an entry in pod.spec.resourceClaims, which implies that the string must be a DNS_LABEL.
+  name: String,
+  -- ResourceClaimName is the name of the ResourceClaim that was generated for the Pod in the namespace of the Pod.
+  --
+  -- When the DRAWorkloadResourceClaims feature is enabled and the corresponding PodResourceClaim matches a PodGroupResourceClaim made by the Pod's PodGroup, then this is the name of the ResourceClaim generated and reserved for the PodGroup.
+  --
+  -- If this is unset, then generating a ResourceClaim was not necessary. The pod.spec.resourceClaims entry can be ignored in this case.
+  resourceClaimName: Option String = None
+)
+
 -- PodSchedulingGate is associated to a Pod to guard its scheduling.
 type PodSchedulingGate(
   -- Name of the scheduling gate. Each scheduling gate must have a unique name field.
@@ -774,6 +1572,42 @@ type PodSchedulingGate(
 type PodSchedulingGroup(
   -- PodGroupName specifies the name of the standalone PodGroup object that represents the runtime instance of this group. Must be a DNS subdomain.
   podGroupName: Option String = None
+)
+
+-- PortStatus represents the error condition of a service port
+type PortStatus(
+  -- Error is to record the problem with the service port The format of the error shall comply with the following rules: - built-in error values shall be specified in this file and those shall use
+  --   CamelCase names
+  -- - cloud provider specific error values must have names that comply with the
+  --   format foo.example.com/CamelCase.
+  error: Option String = None,
+  -- Port is the port number of the service port of which status is recorded here
+  port: Int,
+  -- Protocol is the protocol of the service port of which status is recorded here The supported values are: "TCP", "UDP", "SCTP"
+  --
+  -- Possible enum values:
+  --  - `"SCTP"` is the SCTP protocol.
+  --  - `"TCP"` is the TCP protocol.
+  --  - `"UDP"` is the UDP protocol.
+  protocol: ContainerPortProtocol
+)
+
+-- LoadBalancerIngress represents the status of a load-balancer ingress point: traffic intended for the service should be sent to an ingress point.
+type LoadBalancerIngress(
+  -- Hostname is set for load-balancer ingress points that are DNS based (typically AWS load-balancers)
+  hostname: Option String = None,
+  -- IP is set for load-balancer ingress points that are IP based (typically GCE or OpenStack load-balancers)
+  ip: Option String = None,
+  -- IPMode specifies how the load-balancer IP behaves, and may only be specified when the ip field is specified. Setting this to "VIP" indicates that traffic is delivered to the node with the destination set to the load-balancer's IP and port. Setting this to "Proxy" indicates that traffic is delivered to the node or pod with the destination set to the node's IP and node port or the pod's IP and port. Service implementations may use this information to adjust traffic routing.
+  ipMode: Option String = None,
+  -- Ports is a list of records of service ports If used, every port defined in the service should have an entry in it
+  ports: Option (List PortStatus) = None
+)
+
+-- LoadBalancerStatus represents the status of a load-balancer.
+type LoadBalancerStatus(
+  -- Ingress is a list containing ingress points for the load-balancer. Traffic intended for the service should be sent to these ingress points.
+  ingress: Option (List LoadBalancerIngress) = None
 )
 
 -- PortworxVolumeSource represents a Portworx volume resource.
@@ -838,6 +1672,36 @@ type RBDVolumeSource(
   user: Option String = None
 )
 
+-- ReplicationControllerCondition describes the state of a replication controller at a certain point.
+type ReplicationControllerCondition(
+  -- The last time the condition transitioned from one status to another.
+  lastTransitionTime: Option DateTime = None,
+  -- A human readable message indicating details about the transition.
+  message: Option String = None,
+  -- The reason for the condition's last transition.
+  reason: Option String = None,
+  -- Status of the condition, one of True, False, Unknown.
+  status: String,
+  -- Type of replication controller condition.
+  type: String
+)
+
+-- ReplicationControllerStatus represents the current status of a replication controller.
+type ReplicationControllerStatus(
+  -- The number of available replicas (ready for at least minReadySeconds) for this replication controller.
+  availableReplicas: Option Int = None,
+  -- Represents the latest available observations of a replication controller's current state.
+  conditions: Option (List ReplicationControllerCondition) = None,
+  -- The number of pods that have labels matching the labels of the pod template of the replication controller.
+  fullyLabeledReplicas: Option Int = None,
+  -- ObservedGeneration reflects the generation of the most recently observed replication controller.
+  observedGeneration: Option Int = None,
+  -- The number of ready replicas for this replication controller.
+  readyReplicas: Option Int = None,
+  -- Replicas is the most recently observed number of replicas. More info: https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller#what-is-a-replicationcontroller
+  replicas: Int
+)
+
 -- ResourceClaim references one entry in PodSpec.ResourceClaims.
 type ResourceClaim(
   -- Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.
@@ -886,6 +1750,32 @@ type DownwardAPIVolumeSource(
   items: Option (List DownwardAPIVolumeFile) = None
 )
 
+-- ResourceHealth represents the health of a resource. It has the latest device health information. This is a part of KEP https://kep.k8s.io/4680.
+type ResourceHealth(
+  -- Health of the resource. can be one of:
+  --  - Healthy: operates as normal
+  --  - Unhealthy: reported unhealthy. We consider this a temporary health issue
+  --               since we do not have a mechanism today to distinguish
+  --               temporary and permanent issues.
+  --  - Unknown: The status cannot be determined.
+  --             For example, Device Plugin got unregistered and hasn't been re-registered since.
+  --
+  -- In future we may want to introduce the PermanentlyUnhealthy Status.
+  health: Option String = None,
+  -- Message provides human-readable context for Health (e.g. "ECC error count exceeded threshold"). This field is populated by the kubelet when ResourceHealthStatusMessage is enabled if the DRA plugin returns a message, and is null otherwise.
+  message: Option String = None,
+  -- ResourceID is the unique identifier of the resource. See the ResourceID type for more information.
+  resourceID: String
+)
+
+-- ResourceQuotaStatus defines the enforced hard limits and observed use.
+type ResourceQuotaStatus(
+  -- Hard is the set of enforced hard limits for each named resource. More info: https://kubernetes.io/docs/concepts/policy/resource-quotas/
+  hard: Option (Map plimsoll.Quantity) = None,
+  -- Used is the current observed total usage of the resource in the namespace.
+  used: Option (Map plimsoll.Quantity) = None
+)
+
 -- ResourceRequirements describes the compute resource requirements.
 type ResourceRequirements(
   -- Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.
@@ -898,6 +1788,14 @@ type ResourceRequirements(
   limits: Option (Map plimsoll.Quantity) = None,
   -- Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
   requests: Option (Map plimsoll.Quantity) = None
+)
+
+-- ResourceStatus represents the status of a single resource allocated to a Pod.
+type ResourceStatus(
+  -- Name of the resource. Must be unique within the pod and in case of non-DRA resource, match one of the resources from the pod spec. For DRA resources, the value must be "claim:<claim_name>/<request>" when container.resources.claims[*].request is set or "claim:<claim_name>" when container.resources.claims[*].request is empty. For DRA-backed extended resources, "claim:<claim_name>/<request>" is used when the claim name and request name are recorded in pod.status.extendedResourceClaimStatus. When this status is reported about a container, the "claim_name" and "request" must match one of the claims of this container.
+  name: String,
+  -- List of unique resources health. Each element in the list contains an unique resource ID and its health. At a minimum, for the lifetime of a Pod, resource ID must uniquely identify the resource allocated to the Pod on the Node. If other Pod on the same Node reports the status with the same resource ID, it must be the same resource they share. See ResourceID type definition for a specific format it has in various use cases.
+  resources: Option (List ResourceHealth) = None
 )
 
 -- SELinuxOptions are the labels to be applied to the container
@@ -936,6 +1834,73 @@ type ScaleIOVolumeSource(
   volumeName: Option String = None
 )
 
+-- A scoped-resource selector requirement is a selector that contains values, a scope name, and an operator that relates the scope name and values.
+type ScopedResourceSelectorRequirement(
+  -- Represents a scope's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist.
+  --
+  -- Possible enum values:
+  --  - `"DoesNotExist"`
+  --  - `"Exists"`
+  --  - `"In"`
+  --  - `"NotIn"`
+  operator: ScopedResourceSelectorRequirementOperator,
+  -- The name of the scope that the selector applies to.
+  --
+  -- Possible enum values:
+  --  - `"BestEffort"` Match all pod objects that have best effort quality of service
+  --  - `"CrossNamespacePodAffinity"` Match all pod objects that have cross-namespace pod (anti)affinity mentioned.
+  --  - `"NotBestEffort"` Match all pod objects that do not have best effort quality of service
+  --  - `"NotTerminating"` Match all pod objects where spec.activeDeadlineSeconds is nil
+  --  - `"PriorityClass"` Match all pod objects that have priority class mentioned
+  --  - `"Terminating"` Match all pod objects where spec.activeDeadlineSeconds >=0
+  --  - `"VolumeAttributesClass"` Match all pvc objects that have volume attributes class mentioned.
+  scopeName: ResourceQuotaSpecScopes,
+  -- An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.
+  values: Option (List String) = None
+)
+
+-- A scope selector represents the AND of the selectors represented by the scoped-resource selector requirements.
+type ScopeSelector(
+  -- A list of scope selector requirements by scope of the resources.
+  matchExpressions: Option (List ScopedResourceSelectorRequirement) = None
+)
+
+-- ResourceQuotaSpec defines the desired hard limits to enforce for Quota.
+type ResourceQuotaSpec(
+  -- hard is the set of desired hard limits for each named resource. More info: https://kubernetes.io/docs/concepts/policy/resource-quotas/
+  hard: Option (Map plimsoll.Quantity) = None,
+  -- scopeSelector is also a collection of filters like scopes that must match each object tracked by a quota but expressed using ScopeSelectorOperator in combination with possible values. For a resource to match, both scopes AND scopeSelector (if specified in spec), must be matched.
+  scopeSelector: Option ScopeSelector = None,
+  -- A collection of filters that must match each object tracked by a quota. If not specified, the quota matches all objects.
+  scopes: Option (List ResourceQuotaSpecScopes) = None
+)
+
+-- ResourceQuota sets aggregate quota restrictions enforced per namespace
+type ResourceQuota(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "ResourceQuota",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- Spec defines the desired quota. https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  spec: Option ResourceQuotaSpec = None,
+  -- Status defines the actual enforced quota and its current usage. https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  status: Option ResourceQuotaStatus = None
+)
+
+-- ResourceQuotaList is a list of ResourceQuota items.
+type ResourceQuotaList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Items is a list of ResourceQuota objects. More info: https://kubernetes.io/docs/concepts/policy/resource-quotas/
+  items: List ResourceQuota,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "ResourceQuotaList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
+)
+
 -- SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.
 type SeccompProfile(
   -- localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is "Localhost". Must NOT be set for any other type.
@@ -949,6 +1914,24 @@ type SeccompProfile(
   --  - `"RuntimeDefault"` represents the default container runtime seccomp profile.
   --  - `"Unconfined"` indicates no seccomp profile is applied (A.K.A. unconfined).
   type: AppArmorProfileType
+)
+
+-- Secret holds secret data of a certain type. The total bytes of the values in the Data field must be less than MaxSecretSize bytes.
+type Secret(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Data contains the secret data. Each key must consist of alphanumeric characters, '-', '_' or '.'. The serialized form of the secret data is a base64 encoded string, representing the arbitrary (possibly non-string) data value here. Described in https://tools.ietf.org/html/rfc4648#section-4
+  data: Option (Map String) = None,
+  -- Immutable, if set to true, ensures that data stored in the Secret cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.
+  immutable: Option Bool = None,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "Secret",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- stringData allows specifying non-binary secret data in string form. It is provided as a write-only input field for convenience. All keys and values are merged into the data field on write, overwriting any existing values. The stringData field is never output when reading from the API.
+  stringData: Option (Map String) = None,
+  -- Used to facilitate programmatic handling of secret data. More info: https://kubernetes.io/docs/concepts/configuration/secret/#secret-types
+  type: Option String = None
 )
 
 -- SecretEnvSource selects a Secret to populate the environment variables with.
@@ -1005,6 +1988,18 @@ type EnvVar(
   valueFrom: Option EnvVarSource = None
 )
 
+-- SecretList is a list of Secret.
+type SecretList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Items is a list of secret objects. More info: https://kubernetes.io/docs/concepts/configuration/secret
+  items: List Secret,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "SecretList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
+)
+
 -- Adapts a secret into a projected volume.
 --
 -- The contents of the target Secret's Data field will be presented in a projected volume as files using the keys in the Data field as the file names. Note that this is identical to a secret volume source without the default mode.
@@ -1015,6 +2010,150 @@ type SecretProjection(
   name: Option String = None,
   -- optional field specify whether the Secret or its key must be defined
   optional: Option Bool = None
+)
+
+-- SecretReference represents a Secret Reference. It has enough information to retrieve secret in any namespace
+type SecretReference(
+  -- name is unique within a namespace to reference a secret resource.
+  name: Option String = None,
+  -- namespace defines the space within which the secret name must be unique.
+  namespace: Option String = None
+)
+
+-- Represents storage that is managed by an external CSI volume driver
+type CSIPersistentVolumeSource(
+  -- controllerExpandSecretRef is a reference to the secret object containing sensitive information to pass to the CSI driver to complete the CSI ControllerExpandVolume call. This field is optional, and may be empty if no secret is required. If the secret object contains more than one secret, all secrets are passed.
+  controllerExpandSecretRef: Option SecretReference = None,
+  -- controllerPublishSecretRef is a reference to the secret object containing sensitive information to pass to the CSI driver to complete the CSI ControllerPublishVolume and ControllerUnpublishVolume calls. This field is optional, and may be empty if no secret is required. If the secret object contains more than one secret, all secrets are passed.
+  controllerPublishSecretRef: Option SecretReference = None,
+  -- driver is the name of the driver to use for this volume. Required.
+  driver: String,
+  -- fsType to mount. Must be a filesystem type supported by the host operating system. Ex. "ext4", "xfs", "ntfs".
+  fsType: Option String = None,
+  -- nodeExpandSecretRef is a reference to the secret object containing sensitive information to pass to the CSI driver to complete the CSI NodeExpandVolume call. This field is optional, may be omitted if no secret is required. If the secret object contains more than one secret, all secrets are passed.
+  nodeExpandSecretRef: Option SecretReference = None,
+  -- nodePublishSecretRef is a reference to the secret object containing sensitive information to pass to the CSI driver to complete the CSI NodePublishVolume and NodeUnpublishVolume calls. This field is optional, and may be empty if no secret is required. If the secret object contains more than one secret, all secrets are passed.
+  nodePublishSecretRef: Option SecretReference = None,
+  -- nodeStageSecretRef is a reference to the secret object containing sensitive information to pass to the CSI driver to complete the CSI NodeStageVolume and NodeStageVolume and NodeUnstageVolume calls. This field is optional, and may be empty if no secret is required. If the secret object contains more than one secret, all secrets are passed.
+  nodeStageSecretRef: Option SecretReference = None,
+  -- readOnly value to pass to ControllerPublishVolumeRequest. Defaults to false (read/write).
+  readOnly: Option Bool = None,
+  -- volumeAttributes of the volume to publish.
+  volumeAttributes: Option (Map String) = None,
+  -- volumeHandle is the unique volume name returned by the CSI volume plugin’s CreateVolume to refer to the volume on all subsequent calls. Required.
+  volumeHandle: String
+)
+
+-- Represents a Ceph Filesystem mount that lasts the lifetime of a pod Cephfs volumes do not support ownership management or SELinux relabeling.
+type CephFSPersistentVolumeSource(
+  -- monitors is Required: Monitors is a collection of Ceph monitors More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it
+  monitors: List String,
+  -- path is Optional: Used as the mounted root, rather than the full Ceph tree, default is /
+  path: Option String = None,
+  -- readOnly is Optional: Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts. More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it
+  readOnly: Option Bool = None,
+  -- secretFile is Optional: SecretFile is the path to key ring for User, default is /etc/ceph/user.secret More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it
+  secretFile: Option String = None,
+  -- secretRef is Optional: SecretRef is reference to the authentication secret for User, default is empty. More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it
+  secretRef: Option SecretReference = None,
+  -- user is Optional: User is the rados user name, default is admin More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it
+  user: Option String = None
+)
+
+-- Represents a cinder volume resource in Openstack. A Cinder volume must exist before mounting to a container. The volume must also be in the same region as the kubelet. Cinder volumes support ownership management and SELinux relabeling.
+type CinderPersistentVolumeSource(
+  -- fsType Filesystem type to mount. Must be a filesystem type supported by the host operating system. Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified. More info: https://examples.k8s.io/mysql-cinder-pd/README.md
+  fsType: Option String = None,
+  -- readOnly is Optional: Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts. More info: https://examples.k8s.io/mysql-cinder-pd/README.md
+  readOnly: Option Bool = None,
+  -- secretRef is Optional: points to a secret object containing parameters used to connect to OpenStack.
+  secretRef: Option SecretReference = None,
+  -- volumeID used to identify the volume in cinder. More info: https://examples.k8s.io/mysql-cinder-pd/README.md
+  volumeID: String
+)
+
+-- FlexPersistentVolumeSource represents a generic persistent volume resource that is provisioned/attached using an exec based plugin.
+type FlexPersistentVolumeSource(
+  -- driver is the name of the driver to use for this volume.
+  driver: String,
+  -- fsType is the Filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. "ext4", "xfs", "ntfs". The default filesystem depends on FlexVolume script.
+  fsType: Option String = None,
+  -- options is Optional: this field holds extra command options if any.
+  options: Option (Map String) = None,
+  -- readOnly is Optional: defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.
+  readOnly: Option Bool = None,
+  -- secretRef is Optional: SecretRef is reference to the secret object containing sensitive information to pass to the plugin scripts. This may be empty if no secret object is specified. If the secret object contains more than one secret, all secrets are passed to the plugin scripts.
+  secretRef: Option SecretReference = None
+)
+
+-- ISCSIPersistentVolumeSource represents an ISCSI disk. ISCSI volumes can only be mounted as read/write once. ISCSI volumes support ownership management and SELinux relabeling.
+type ISCSIPersistentVolumeSource(
+  -- chapAuthDiscovery defines whether support iSCSI Discovery CHAP authentication
+  chapAuthDiscovery: Option Bool = None,
+  -- chapAuthSession defines whether support iSCSI Session CHAP authentication
+  chapAuthSession: Option Bool = None,
+  -- fsType is the filesystem type of the volume that you want to mount. Tip: Ensure that the filesystem type is supported by the host operating system. Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified. More info: https://kubernetes.io/docs/concepts/storage/volumes#iscsi
+  fsType: Option String = None,
+  -- initiatorName is the custom iSCSI Initiator Name. If initiatorName is specified with iscsiInterface simultaneously, new iSCSI interface <target portal>:<volume name> will be created for the connection.
+  initiatorName: Option String = None,
+  -- iqn is Target iSCSI Qualified Name.
+  iqn: String,
+  -- iscsiInterface is the interface Name that uses an iSCSI transport. Defaults to 'default' (tcp).
+  iscsiInterface: Option String = None,
+  -- lun is iSCSI Target Lun number.
+  lun: Int,
+  -- portals is the iSCSI Target Portal List. The Portal is either an IP or ip_addr:port if the port is other than default (typically TCP ports 860 and 3260).
+  portals: Option (List String) = None,
+  -- readOnly here will force the ReadOnly setting in VolumeMounts. Defaults to false.
+  readOnly: Option Bool = None,
+  -- secretRef is the CHAP Secret for iSCSI target and initiator authentication
+  secretRef: Option SecretReference = None,
+  -- targetPortal is iSCSI Target Portal. The Portal is either an IP or ip_addr:port if the port is other than default (typically TCP ports 860 and 3260).
+  targetPortal: String
+)
+
+-- Represents a Rados Block Device mount that lasts the lifetime of a pod. RBD volumes support ownership management and SELinux relabeling.
+type RBDPersistentVolumeSource(
+  -- fsType is the filesystem type of the volume that you want to mount. Tip: Ensure that the filesystem type is supported by the host operating system. Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified. More info: https://kubernetes.io/docs/concepts/storage/volumes#rbd
+  fsType: Option String = None,
+  -- image is the rados image name. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it
+  image: String,
+  -- keyring is the path to key ring for RBDUser. Default is /etc/ceph/keyring. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it
+  keyring: Option String = None,
+  -- monitors is a collection of Ceph monitors. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it
+  monitors: List String,
+  -- pool is the rados pool name. Default is rbd. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it
+  pool: Option String = None,
+  -- readOnly here will force the ReadOnly setting in VolumeMounts. Defaults to false. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it
+  readOnly: Option Bool = None,
+  -- secretRef is name of the authentication secret for RBDUser. If provided overrides keyring. Default is nil. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it
+  secretRef: Option SecretReference = None,
+  -- user is the rados user name. Default is admin. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it
+  user: Option String = None
+)
+
+-- ScaleIOPersistentVolumeSource represents a persistent ScaleIO volume
+type ScaleIOPersistentVolumeSource(
+  -- fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. "ext4", "xfs", "ntfs". Default is "xfs"
+  fsType: Option String = None,
+  -- gateway is the host address of the ScaleIO API Gateway.
+  gateway: String,
+  -- protectionDomain is the name of the ScaleIO Protection Domain for the configured storage.
+  protectionDomain: Option String = None,
+  -- readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.
+  readOnly: Option Bool = None,
+  -- secretRef references to the secret for ScaleIO user and other sensitive information. If this is not provided, Login operation will fail.
+  secretRef: SecretReference,
+  -- sslEnabled is the flag to enable/disable SSL communication with Gateway, default false
+  sslEnabled: Option Bool = None,
+  -- storageMode indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned. Default is ThinProvisioned.
+  storageMode: Option String = None,
+  -- storagePool is the ScaleIO Storage Pool associated with the protection domain.
+  storagePool: Option String = None,
+  -- system is the name of the storage system as configured in ScaleIO.
+  system: String,
+  -- volumeName is the name of a volume already created in the ScaleIO system that is associated with this volume source.
+  volumeName: Option String = None
 )
 
 -- Adapts a Secret into a volume.
@@ -1033,6 +2172,34 @@ type SecretVolumeSource(
   secretName: Option String = None
 )
 
+-- ServiceAccount binds together: * a name, understood by users, and perhaps by peripheral systems, for an identity * a principal that can be authenticated and authorized * a set of secrets
+type ServiceAccount(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.
+  automountServiceAccountToken: Option Bool = None,
+  -- ImagePullSecrets is a list of references to secrets in the same namespace to use for pulling any images in pods that reference this ServiceAccount. ImagePullSecrets are distinct from Secrets because Secrets can be mounted in the pod, but ImagePullSecrets are only accessed by the kubelet. More info: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
+  imagePullSecrets: Option (List LocalObjectReference) = None,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "ServiceAccount",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- Secrets is a list of the secrets in the same namespace that pods running using this ServiceAccount are allowed to use. Pods are only limited to this list if this service account has a "kubernetes.io/enforce-mountable-secrets" annotation set to "true". The "kubernetes.io/enforce-mountable-secrets" annotation is deprecated since v1.32. Prefer separate namespaces to isolate access to mounted secrets. This field should not be used to find auto-generated service account token secrets for use outside of pods. Instead, tokens can be requested directly using the TokenRequest API, or service account token secrets can be manually created. More info: https://kubernetes.io/docs/concepts/configuration/secret
+  secrets: Option (List ObjectReference) = None
+)
+
+-- ServiceAccountList is a list of ServiceAccount objects
+type ServiceAccountList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- List of ServiceAccounts. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  items: List ServiceAccount,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "ServiceAccountList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
+)
+
 -- ServiceAccountTokenProjection represents a projected service account token volume. This projection can be used to insert a service account token into the pods runtime filesystem for use against APIs (Kubernetes API Server or otherwise).
 type ServiceAccountTokenProjection(
   -- audience is the intended audience of the token. A recipient of a token must identify itself with an identifier specified in the audience of the token, and otherwise should reject the token. The audience defaults to the identifier of the apiserver.
@@ -1045,10 +2212,165 @@ type ServiceAccountTokenProjection(
   user: Option Int = None
 )
 
+-- ServicePort contains information on service's port.
+type ServicePort(
+  -- The application protocol for this port. This is used as a hint for implementations to offer richer behavior for protocols that they understand. This field follows standard Kubernetes label syntax. Valid values are either:
+  --
+  -- * Un-prefixed protocol names - reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names).
+  --
+  -- * Kubernetes-defined prefixed names:
+  --   * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior-
+  --   * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455
+  --   * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455
+  --
+  -- * Other protocols should use implementation-defined prefixed names such as mycompany.com/my-custom-protocol.
+  appProtocol: Option String = None,
+  -- The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.
+  name: Option String = None,
+  -- The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport
+  nodePort: Option Int = None,
+  -- The port that will be exposed by this service.
+  port: Int,
+  -- The IP protocol for this port. Supports "TCP", "UDP", and "SCTP". Default is TCP.
+  --
+  -- Possible enum values:
+  --  - `"SCTP"` is the SCTP protocol.
+  --  - `"TCP"` is the TCP protocol.
+  --  - `"UDP"` is the UDP protocol.
+  protocol: Option ContainerPortProtocol = None,
+  -- Number or name of the port to access on the pods targeted by the service. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME. If this is a string, it will be looked up as a named port in the target Pod's container ports. If this is not specified, the value of the 'port' field is used (an identity map). This field is ignored for services with clusterIP=None, and should be omitted or set equal to the 'port' field. More info: https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service
+  targetPort: Option plimsoll.IntOrString = None
+)
+
+-- ServiceStatus represents the current status of a service.
+type ServiceStatus(
+  -- Current service state
+  conditions: Option (List meta_v1.Condition) = None,
+  -- LoadBalancer contains the current status of the load-balancer, if one is present.
+  loadBalancer: Option LoadBalancerStatus = None
+)
+
+-- SessionAffinityConfig represents the configurations of session affinity.
+type SessionAffinityConfig(
+  -- clientIP contains the configurations of Client IP based session affinity.
+  clientIP: Option ClientIPConfig = None
+)
+
+-- ServiceSpec describes the attributes that a user creates on a service.
+type ServiceSpec(
+  -- allocateLoadBalancerNodePorts defines if NodePorts will be automatically allocated for services with type LoadBalancer.  Default is "true". It may be set to "false" if the cluster load-balancer does not rely on NodePorts.  If the caller requests specific NodePorts (by specifying a value), those requests will be respected, regardless of this field. This field may only be set for services with type LoadBalancer and will be cleared if the type is changed to any other type.
+  allocateLoadBalancerNodePorts: Option Bool = None,
+  -- clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are "None", empty string (""), or a valid IP address. Setting this to "None" makes a "headless service" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+  clusterIP: Option String = None,
+  -- ClusterIPs is a list of IP addresses assigned to this service, and are usually assigned randomly.  If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be empty) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are "None", empty string (""), or a valid IP address.  Setting this to "None" makes a "headless service" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName.  If this field is not specified, it will be initialized from the clusterIP field.  If this field is specified, clients must ensure that clusterIPs[0] and clusterIP have the same value.
+  --
+  -- This field may hold a maximum of two entries (dual-stack IPs, in either order). These IPs must correspond to the values of the ipFamilies field. Both clusterIPs and ipFamilies are governed by the ipFamilyPolicy field. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+  clusterIPs: Option (List String) = None,
+  -- externalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic for this service.  These IPs are not managed by Kubernetes.  The user is responsible for ensuring that traffic arrives at a node with this IP.  A common example is external load-balancers that are not part of the Kubernetes system.
+  externalIPs: Option (List String) = None,
+  -- externalName is the external reference that discovery mechanisms will return as an alias for this service (e.g. a DNS CNAME record). No proxying will be involved.  Must be a lowercase RFC-1123 hostname (https://tools.ietf.org/html/rfc1123) and requires `type` to be "ExternalName".
+  externalName: Option String = None,
+  -- externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's "externally-facing" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to "Local", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, "Cluster", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get "Cluster" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.
+  --
+  -- Possible enum values:
+  --  - `"Cluster"` routes traffic to all endpoints.
+  --  - `"Local"` preserves the source IP of the traffic by routing only to endpoints on the same node as the traffic was received on (dropping the traffic if there are no local endpoints).
+  externalTrafficPolicy: Option ServiceSpecExternalTrafficPolicy = None,
+  -- healthCheckNodePort specifies the healthcheck nodePort for the service. This only applies when type is set to LoadBalancer and externalTrafficPolicy is set to Local. If a value is specified, is in-range, and is not in use, it will be used.  If not specified, a value will be automatically allocated.  External systems (e.g. load-balancers) can use this port to determine if a given node holds endpoints for this service or not.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type). This field cannot be updated once set.
+  healthCheckNodePort: Option Int = None,
+  -- InternalTrafficPolicy describes how nodes distribute service traffic they receive on the ClusterIP. If set to "Local", the proxy will assume that pods only want to talk to endpoints of the service on the same node as the pod, dropping the traffic if there are no local endpoints. The default value, "Cluster", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features).
+  --
+  -- Possible enum values:
+  --  - `"Cluster"` routes traffic to all endpoints.
+  --  - `"Local"` routes traffic only to endpoints on the same node as the client pod (dropping the traffic if there are no local endpoints).
+  internalTrafficPolicy: Option ServiceSpecExternalTrafficPolicy = None,
+  -- IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this service. This field is usually assigned automatically based on cluster configuration and the ipFamilyPolicy field. If this field is specified manually, the requested family is available in the cluster, and ipFamilyPolicy allows it, it will be used; otherwise creation of the service will fail. This field is conditionally mutable: it allows for adding or removing a secondary IP family, but it does not allow changing the primary IP family of the Service. Valid values are "IPv4" and "IPv6".  This field only applies to Services of types ClusterIP, NodePort, and LoadBalancer, and does apply to "headless" services. This field will be wiped when updating a Service to type ExternalName.
+  --
+  -- This field may hold a maximum of two entries (dual-stack families, in either order).  These families must correspond to the values of the clusterIPs field, if specified. Both clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.
+  ipFamilies: Option (List String) = None,
+  -- IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be "SingleStack" (a single IP family), "PreferDualStack" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or "RequireDualStack" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.
+  --
+  -- Possible enum values:
+  --  - `"PreferDualStack"` indicates that this service prefers dual-stack when the cluster is configured for dual-stack. If the cluster is not configured for dual-stack the service will be assigned a single IPFamily. If the IPFamily is not set in service.spec.ipFamilies then the service will be assigned the default IPFamily configured on the cluster
+  --  - `"RequireDualStack"` indicates that this service requires dual-stack. Using IPFamilyPolicyRequireDualStack on a single stack cluster will result in validation errors. The IPFamilies (and their order) assigned to this service is based on service.spec.ipFamilies. If service.spec.ipFamilies was not provided then it will be assigned according to how they are configured on the cluster. If service.spec.ipFamilies has only one entry then the alternative IPFamily will be added by apiserver
+  --  - `"SingleStack"` indicates that this service is required to have a single IPFamily. The IPFamily assigned is based on the default IPFamily used by the cluster or as identified by service.spec.ipFamilies field
+  ipFamilyPolicy: Option ServiceSpecIpFamilyPolicy = None,
+  -- loadBalancerClass is the class of the load balancer implementation this Service belongs to. If specified, the value of this field must be a label-style identifier, with an optional prefix, e.g. "internal-vip" or "example.com/internal-vip". Unprefixed names are reserved for end-users. This field can only be set when the Service type is 'LoadBalancer'. If not set, the default load balancer implementation is used, today this is typically done through the cloud provider integration, but should apply for any default implementation. If set, it is assumed that a load balancer implementation is watching for Services with a matching class. Any default load balancer implementation (e.g. cloud providers) should ignore Services that set this field. This field can only be set when creating or updating a Service to type 'LoadBalancer'. Once set, it can not be changed. This field will be wiped when a service is updated to a non 'LoadBalancer' type.
+  loadBalancerClass: Option String = None,
+  -- Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.
+  loadBalancerIP: Option String = None,
+  -- If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature." More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/
+  loadBalancerSourceRanges: Option (List String) = None,
+  -- The list of ports that are exposed by this service. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+  ports: Option (List ServicePort) = None,
+  -- publishNotReadyAddresses indicates that any agent which deals with endpoints for this Service should disregard any indications of ready/not-ready. The primary use case for setting this field is for a StatefulSet's Headless Service to propagate SRV DNS records for its Pods for the purpose of peer discovery. The Kubernetes controllers that generate Endpoints and EndpointSlice resources for Services interpret this to mean that all endpoints are considered "ready" even if the Pods themselves are not. Agents which consume only Kubernetes generated endpoints through the Endpoints or EndpointSlice resources can safely assume this behavior.
+  publishNotReadyAddresses: Option Bool = None,
+  -- Route service traffic to pods with label keys and values matching this selector. If empty or not present, the service is assumed to have an external process managing its endpoints, which Kubernetes will not modify. Only applies to types ClusterIP, NodePort, and LoadBalancer. Ignored if type is ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/
+  selector: Option (Map String) = None,
+  -- Supports "ClientIP" and "None". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies
+  --
+  -- Possible enum values:
+  --  - `"ClientIP"` is the Client IP based.
+  --  - `"None"` - no session affinity.
+  sessionAffinity: Option String = None,
+  -- sessionAffinityConfig contains the configurations of session affinity.
+  sessionAffinityConfig: Option SessionAffinityConfig = None,
+  -- TrafficDistribution offers a way to express preferences for how traffic is distributed to Service endpoints. Implementations can use this field as a hint, but are not required to guarantee strict adherence. If the field is not set, the implementation will apply its default routing strategy. If set to "PreferClose", implementations should prioritize endpoints that are in the same zone.
+  trafficDistribution: Option String = None,
+  -- type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. "ClusterIP" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is "None", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. "NodePort" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. "LoadBalancer" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. "ExternalName" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  --
+  -- Possible enum values:
+  --  - `"ClusterIP"` means a service will only be accessible inside the cluster, via the cluster IP.
+  --  - `"ExternalName"` means a service consists of only a reference to an external name that kubedns or equivalent will return as a CNAME record, with no exposing or proxying of any pods involved.
+  --  - `"LoadBalancer"` means a service will be exposed via an external load balancer (if the cloud provider supports it), in addition to 'NodePort' type.
+  --  - `"NodePort"` means a service will be exposed on one port of every node, in addition to 'ClusterIP' type.
+  type: Option ServiceSpecType = None
+)
+
+-- Service is a named abstraction of software service (for example, mysql) consisting of local port (for example 3306) that the proxy listens on, and the selector that determines which pods will answer requests sent through the proxy.
+type Service(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "Service",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- Spec defines the behavior of a service. https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  spec: Option ServiceSpec = None,
+  -- Most recently observed status of the service. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  status: Option ServiceStatus = None
+)
+
+-- ServiceList holds a list of services.
+type ServiceList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- List of services
+  items: List Service,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "ServiceList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
+)
+
 -- SleepAction describes a "sleep" action.
 type SleepAction(
   -- Seconds is the number of seconds to sleep.
   seconds: Int
+)
+
+-- Represents a StorageOS persistent volume resource.
+type StorageOSPersistentVolumeSource(
+  -- fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
+  fsType: Option String = None,
+  -- readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.
+  readOnly: Option Bool = None,
+  -- secretRef specifies the secret to use for obtaining the StorageOS API credentials.  If not specified, default values will be attempted.
+  secretRef: Option ObjectReference = None,
+  -- volumeName is the human-readable name of the StorageOS volume.  Volume names are only unique within a namespace.
+  volumeName: Option String = None,
+  -- volumeNamespace specifies the scope of the volume within StorageOS.  If no namespace is specified then the Pod's namespace will be used.  This allows the Kubernetes name scoping to be mirrored within StorageOS for tighter integration. Set VolumeName to any name to override the default behaviour. Set to "default" if you are not using namespaces within StorageOS. Namespaces that do not pre-exist within StorageOS will be created.
+  volumeNamespace: Option String = None
 )
 
 -- Represents a StorageOS persistent volume resource.
@@ -1194,6 +2516,69 @@ type Probe(
   timeoutSeconds: Option Int = None
 )
 
+-- The node this Taint is attached to has the "effect" on any pod that does not tolerate the Taint.
+type Taint(
+  -- Required. The effect of the taint on pods that do not tolerate the taint. Valid effects are NoSchedule, PreferNoSchedule and NoExecute.
+  --
+  -- Possible enum values:
+  --  - `"NoExecute"` Evict any already-running pods that do not tolerate the taint. Currently enforced by NodeController.
+  --  - `"NoSchedule"` Do not allow new pods to schedule onto the node unless they tolerate the taint, but allow all pods submitted to Kubelet without going through the scheduler to start, and allow all already-running pods to continue running. Enforced by the scheduler.
+  --  - `"PreferNoSchedule"` Like TaintEffectNoSchedule, but the scheduler tries not to schedule new pods onto the node, rather than prohibiting new pods from scheduling onto the node entirely. Enforced by the scheduler.
+  effect: TaintEffect,
+  -- Required. The taint key to be applied to a node.
+  key: String,
+  -- TimeAdded represents the time at which the taint was added.
+  timeAdded: Option DateTime = None,
+  -- The taint value corresponding to the taint key.
+  value: Option String = None
+)
+
+-- NodeSpec describes the attributes that a node is created with.
+type NodeSpec(
+  -- Deprecated: Previously used to specify the source of the node's configuration for the DynamicKubeletConfig feature. This feature is removed.
+  configSource: Option NodeConfigSource = None,
+  -- Deprecated. Not all kubelets will set this field. Remove field after 1.13. see: https://issues.k8s.io/61966
+  externalID: Option String = None,
+  -- PodCIDR represents the pod IP range assigned to the node.
+  podCIDR: Option String = None,
+  -- podCIDRs represents the IP ranges assigned to the node for usage by Pods on that node. If this field is specified, the 0th entry must match the podCIDR field. It may contain at most 1 value for each of IPv4 and IPv6.
+  podCIDRs: Option (List String) = None,
+  -- PodPreemptionPolicy controls the node-level preemption behaviors for pods on this node. This is an alpha field and requires enabling the InPlacePodVerticalScalingSchedulerPreemption feature gate.
+  podPreemptionPolicy: Option NodePodPreemptionPolicy = None,
+  -- ID of the node assigned by the cloud provider in the format: <ProviderName>://<ProviderSpecificNodeID>
+  providerID: Option String = None,
+  -- If specified, the node's taints.
+  taints: Option (List Taint) = None,
+  -- Unschedulable controls node schedulability of new pods. By default, node is schedulable. More info: https://kubernetes.io/docs/concepts/nodes/node/#manual-node-administration
+  unschedulable: Option Bool = None
+)
+
+-- Node is a worker node in Kubernetes. Each node will have a unique identifier in the cache (i.e. in etcd).
+type Node(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "Node",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- Spec defines the behavior of a node. https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  spec: Option NodeSpec = None,
+  -- Most recently observed status of the node. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  status: Option NodeStatus = None
+)
+
+-- NodeList is the whole list of all Nodes which have been registered with master.
+type NodeList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- List of nodes
+  items: List Node,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "NodeList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
+)
+
 -- The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.
 type Toleration(
   -- Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
@@ -1202,7 +2587,7 @@ type Toleration(
   --  - `"NoExecute"` Evict any already-running pods that do not tolerate the taint. Currently enforced by NodeController.
   --  - `"NoSchedule"` Do not allow new pods to schedule onto the node unless they tolerate the taint, but allow all pods submitted to Kubelet without going through the scheduler to start, and allow all already-running pods to continue running. Enforced by the scheduler.
   --  - `"PreferNoSchedule"` Like TaintEffectNoSchedule, but the scheduler tries not to schedule new pods onto the node, rather than prohibiting new pods from scheduling onto the node entirely. Enforced by the scheduler.
-  effect: Option TolerationEffect = None,
+  effect: Option TaintEffect = None,
   -- Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys.
   key: Option String = None,
   -- Operator represents a key's relationship to the value. Valid operators are Exists, Equal, Lt, and Gt. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category. Lt and Gt perform numeric comparisons (requires feature gate TaintTolerationComparisonOperators).
@@ -1217,6 +2602,20 @@ type Toleration(
   tolerationSeconds: Option Int = None,
   -- Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.
   value: Option String = None
+)
+
+-- A topology selector requirement is a selector that matches given label. This is an alpha feature and may change in the future.
+type TopologySelectorLabelRequirement(
+  -- The label key that the selector applies to.
+  key: String,
+  -- An array of string values. One value must match the label to be selected. Each entry in Values is ORed.
+  values: List String
+)
+
+-- A topology selector term represents the result of label queries. A null or empty topology selector term matches no objects. The requirements of them are ANDed. It provides a subset of functionality as NodeSelectorTerm. This is an alpha feature and may change in the future.
+type TopologySelectorTerm(
+  -- A list of topology selector requirements by labels.
+  matchLabelExpressions: Option (List TopologySelectorLabelRequirement) = None
 )
 
 -- TopologySpreadConstraint specifies how to spread matching pods among the given topology.
@@ -1305,6 +2704,16 @@ type VolumeHealthCondition(
   --  - `"Degraded"` indicates the volume is functioning but with reduced capability.
   --  - `"Inaccessible"` indicates the volume cannot be accessed.
   status: VolumeHealthConditionStatus
+)
+
+-- PodVolumeHealth contains health information for a volume used by a pod, reported by the CSI node plugin via the kubelet.
+type PodVolumeHealth(
+  -- conditions is the set of adverse conditions reported by the CSI node plugin for this volume on this node. At most 16 conditions may be reported.
+  healthConditions: Option (List VolumeHealthCondition) = None,
+  -- lastTransitionTime is when the current set of conditions first appeared.
+  lastTransitionTime: Option DateTime = None,
+  -- name matches an entry in pod.spec.volumes.
+  name: String
 )
 
 -- VolumeHealthStatus contains health information for a volume reported by the CSI controller plugin.
@@ -1410,6 +2819,12 @@ type VolumeMount(
   subPathExpr: Option String = None
 )
 
+-- VolumeNodeAffinity defines constraints that limit what nodes this volume can be accessed from.
+type VolumeNodeAffinity(
+  -- required specifies hard node constraints that must be met.
+  required: Option NodeSelector = None
+)
+
 -- Projection that may be projected along with other supported volume types. Exactly one of these fields must be set.
 type VolumeProjection(
   -- ClusterTrustBundle allows a pod to access the `.spec.trustBundle` field of ClusterTrustBundle objects in an auto-updating file.
@@ -1509,6 +2924,18 @@ type PersistentVolumeClaim(
   status: Option PersistentVolumeClaimStatus = None
 )
 
+-- PersistentVolumeClaimList is a list of PersistentVolumeClaim items.
+type PersistentVolumeClaimList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- items is a list of persistent volume claims. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims
+  items: List PersistentVolumeClaim,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "PersistentVolumeClaimList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
+)
+
 -- PersistentVolumeClaimTemplate is used to produce PersistentVolumeClaim objects as part of an EphemeralVolumeSource.
 type PersistentVolumeClaimTemplate(
   -- May contain labels and annotations that will be copied into the PVC when creating it. No other fields are allowed and will be rejected during validation.
@@ -1529,6 +2956,193 @@ type EphemeralVolumeSource(
   volumeClaimTemplate: Option PersistentVolumeClaimTemplate = None
 )
 
+-- VolumeStatus represents the status of a mounted volume. At most one of its members must be specified.
+type VolumeStatus(
+  -- image represents an OCI object (a container image or artifact) pulled and mounted on the kubelet's host machine.
+  image: Option ImageVolumeStatus = None
+)
+
+-- VolumeMountStatus shows status of volume mounts.
+type VolumeMountStatus(
+  -- MountPath corresponds to the original VolumeMount.
+  mountPath: String,
+  -- Name corresponds to the name of the original VolumeMount.
+  name: String,
+  -- ReadOnly corresponds to the original VolumeMount.
+  readOnly: Option Bool = None,
+  -- RecursiveReadOnly must be set to Disabled, Enabled, or unspecified (for non-readonly mounts). An IfPossible value in the original VolumeMount must be translated to Disabled or Enabled, depending on the mount result.
+  recursiveReadOnly: Option String = None,
+  -- volumeStatus represents volume-type-specific status about the mounted volume.
+  volumeStatus: Option VolumeStatus = None
+)
+
+-- ContainerStatus contains details for the current status of this container.
+type ContainerStatus(
+  -- AllocatedResources represents the compute resources allocated for this container by the node. Kubelet sets this value to Container.Resources.Requests upon successful pod admission and after successfully admitting desired pod resize.
+  allocatedResources: Option (Map plimsoll.Quantity) = None,
+  -- AllocatedResourcesStatus represents the status of various resources allocated for this Pod.
+  allocatedResourcesStatus: Option (List ResourceStatus) = None,
+  -- ContainerID is the ID of the container in the format '<type>://<container_id>'. Where type is a container runtime identifier, returned from Version call of CRI API (for example "containerd").
+  containerID: Option String = None,
+  -- Image is the name of container image that the container is running. The container image may not match the image used in the PodSpec, as it may have been resolved by the runtime. More info: https://kubernetes.io/docs/concepts/containers/images.
+  image: String,
+  -- ImageID is the image ID of the container's image. The image ID may not match the image ID of the image used in the PodSpec, as it may have been resolved by the runtime.
+  imageID: String,
+  -- LastTerminationState holds the last termination state of the container to help debug container crashes and restarts. This field is not populated if the container is still running and RestartCount is 0.
+  lastState: Option ContainerState = None,
+  -- Name is a DNS_LABEL representing the unique name of the container. Each container in a pod must have a unique name across all container types. Cannot be updated.
+  name: String,
+  -- Ready specifies whether the container is currently passing its readiness check. The value will change as readiness probes keep executing. If no readiness probes are specified, this field defaults to true once the container is fully started (see Started field).
+  --
+  -- The value is typically used to determine whether a container is ready to accept traffic.
+  ready: Bool,
+  -- Resources represents the compute resource requests and limits that have been successfully enacted on the running container after it has been started or has been successfully resized.
+  resources: Option ResourceRequirements = None,
+  -- RestartCount holds the number of times the container has been restarted. Kubelet makes an effort to always increment the value, but there are cases when the state may be lost due to node restarts and then the value may be reset to 0. The value is never negative.
+  restartCount: Int,
+  -- Started indicates whether the container has finished its postStart lifecycle hook and passed its startup probe. Initialized as false, becomes true after startupProbe is considered successful. Resets to false when the container is restarted, or if kubelet loses state temporarily. In both cases, startup probes will run again. Is always true when no startupProbe is defined and container is running and has passed the postStart lifecycle hook. The null value must be treated the same as false.
+  started: Option Bool = None,
+  -- State holds details about the container's current condition.
+  state: Option ContainerState = None,
+  -- StopSignal reports the effective stop signal for this container
+  --
+  -- Possible enum values:
+  --  - `"SIGABRT"`
+  --  - `"SIGALRM"`
+  --  - `"SIGBUS"`
+  --  - `"SIGCHLD"`
+  --  - `"SIGCLD"`
+  --  - `"SIGCONT"`
+  --  - `"SIGFPE"`
+  --  - `"SIGHUP"`
+  --  - `"SIGILL"`
+  --  - `"SIGINT"`
+  --  - `"SIGIO"`
+  --  - `"SIGIOT"`
+  --  - `"SIGKILL"`
+  --  - `"SIGPIPE"`
+  --  - `"SIGPOLL"`
+  --  - `"SIGPROF"`
+  --  - `"SIGPWR"`
+  --  - `"SIGQUIT"`
+  --  - `"SIGRTMAX"`
+  --  - `"SIGRTMAX-1"`
+  --  - `"SIGRTMAX-10"`
+  --  - `"SIGRTMAX-11"`
+  --  - `"SIGRTMAX-12"`
+  --  - `"SIGRTMAX-13"`
+  --  - `"SIGRTMAX-14"`
+  --  - `"SIGRTMAX-2"`
+  --  - `"SIGRTMAX-3"`
+  --  - `"SIGRTMAX-4"`
+  --  - `"SIGRTMAX-5"`
+  --  - `"SIGRTMAX-6"`
+  --  - `"SIGRTMAX-7"`
+  --  - `"SIGRTMAX-8"`
+  --  - `"SIGRTMAX-9"`
+  --  - `"SIGRTMIN"`
+  --  - `"SIGRTMIN+1"`
+  --  - `"SIGRTMIN+10"`
+  --  - `"SIGRTMIN+11"`
+  --  - `"SIGRTMIN+12"`
+  --  - `"SIGRTMIN+13"`
+  --  - `"SIGRTMIN+14"`
+  --  - `"SIGRTMIN+15"`
+  --  - `"SIGRTMIN+2"`
+  --  - `"SIGRTMIN+3"`
+  --  - `"SIGRTMIN+4"`
+  --  - `"SIGRTMIN+5"`
+  --  - `"SIGRTMIN+6"`
+  --  - `"SIGRTMIN+7"`
+  --  - `"SIGRTMIN+8"`
+  --  - `"SIGRTMIN+9"`
+  --  - `"SIGSEGV"`
+  --  - `"SIGSTKFLT"`
+  --  - `"SIGSTOP"`
+  --  - `"SIGSYS"`
+  --  - `"SIGTERM"`
+  --  - `"SIGTRAP"`
+  --  - `"SIGTSTP"`
+  --  - `"SIGTTIN"`
+  --  - `"SIGTTOU"`
+  --  - `"SIGURG"`
+  --  - `"SIGUSR1"`
+  --  - `"SIGUSR2"`
+  --  - `"SIGVTALRM"`
+  --  - `"SIGWINCH"`
+  --  - `"SIGXCPU"`
+  --  - `"SIGXFSZ"`
+  stopSignal: Option String = None,
+  -- User represents user identity information initially attached to the first process of the container
+  user: Option ContainerUser = None,
+  -- Status of volume mounts.
+  volumeMounts: Option (List VolumeMountStatus) = None
+)
+
+-- PodStatus represents information about the status of a pod. Status may trail the actual state of a system, especially if the node that hosts the pod cannot contact the control plane.
+type PodStatus(
+  -- AllocatedResources is the total requests allocated for this pod by the node. If pod-level requests are not set, this will be the total requests aggregated across containers in the pod.
+  allocatedResources: Option (Map plimsoll.Quantity) = None,
+  -- Current service state of pod. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#pod-conditions
+  conditions: Option (List PodCondition) = None,
+  -- Statuses of containers in this pod. Each container in the pod should have at most one status in this list, and all statuses should be for containers in the pod. However this is not enforced. If a status for a non-existent container is present in the list, or the list has duplicate names, the behavior of various Kubernetes components is not defined and those statuses might be ignored. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#pod-and-container-status
+  containerStatuses: Option (List ContainerStatus) = None,
+  -- Statuses for any ephemeral containers that have run in this pod. Each ephemeral container in the pod should have at most one status in this list, and all statuses should be for containers in the pod. However this is not enforced. If a status for a non-existent container is present in the list, or the list has duplicate names, the behavior of various Kubernetes components is not defined and those statuses might be ignored. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#pod-and-container-status
+  ephemeralContainerStatuses: Option (List ContainerStatus) = None,
+  -- Status of extended resource claim backed by DRA.
+  extendedResourceClaimStatus: Option PodExtendedResourceClaimStatus = None,
+  -- hostIP holds the IP address of the host to which the pod is assigned. Empty if the pod has not started yet. A pod can be assigned to a node that has a problem in kubelet which in turns mean that HostIP will not be updated even if there is a node is assigned to pod
+  hostIP: Option String = None,
+  -- hostIPs holds the IP addresses allocated to the host. If this field is specified, the first entry must match the hostIP field. This list is empty if the pod has not started yet. A pod can be assigned to a node that has a problem in kubelet which in turns means that HostIPs will not be updated even if there is a node is assigned to this pod.
+  hostIPs: Option (List HostIP) = None,
+  -- Statuses of init containers in this pod. The most recent successful non-restartable init container will have ready = true, the most recently started container will have startTime set. Each init container in the pod should have at most one status in this list, and all statuses should be for containers in the pod. However this is not enforced. If a status for a non-existent container is present in the list, or the list has duplicate names, the behavior of various Kubernetes components is not defined and those statuses might be ignored. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-and-container-status
+  initContainerStatuses: Option (List ContainerStatus) = None,
+  -- A human readable message indicating details about why the pod is in this condition.
+  message: Option String = None,
+  -- NodeAllocatableResourceClaimStatuses contains the status of node-allocatable resources that were allocated for this pod through DRA claims. This includes resources currently reported in v1.Node `status.allocatable` that are not extended resources (see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#extended-resources). Examples include "cpu", "memory", "ephemeral-storage", and hugepages.
+  nodeAllocatableResourceClaimStatuses: Option (List NodeAllocatableResourceClaimStatus) = None,
+  -- nominatedNodeName is set only when this pod preempts other pods on the node, but it cannot be scheduled right away as preemption victims receive their graceful termination periods. This field does not guarantee that the pod will be scheduled on this node. Scheduler may decide to place the pod elsewhere if other nodes become available sooner. Scheduler may also decide to give the resources on this node to a higher priority pod that is created after preemption. As a result, this field may be different than PodSpec.nodeName when the pod is scheduled.
+  nominatedNodeName: Option String = None,
+  -- If set, this represents the .metadata.generation that the pod status was set based upon. The PodObservedGenerationTracking feature gate must be enabled to use this field.
+  observedGeneration: Option Int = None,
+  -- The phase of a Pod is a simple, high-level summary of where the Pod is in its lifecycle. The conditions array, the reason and message fields, and the individual container status arrays contain more detail about the pod's status. There are five possible phase values:
+  --
+  -- Pending: The pod has been accepted by the Kubernetes system, but one or more of the container images has not been created. This includes time before being scheduled as well as time spent downloading images over the network, which could take a while. Running: The pod has been bound to a node, and all of the containers have been created. At least one container is still running, or is in the process of starting or restarting. Succeeded: All containers in the pod have terminated in success, and will not be restarted. Failed: All containers in the pod have terminated, and at least one container has terminated in failure. The container either exited with non-zero status or was terminated by the system. Unknown: For some reason the state of the pod could not be obtained, typically due to an error in communicating with the host of the pod.
+  --
+  -- More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#pod-phase
+  --
+  -- Possible enum values:
+  --  - `"Failed"` means that all containers in the pod have terminated, and at least one container has terminated in a failure (exited with a non-zero exit code or was stopped by the system).
+  --  - `"Pending"` means the pod has been accepted by the system, but one or more of the containers has not been started. This includes time before being bound to a node, as well as time spent pulling images onto the host.
+  --  - `"Running"` means the pod has been bound to a node and all of the containers have been started. At least one container is still running or is in the process of being restarted.
+  --  - `"Succeeded"` means that all containers in the pod have voluntarily terminated with a container exit code of 0, and the system is not going to restart any of these containers.
+  --  - `"Unknown"` means that for some reason the state of the pod could not be obtained, typically due to an error in communicating with the host of the pod. Deprecated: It isn't being set since 2015 (74da3b14b0c0f658b3bb8d2def5094686d0e9095)
+  phase: Option PodStatusPhase = None,
+  -- podIP address allocated to the pod. Routable at least within the cluster. Empty if not yet allocated.
+  podIP: Option String = None,
+  -- podIPs holds the IP addresses allocated to the pod. If this field is specified, the 0th entry must match the podIP field. Pods may be allocated at most 1 value for each of IPv4 and IPv6. This list is empty if no IPs have been allocated yet.
+  podIPs: Option (List PodIP) = None,
+  -- The Quality of Service (QOS) classification assigned to the pod based on resource requirements See PodQOSClass type for available QOS classes More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/#quality-of-service-classes
+  --
+  -- Possible enum values:
+  --  - `"BestEffort"` is the BestEffort qos class.
+  --  - `"Burstable"` is the Burstable qos class.
+  --  - `"Guaranteed"` is the Guaranteed qos class.
+  qosClass: Option PodStatusQosClass = None,
+  -- A brief CamelCase message indicating details about why the pod is in this state. e.g. 'Evicted'
+  reason: Option String = None,
+  -- Status of resources resize desired for pod's containers. It is empty if no resources resize is pending. Any changes to container resources will automatically set this to "Proposed" Deprecated: Resize status is moved to two pod conditions PodResizePending and PodResizeInProgress. PodResizePending will track states where the spec has been resized, but the Kubelet has not yet allocated the resources. PodResizeInProgress will track in-progress resizes, and should be present whenever allocated resources != acknowledged resources.
+  resize: Option String = None,
+  -- Status of resource claims.
+  resourceClaimStatuses: Option (List PodResourceClaimStatus) = None,
+  -- Resources represents the compute resource requests and limits that have been applied at the pod level if pod-level requests or limits are set in PodSpec.Resources
+  resources: Option ResourceRequirements = None,
+  -- RFC 3339 date and time at which the object was acknowledged by the Kubelet. This is before the Kubelet pulled the container image(s) for the pod.
+  startTime: Option DateTime = None,
+  -- volumeHealth contains node-reported health for each volume the pod is using. Populated by the kubelet on the pod's node.
+  volumeHealth: Option (List PodVolumeHealth) = None
+)
+
 -- Represents a vSphere volume resource.
 type VsphereVirtualDiskVolumeSource(
   -- fsType is filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
@@ -1539,6 +3153,107 @@ type VsphereVirtualDiskVolumeSource(
   storagePolicyName: Option String = None,
   -- volumePath is the path that identifies vSphere volume vmdk
   volumePath: String
+)
+
+-- PersistentVolumeSpec is the specification of a persistent volume.
+type PersistentVolumeSpec(
+  -- accessModes contains all ways the volume can be mounted. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes
+  accessModes: Option (List PersistentVolumeClaimSpecAccessModes) = None,
+  -- awsElasticBlockStore represents an AWS Disk resource that is attached to a kubelet's host machine and then exposed to the pod. Deprecated: AWSElasticBlockStore is deprecated. All operations for the in-tree awsElasticBlockStore type are redirected to the ebs.csi.aws.com CSI driver. More info: https://kubernetes.io/docs/concepts/storage/volumes#awselasticblockstore
+  awsElasticBlockStore: Option AWSElasticBlockStoreVolumeSource = None,
+  -- azureDisk represents an Azure Data Disk mount on the host and bind mount to the pod. Deprecated: AzureDisk is deprecated. All operations for the in-tree azureDisk type are redirected to the disk.csi.azure.com CSI driver.
+  azureDisk: Option AzureDiskVolumeSource = None,
+  -- azureFile represents an Azure File Service mount on the host and bind mount to the pod. Deprecated: AzureFile is deprecated. All operations for the in-tree azureFile type are redirected to the file.csi.azure.com CSI driver.
+  azureFile: Option AzureFilePersistentVolumeSource = None,
+  -- capacity is the description of the persistent volume's resources and capacity. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#capacity
+  capacity: Option (Map plimsoll.Quantity) = None,
+  -- cephFS represents a Ceph FS mount on the host that shares a pod's lifetime. Deprecated: CephFS is deprecated and the in-tree cephfs type is no longer supported.
+  cephfs: Option CephFSPersistentVolumeSource = None,
+  -- cinder represents a cinder volume attached and mounted on kubelets host machine. Deprecated: Cinder is deprecated. All operations for the in-tree cinder type are redirected to the cinder.csi.openstack.org CSI driver. More info: https://examples.k8s.io/mysql-cinder-pd/README.md
+  cinder: Option CinderPersistentVolumeSource = None,
+  -- claimRef is part of a bi-directional binding between PersistentVolume and PersistentVolumeClaim. Expected to be non-nil when bound. claim.VolumeName is the authoritative bind between PV and PVC. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#binding
+  claimRef: Option ObjectReference = None,
+  -- csi represents storage that is handled by an external CSI driver.
+  csi: Option CSIPersistentVolumeSource = None,
+  -- fc represents a Fibre Channel resource that is attached to a kubelet's host machine and then exposed to the pod.
+  fc: Option FCVolumeSource = None,
+  -- flexVolume represents a generic volume resource that is provisioned/attached using an exec based plugin. Deprecated: FlexVolume is deprecated. Consider using a CSIDriver instead.
+  flexVolume: Option FlexPersistentVolumeSource = None,
+  -- flocker represents a Flocker volume attached to a kubelet's host machine and exposed to the pod for its usage. This depends on the Flocker control service being running. Deprecated: Flocker is deprecated and the in-tree flocker type is no longer supported.
+  flocker: Option FlockerVolumeSource = None,
+  -- gcePersistentDisk represents a GCE Disk resource that is attached to a kubelet's host machine and then exposed to the pod. Provisioned by an admin. Deprecated: GCEPersistentDisk is deprecated. All operations for the in-tree gcePersistentDisk type are redirected to the pd.csi.storage.gke.io CSI driver. More info: https://kubernetes.io/docs/concepts/storage/volumes#gcepersistentdisk
+  gcePersistentDisk: Option GCEPersistentDiskVolumeSource = None,
+  -- glusterfs represents a Glusterfs volume that is attached to a host and exposed to the pod. Provisioned by an admin. Deprecated: Glusterfs is deprecated and the in-tree glusterfs type is no longer supported. More info: https://examples.k8s.io/volumes/glusterfs/README.md
+  glusterfs: Option GlusterfsPersistentVolumeSource = None,
+  -- hostPath represents a directory on the host. Provisioned by a developer or tester. This is useful for single-node development and testing only! On-host storage is not supported in any way and WILL NOT WORK in a multi-node cluster. More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath
+  hostPath: Option HostPathVolumeSource = None,
+  -- iscsi represents an ISCSI Disk resource that is attached to a kubelet's host machine and then exposed to the pod. Provisioned by an admin.
+  iscsi: Option ISCSIPersistentVolumeSource = None,
+  -- local represents directly-attached storage with node affinity
+  local: Option LocalVolumeSource = None,
+  -- mountOptions is the list of mount options, e.g. ["ro", "soft"]. Not validated - mount will simply fail if one is invalid. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#mount-options
+  mountOptions: Option (List String) = None,
+  -- nfs represents an NFS mount on the host. Provisioned by an admin. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs
+  nfs: Option NFSVolumeSource = None,
+  -- nodeAffinity defines constraints that limit what nodes this volume can be accessed from. This field influences the scheduling of pods that use this volume. This field is mutable if MutablePVNodeAffinity feature gate is enabled.
+  nodeAffinity: Option VolumeNodeAffinity = None,
+  -- persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming
+  --
+  -- Possible enum values:
+  --  - `"Delete"` means the volume will be deleted from Kubernetes on release from its claim. The volume plugin must support Deletion.
+  --  - `"Recycle"` means the volume will be recycled back into the pool of unbound persistent volumes on release from its claim. The volume plugin must support Recycling.
+  --  - `"Retain"` means the volume will be left in its current phase (Released) for manual reclamation by the administrator. The default policy is Retain.
+  persistentVolumeReclaimPolicy: Option PersistentVolumeSpecPersistentVolumeReclaimPolicy = None,
+  -- photonPersistentDisk represents a PhotonController persistent disk attached and mounted on kubelets host machine. Deprecated: PhotonPersistentDisk is deprecated and the in-tree photonPersistentDisk type is no longer supported.
+  photonPersistentDisk: Option PhotonPersistentDiskVolumeSource = None,
+  -- portworxVolume represents a portworx volume attached and mounted on kubelets host machine. Deprecated: PortworxVolume is deprecated. All operations for the in-tree portworxVolume type are redirected to the pxd.portworx.com CSI driver.
+  portworxVolume: Option PortworxVolumeSource = None,
+  -- quobyte represents a Quobyte mount on the host that shares a pod's lifetime. Deprecated: Quobyte is deprecated and the in-tree quobyte type is no longer supported.
+  quobyte: Option QuobyteVolumeSource = None,
+  -- rbd represents a Rados Block Device mount on the host that shares a pod's lifetime. Deprecated: RBD is deprecated and the in-tree rbd type is no longer supported. More info: https://examples.k8s.io/volumes/rbd/README.md
+  rbd: Option RBDPersistentVolumeSource = None,
+  -- scaleIO represents a ScaleIO persistent volume attached and mounted on Kubernetes nodes. Deprecated: ScaleIO is deprecated and the in-tree scaleIO type is no longer supported.
+  scaleIO: Option ScaleIOPersistentVolumeSource = None,
+  -- storageClassName is the name of StorageClass to which this persistent volume belongs. Empty value means that this volume does not belong to any StorageClass.
+  storageClassName: Option String = None,
+  -- storageOS represents a StorageOS volume that is attached to the kubelet's host machine and mounted into the pod. Deprecated: StorageOS is deprecated and the in-tree storageos type is no longer supported. More info: https://examples.k8s.io/volumes/storageos/README.md
+  storageos: Option StorageOSPersistentVolumeSource = None,
+  -- Name of VolumeAttributesClass to which this persistent volume belongs. Empty value is not allowed. When this field is not set, it indicates that this volume does not belong to any VolumeAttributesClass. This field is mutable and can be changed by the CSI driver after a volume has been updated successfully to a new class. For an unbound PersistentVolume, the volumeAttributesClassName will be matched with unbound PersistentVolumeClaims during the binding process.
+  volumeAttributesClassName: Option String = None,
+  -- volumeMode defines if a volume is intended to be used with a formatted filesystem or to remain in raw block state. Value of Filesystem is implied when not included in spec.
+  --
+  -- Possible enum values:
+  --  - `"Block"` means the volume will not be formatted with a filesystem and will remain a raw block device.
+  --  - `"Filesystem"` means the volume will be or is formatted with a filesystem.
+  volumeMode: Option PersistentVolumeClaimSpecVolumeMode = None,
+  -- vsphereVolume represents a vSphere volume attached and mounted on kubelets host machine. Deprecated: VsphereVolume is deprecated. All operations for the in-tree vsphereVolume type are redirected to the csi.vsphere.vmware.com CSI driver.
+  vsphereVolume: Option VsphereVirtualDiskVolumeSource = None
+)
+
+-- PersistentVolume (PV) is a storage resource provisioned by an administrator. It is analogous to a node. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes
+type PersistentVolume(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "PersistentVolume",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- spec defines a specification of a persistent volume owned by the cluster. Provisioned by an administrator. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistent-volumes
+  spec: Option PersistentVolumeSpec = None,
+  -- status represents the current information/status for the persistent volume. Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistent-volumes
+  status: Option PersistentVolumeStatus = None
+)
+
+-- PersistentVolumeList is a list of PersistentVolume items.
+type PersistentVolumeList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- items is a list of persistent volumes. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes
+  items: List PersistentVolume,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "PersistentVolumeList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
 )
 
 -- Volume represents a named volume in a pod that may be accessed by any container in the pod.
@@ -2011,10 +3726,98 @@ type PodSpec(
   volumes: Option (List Volume) = None
 )
 
+-- Pod is a collection of containers that can run on a host. This resource is created by clients and scheduled onto hosts.
+type Pod(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "Pod",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- Specification of the desired behavior of the pod. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  spec: Option PodSpec = None,
+  -- Most recently observed status of the pod. This data may not be up to date. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  status: Option PodStatus = None
+)
+
+-- PodList is a list of Pods.
+type PodList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- List of pods. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md
+  items: List Pod,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "PodList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
+)
+
 -- PodTemplateSpec describes the data a pod should have when created from a template
 type PodTemplateSpec(
   -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
   metadata: Option meta_v1.ObjectMeta = None,
   -- Specification of the desired behavior of the pod. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
   spec: Option PodSpec = None
+)
+
+-- PodTemplate describes a template for creating copies of a predefined pod.
+type PodTemplate(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "PodTemplate",
+  -- Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- Template defines the pods that will be created from this pod template. https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  template: Option PodTemplateSpec = None
+)
+
+-- PodTemplateList is a list of PodTemplates.
+type PodTemplateList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- List of pod templates
+  items: List PodTemplate,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "PodTemplateList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
+)
+
+-- ReplicationControllerSpec is the specification of a replication controller.
+type ReplicationControllerSpec(
+  -- Minimum number of seconds for which a newly created pod should be ready without any of its container crashing, for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready)
+  minReadySeconds: Option Int = None,
+  -- Replicas is the number of desired replicas. This is a pointer to distinguish between explicit zero and unspecified. Defaults to 1. More info: https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller#what-is-a-replicationcontroller
+  replicas: Option Int = None,
+  -- Selector is a label query over pods that should match the Replicas count. If Selector is empty, it is defaulted to the labels present on the Pod template. Label keys and values that must match in order to be controlled by this replication controller, if empty defaulted to labels on Pod template. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
+  selector: Option (Map String) = None,
+  -- Template is the object that describes the pod that will be created if insufficient replicas are detected. This takes precedence over a TemplateRef. The only allowed template.spec.restartPolicy value is "Always". More info: https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller#pod-template
+  template: Option PodTemplateSpec = None
+)
+
+-- ReplicationController represents the configuration of a replication controller.
+type ReplicationController(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "ReplicationController",
+  -- If the Labels of a ReplicationController are empty, they are defaulted to be the same as the Pod(s) that the replication controller manages. Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- Spec defines the specification of the desired behavior of the replication controller. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  spec: Option ReplicationControllerSpec = None,
+  -- Status is the most recently observed status of the replication controller. This data may be out of date by some window of time. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  status: Option ReplicationControllerStatus = None
+)
+
+-- ReplicationControllerList is a collection of replication controllers.
+type ReplicationControllerList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "v1",
+  -- List of replication controllers. More info: https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller
+  items: List ReplicationController,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "ReplicationControllerList",
+  -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  metadata: Option meta_v1.ListMeta = None
 )

@@ -76,7 +76,7 @@ typed too.
 
 ## How to use it
 
-You need wand 0.88.1 or later, and `kubectl` with a context for your
+You need wand 0.89.0 or later, and `kubectl` with a context for your
 cluster.
 
 ### 1. Add plimsoll to your package
@@ -91,8 +91,9 @@ wand p add github.com/wand-lang/plimsoll
 wand github.com/wand-lang/plimsoll/cli gen
 ```
 
-This writes `k8s/apps/v1.wand` and the modules it needs. Give the group
-versions you use to generate more of them:
+This writes one module for each API group and version your cluster
+serves, CRDs included: `k8s/core/v1.wand`, `k8s/apps/v1.wand`,
+`k8s/batch/v1.wand`, and so on. To generate only some of them, name them:
 
 ```sh
 wand github.com/wand-lang/plimsoll/cli gen apis/apps/v1 api/v1 apis/batch/v1

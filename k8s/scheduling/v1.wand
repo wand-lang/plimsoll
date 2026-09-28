@@ -1,0 +1,40 @@
+-- DO NOT EDIT: written by plimsoll gen from api/v1, apis/admissionregistration.k8s.io/v1, apis/apiextensions.k8s.io/v1, apis/apiregistration.k8s.io/v1, apis/apps/v1, apis/authentication.k8s.io/v1, apis/authorization.k8s.io/v1, apis/autoscaling/v1, apis/autoscaling/v2, apis/batch/v1, apis/certificates.k8s.io/v1, apis/coordination.k8s.io/v1, apis/discovery.k8s.io/v1, apis/events.k8s.io/v1, apis/flowcontrol.apiserver.k8s.io/v1, apis/networking.k8s.io/v1, apis/node.k8s.io/v1, apis/policy/v1, apis/rbac.authorization.k8s.io/v1, apis/resource.k8s.io/v1, apis/scheduling.k8s.io/v1, apis/storage.k8s.io/v1, apis/storagemigration.k8s.io/v1
+
+let meta_v1 = import ../meta/v1
+
+-- The values of PriorityClass.preemptionPolicy.
+type PriorityClassPreemptionPolicy = Never | PreemptLowerPriority
+
+-- PriorityClass defines mapping from a priority class name to the priority integer value. The value can be any valid integer.
+type PriorityClass(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "scheduling.k8s.io/v1",
+  -- description is an arbitrary string that usually provides guidelines on when this priority class should be used.
+  description: Option String = None,
+  -- globalDefault specifies whether this PriorityClass should be considered as the default priority for pods that do not have any priority class. Only one PriorityClass can be marked as `globalDefault`. However, if more than one PriorityClasses exists with their `globalDefault` field set to true, the smallest value of such global default PriorityClasses will be used as the default priority.
+  globalDefault: Option Bool = None,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "PriorityClass",
+  -- metadata is the standard object metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ObjectMeta = None,
+  -- preemptionPolicy is the Policy for preempting pods with lower priority. One of Never, PreemptLowerPriority. Defaults to PreemptLowerPriority if unset.
+  --
+  -- Possible enum values:
+  --  - `"Never"` means that pod never preempts other pods with lower priority.
+  --  - `"PreemptLowerPriority"` means that pod can preempt other pods with lower priority.
+  preemptionPolicy: Option PriorityClassPreemptionPolicy = None,
+  -- value represents the integer value of this priority class. This is the actual priority that pods receive when they have the name of this class in their pod spec.
+  value: Option Int = None
+)
+
+-- PriorityClassList is a collection of priority classes.
+type PriorityClassList(
+  -- APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  apiVersion: String = "scheduling.k8s.io/v1",
+  -- items is the list of PriorityClasses
+  items: List PriorityClass,
+  -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  kind: String = "PriorityClassList",
+  -- Standard list metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+  metadata: Option meta_v1.ListMeta = None
+)
