@@ -38,7 +38,6 @@ Obey them here.
 - `.github/workflows/ci.yml` — CI: the checks below with no cluster, and
   `tools/_e2e.wand` on a kind cluster. It installs the wand that `wand.pkg`
   names.
-- `docs/llm-authoring.md` — the authoring log. See below.
 
 ## Checks
 
@@ -67,18 +66,6 @@ encodes it, has the API server validate it with `--dry-run=server`, and
 decodes the object the server would store. Run it after a change to the
 generator.
 
-## The authoring log
-
-The log records the ergonomics of an LLM writing wand: what came
-naturally, where habits from other languages got in the way, whether a
-diagnostic led to the fix, and what the task cost. It is not a bug list.
-Fix a wand bug in wand, or file an issue in wand-lang/wand; fix a plimsoll
-bug in plimsoll. Neither goes in the log.
-
-At the end of each task (one commit or one PR), before you report the task
-done, add one entry at the end of `docs/llm-authoring.md`. Follow the rules
-at the top of that file: write it during the task, quote the real
-diagnostic and its code, give counts, and do not soften the cause. Never
-change an earlier entry.
+## Writing
 
 Write docs and comments in ASD-STE100 Simplified Technical English.
