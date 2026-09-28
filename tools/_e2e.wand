@@ -34,10 +34,10 @@ import String
 
 -- What the copy needs to generate a module and run a script against it.
 let sources = [
-  "_gen.wand",
-  "_drift.wand",
   "_lib/cli.wand",
   "_lib/decode.wand",
+  "_lib/drift.wand",
+  "_lib/gen.wand",
   "_lib/quantity.wand",
   "cli.wand",
   "plimsoll.wand",

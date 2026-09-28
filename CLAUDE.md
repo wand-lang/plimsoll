@@ -15,16 +15,17 @@ Obey them here.
   few more fields) made into a Deployment and a Service of the `k8s/`
   types, with one set of labels. The builders are pure; `apply!` applies
   both.
-- `_gen.wand` — the generator. It is pure: OpenAPI documents in, file texts
-  and notes out. It is private to this package.
-- `_drift.wand` — what changed between the modules on disk and the ones
+- `_lib/gen.wand` — the generator. It is pure: OpenAPI documents in, file
+  texts and notes out.
+- `_lib/drift.wand` — what changed between the modules on disk and the ones
   `gen` would write now. It is pure. `check` and `upgrade` print it.
 - `cli.wand` — the command: `gen [group-version ...]`, `check [--contexts
   a,b,c]` and `upgrade [--contexts a,b,c]`. Run it here as
   `wand cli.wand gen`. It holds only `main!`; the work is in `_lib/cli.wand`.
-- `_lib/` — helpers that are not API: `quantity.wand`, `decode.wand`,
-  `app.wand` and `cli.wand`. A path with a `_` part is not in the package's
-  interface, so put a helper here, not at the top level of a public module.
+- `_lib/` — the code that is not API: the generator and drift above, and
+  the helpers `quantity.wand`, `decode.wand`, `app.wand` and `cli.wand`. A
+  path with a `_` part is not in the package's interface, so put a helper
+  here, not at the top level of a public module.
 - `k8s/` — generated modules. Do not edit them. Run `gen` again.
 - `test_*.wand` — tests, run with `wand s`. `testdata/` holds fixtures cut
   from a real schema.
@@ -44,7 +45,7 @@ Obey them here.
 Check by exit code.
 
 ```sh
-wand t app.wand _gen.wand _drift.wand cli.wand plimsoll.wand _lib/*.wand test_*.wand examples/*.wand tools/*.wand   # no findings
+wand t app.wand cli.wand plimsoll.wand _lib/*.wand test_*.wand examples/*.wand tools/*.wand   # no findings
 wand s                                                  # all tests pass
 wand t k8s/*/*.wand                                     # generated modules
 for f in k8s/*/*.wand; do cp $f /tmp/x.wand; wand f /tmp/x.wand; cmp $f /tmp/x.wand; done

@@ -28,7 +28,7 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Typecheck the sources
-        run: wand t app.wand _gen.wand _drift.wand cli.wand plimsoll.wand _lib/*.wand test_*.wand examples/*.wand tools/*.wand
+        run: wand t app.wand cli.wand plimsoll.wand _lib/*.wand test_*.wand examples/*.wand tools/*.wand
 
       - name: Run the tests
         run: wand s

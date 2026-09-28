@@ -10,7 +10,7 @@ import Option
 import String
 
 let {test, group} = import Test
-let gen = import ./_gen
+let gen = import ./_lib/gen
 
 let doc = JSON.read_file! ./testdata/apps_v1_cut.json
 let out = gen.generate "../../plimsoll" ["apis/apps/v1"] [doc]

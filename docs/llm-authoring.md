@@ -833,3 +833,16 @@ scripts became `examples/_app.wand`, `examples/_deployment.wand` and
 | `app.wand`, `_lib/app.wand` | 1 | 0 | 0 |
 | `cli.wand`, `_lib/cli.wand` | 1 | 2 (manifests) | 0 |
 | `tools/_e2e.wand` | 1 | 0 | 1 (the copy list) |
+
+## 2026-09-28 — gen and drift into _lib
+
+**Task.** `_gen.wand` and `_drift.wand` moved to `_lib/gen.wand` and
+`_lib/drift.wand`, so all private code is in one place. The user asked why
+they were not there. They were private already, by their names, and the
+LLM had left them where they were without a reason.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| all moved files | 1 | 0 | 0 |

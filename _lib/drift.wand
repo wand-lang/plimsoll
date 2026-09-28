@@ -3,13 +3,13 @@
 --
 -- It is pure: module texts in, lines of change out. It reads the modules
 -- as `gen` writes them, not as wand parses them, so it depends on the
--- layout in _gen.wand.
+-- layout in gen.wand.
 
 import List
 import Option
 import String
 
-let gen = import ./_gen
+let gen = import ./gen
 
 -- One declaration of a generated module: a record and its fields, or a sum
 -- and its values. A field is its name and whether it is required; a value

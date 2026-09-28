@@ -18,8 +18,8 @@ import Shell
 import String
 import Version
 
-let gen = import ../_gen
-let drift = import ../_drift
+let gen = import ./gen
+let drift = import ./drift
 
 -- How a generated module imports plimsoll. Inside this package it is a
 -- path; anywhere else it is the package URL, which wand.pkg requires.

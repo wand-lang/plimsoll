@@ -1,12 +1,12 @@
--- Tests for _drift.wand, on module texts in the layout gen writes.
+-- Tests for _lib/drift.wand, on module texts in the layout gen writes.
 
 import List
 import Option
 import String
 
 let {test, group} = import Test
-let drift = import ./_drift
-let gen = import ./_gen
+let drift = import ./_lib/drift
+let gen = import ./_lib/gen
 
 let before = `
 -- DO NOT EDIT: written by plimsoll gen from apis/apps/v1
