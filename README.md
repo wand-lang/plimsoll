@@ -186,7 +186,57 @@ path a real run takes. `apply!`, `check!` and `delete!` are withheld.
 `plimsoll.millicores` and `plimsoll.bytes` read a `Quantity`: "500m" is 500
 millicores, and "128Mi" is 134217728 bytes.
 
-### 5. Keep the types in step with your clusters
+### 5. Or start from an App
+
+For a usual web service, `app` makes the Deployment and the Service from a
+few fields:
+
+```ocaml
+uses {Shell}
+
+import Map
+
+let app = import github.com/wand-lang/plimsoll/app
+
+let web =
+  app.App(
+    name = "web",
+    image = "nginx:1.27",
+    port = 8080,
+    replicas = 3,
+    env = Map.from_list [("MODE", "prod")],
+    cpu = Some "250m",
+    memory = Some "128Mi"
+  )
+
+app.apply! web
+```
+
+| Function | What it gives |
+|---|---|
+| `app.deployment a` | The Deployment: `a.replicas` pods that run `a.image` and listen on `a.port` |
+| `app.service a` | The Service, with the app's name, that sends `a.port` to the pods |
+| `app.labels a` | `{app = <name>}`: the labels of the pods, and of both selectors |
+| `app.manifest a` | The two objects as one JSON list. It reaches nothing |
+| `app.apply! a` | Server-side apply of the Deployment, then the Service |
+
+Only `replicas` (1), `env`, `cpu` and `memory` can be left out. The labels
+are one value, so the selectors and the pods cannot disagree.
+
+The objects are records of plimsoll's own types, which come from
+Kubernetes v1.37. To set a field that `App` does not have, use a record
+update, and apply the object with its encoder:
+
+```ocaml
+let apps = import github.com/wand-lang/plimsoll/k8s/apps/v1
+
+let d = app.deployment web
+let slow = apps.Deployment(d, spec = apps.DeploymentSpec(d.spec, minReadySeconds = Some 30))
+
+plimsoll.apply! apps.Deployment.encoder slow
+```
+
+### 6. Keep the types in step with your clusters
 
 ```sh
 wand github.com/wand-lang/plimsoll/cli check

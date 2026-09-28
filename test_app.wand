@@ -1,0 +1,129 @@
+uses {Shell}
+
+-- Tests for app.wand. No cluster is needed: a handler answers each kubectl
+-- command.
+
+import JSON
+import Map
+import Option
+
+let {test, group} = import Test
+let app = import ./app
+let plimsoll = import ./plimsoll
+let apps = import ./k8s/apps/v1
+let core = import ./k8s/core/v1
+let meta = import ./k8s/meta/v1
+
+let web = app.App(name = "web", image = "nginx:1.27", port = 8080, replicas = 3)
+
+let full =
+  app.App(
+    web,
+    env = Map.from_list [("MODE", "prod"), ("LOG", "info")],
+    cpu = Some "250m",
+    memory = Some "128Mi"
+  )
+
+-- The one container of a Deployment's pods.
+let container_of (d: apps.Deployment) =
+  match d.spec.template.spec with
+  | Some s -> (
+    match s.containers with
+    | [c :: _] -> Some c
+    | [] -> None
+  )
+  | None -> None
+
+let labels_of (m: Option meta.ObjectMeta) =
+  Option.and_then (fn (m: meta.ObjectMeta) -> m.labels) m
+
+let service_spec (a: app.App) =
+  match (app.service a).spec with
+  | Some s -> s
+  | None -> core.ServiceSpec()
+
+group "the Deployment" (fn () -> [
+  test "has the name, the replicas and the image" (fn t ->
+    let d = app.deployment web;
+    t.eq (Some "web", Some 3, Some (Some "nginx:1.27")) (
+      Option.and_then (fn (m: meta.ObjectMeta) -> m.name) d.metadata,
+      d.spec.replicas,
+      Option.map (fn (c: core.Container) -> c.image) (container_of d)
+    )),
+  test "one set of labels for the object, the selector and the pods" (fn t ->
+    let d = app.deployment web;
+    let want = Some (Map.from_list [("app", "web")]);
+    t.eq [want, want, want] [
+      labels_of d.metadata,
+      d.spec.selector.matchLabels,
+      labels_of d.spec.template.metadata
+    ]),
+  test "the container listens on the port" (fn t ->
+    t.eq
+      (Some (Some [core.ContainerPort(containerPort = 8080)]))
+      (Option.map (fn (c: core.Container) -> c.ports) (container_of (app.deployment web)))),
+  test "no env and no requests when none are given" (fn t ->
+    t.eq
+      (Some (None, None))
+      (Option.map
+        (fn (c: core.Container) -> (c.env, c.resources))
+        (container_of (app.deployment web)))),
+  test "the env, in the order it is written" (fn t ->
+    t.eq
+      (Some
+        (Some [
+          core.EnvVar(name = "MODE", value = Some "prod"),
+          core.EnvVar(name = "LOG", value = Some "info")
+        ]))
+      (Option.map (fn (c: core.Container) -> c.env) (container_of (app.deployment full)))),
+  test "the requests that are given" (fn t ->
+    let mem = app.App(web, memory = Some "64Mi");
+    t.eq [
+      Some
+        (Some core.ResourceRequirements(
+          requests = Some (Map.from_list [("cpu", "250m"), ("memory", "128Mi")])
+        )),
+      Some
+        (Some core.ResourceRequirements(requests = Some (Map.from_list [("memory", "64Mi")])))
+    ] [
+      Option.map
+        (fn (c: core.Container) -> c.resources)
+        (container_of (app.deployment full)),
+      Option.map (fn (c: core.Container) -> c.resources) (container_of (app.deployment mem))
+    ]),
+  test "a record update changes the object before it is applied" (fn t ->
+    let d = app.deployment web;
+    let d2 = apps.Deployment(d, spec = apps.DeploymentSpec(d.spec, paused = Some true));
+    t.eq (Some true, Some 3) (d2.spec.paused, d2.spec.replicas))
+])
+
+group "the Service" (fn () -> [
+  test "selects the app's pods" (fn t ->
+    t.eq (Some (app.labels web)) (service_spec web).selector),
+  test "sends the port to the container's port" (fn t ->
+    t.eq
+      (Some [core.ServicePort(port = 8080, targetPort = Some (plimsoll.I 8080))])
+      (service_spec web).ports),
+  test "has the app's name" (fn t ->
+    t.eq
+      (Some "web")
+      (Option.and_then (fn (m: meta.ObjectMeta) -> m.name) (app.service web).metadata))
+])
+
+group "the cluster" (fn () -> [
+  test "manifest is the Deployment and the Service" (fn t ->
+    let d = JSON.stringify (apps.Deployment.encoder (app.deployment web));
+    let s = JSON.stringify (core.Service.encoder (app.service web));
+    t.eq "[%{d},%{s}]" (app.manifest web)),
+  test "apply sends the Deployment, then the Service" (fn t ->
+    let sent =
+      handle app.apply! web with
+      | Shell!run (_, input) k -> k input
+    in
+    t.eq
+      [
+        JSON.stringify (apps.Deployment.encoder (app.deployment web)),
+        JSON.stringify (core.Service.encoder (app.service web))
+      ]
+      sent)
+])

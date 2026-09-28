@@ -564,3 +564,75 @@ the weekly run uses that. wand 0.89.0.
 | File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
 |---|---|---|---|
 | `tools/e2e.wand` | 1 | 0 | 0 |
+
+## 2026-09-27 — The ergonomic layer: App → Deployment and Service
+
+**Task.** Wrote `app.wand` (111 lines): `App(name, image, port, replicas,
+env, cpu, memory)`, and `deployment`, `service`, `labels`, `manifest` and
+`apply!`. The objects are records of plimsoll's own `k8s/` types, so a
+script changes one with a record update. Also `test_app.wand` (12 tests),
+`examples/app.wand` (the server validates both objects), step 2 of
+`tools/e2e.wand`, and a README section. wand 0.89.0, Kubernetes v1.37.0 on
+kind.
+
+### Easy
+
+- **The builders typechecked on the first attempt after two fixes.** The
+  shapes came from the generated types, and the field names in `k8s/` are
+  the names in the Kubernetes docs.
+- **A record update of a nested record.** `apps.Deployment(d, spec =
+  apps.DeploymentSpec(d.spec, minReadySeconds = Some 5))` was right on the
+  first attempt, in the test and in the example.
+- **A handler tested `apply!` with no cluster.** `Shell!run (_, input) k ->
+  k input` gave back the two JSON texts that the two kubectl commands got.
+- **`examples/app.wand`, `test_app.wand` and the e2e step** typechecked on
+  the first attempt.
+
+### Hard
+
+- **A field default that is not a literal.** The LLM wrote
+  `env: Map String = Map.empty`. E-TYPE: "the default for field 'env' of
+  'App' has to be a value written out: a literal, or a constructor applied
+  to literals. It is read with nothing in scope, so it says the same thing
+  at every construction that leaves the field out". The fix, `{}`, came
+  from the syntax card, not from the message: the message says "a literal"
+  and does not name the empty map literal. Cause: habit from another
+  language (a default is an expression).
+- **A punned field in the first place is a record update.** The LLM wrote
+  `core.EnvVar(name, value = Some v)` with `name` bound by the lambda.
+  E-TYPE: "expected EnvVar, got String -- 'name' here is the record being
+  updated, not a field. Write 'EnvVar(value = ..., name)' to pun it". The
+  message named the cause and the fix. Cause: the LLM's own mistake; the
+  syntax card shows both forms.
+- **The manifest.** The LLM added `uses {Shell(kubectl)}` by hand, after
+  V-USES2 had suggested `uses {Shell}`. A-USES1: "the manifest allows
+  'kubectl', which no command here runs; it could be \"uses {Shell}\"". The
+  command word is in `plimsoll.wand`, so this file names none. `wand t
+  --fix` wrote the line. Cause: the LLM's own mistake; it wrote an effect
+  by hand, which Part B says not to do.
+- **`Map.to_list` order.** A test expected the env sorted by name and
+  failed: "expected Some(Some([EnvVar("LOG", ...), EnvVar("MODE", ...)])),
+  got Some(Some([EnvVar("MODE", ...), EnvVar("LOG", ...)]))". `wand d
+  Map.to_list` says "in the order the keys were added". The LLM assumed a
+  sorted map without reading the doc. The order as written is the better
+  behavior, since `$(NAME)` names only an earlier variable, so the test
+  changed, not the code. Cause: habit from another language (OCaml's
+  `Map` is sorted).
+- **One wrong test, found before the run.** The first `manifest` test
+  passed `JSON.of_list` to `plimsoll.manifest` and would have compared a
+  nested list. The LLM saw it by reading and wrote the expected text
+  directly. Cause: the LLM's own mistake.
+- **The formatter split one `env = if ... else Some (List.map ...)` field
+  over five lines.** The LLM moved it into a function `env_vars` with a
+  `match`, which reads better. Not a fault of `wand f`.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `app.wand` | 5 | 1 (the manifest) | 2 (the default, the pun) |
+| `test_app.wand` | 1 | 0 | 0 |
+| `examples/app.wand` | 1 | 0 | 0 |
+| `tools/e2e.wand` | 1 | 0 | 0 |
+
+One test failed on its first run (the env order). `wand s`: 81 tests pass.

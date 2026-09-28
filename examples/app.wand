@@ -1,0 +1,51 @@
+uses {IO, Shell}
+
+-- An application in a few fields, checked by the API server of the cluster
+-- that kubectl points at.
+--
+-- `app.deployment` and `app.service` make the two objects. The script
+-- changes the Deployment with a record update, and asks the server to
+-- validate each object with `plimsoll.check!` (a server-side dry run).
+-- Nothing on the cluster changes. `wand --dry-run` withholds the checks.
+import IO
+import JSON
+import Map
+import Option
+
+let app = import ../app
+let apps = import ../k8s/apps/v1
+let core = import ../k8s/core/v1
+let plimsoll = import ../plimsoll
+
+let web =
+  app.App(
+    name = "web",
+    image = "nginx:1.27",
+    port = 8080,
+    replicas = 2,
+    env = Map.from_list [("MODE", "prod")],
+    cpu = Some "100m",
+    memory = Some "64Mi"
+  )
+
+let d = app.deployment web
+
+-- A field that App does not have: a record update sets it.
+let settled =
+  apps.Deployment(d, spec = apps.DeploymentSpec(d.spec, minReadySeconds = Some 5))
+
+let deployment =
+  JSON.decode apps.Deployment.decoder (plimsoll.check! apps.Deployment.encoder settled)
+
+let service =
+  JSON.decode core.Service.decoder (plimsoll.check! core.Service.encoder (app.service web))
+
+match (deployment, service) with
+| (Ok d, Ok s) -> (
+  IO.println
+    "deployment: replicas %{d.spec.replicas}, minReadySeconds %{d.spec.minReadySeconds}";
+  IO.println
+    "service: type %{Option.and_then (fn (sp: core.ServiceSpec) -> sp.type) s.spec}, clusterIP %{Option.and_then (fn (sp: core.ServiceSpec) -> sp.clusterIP) s.spec}"
+)
+| (Error e, _) -> IO.println_err "the server's Deployment did not decode: %{e}"
+| (_, Error e) -> IO.println_err "the server's Service did not decode: %{e}"

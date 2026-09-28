@@ -11,6 +11,10 @@ Obey them here.
   (`IntOrString`, `Quantity`), the quantity helpers, and the runtime API:
   `apply!`, `check!`, `get!`, `list!`, `delete!`, `manifest`. It reaches the
   cluster only through kubectl.
+- `app.wand` — the ergonomic layer: `App` (a name, an image, a port and a
+  few more fields) made into a Deployment and a Service of the `k8s/`
+  types, with one set of labels. The builders are pure; `apply!` applies
+  both.
 - `_gen.wand` — the generator. It is pure: OpenAPI documents in, file texts
   and notes out. It is private to this package.
 - `_drift.wand` — what changed between the modules on disk and the ones
@@ -21,7 +25,7 @@ Obey them here.
 - `k8s/` — generated modules. Do not edit them. Run `gen` again.
 - `test_*.wand` — tests, run with `wand s`. `testdata/` holds fixtures cut
   from a real schema.
-- `examples/` — scripts that use the generated types.
+- `examples/` — scripts that use the generated types and `app.wand`.
 - `tools/e2e.wand` — the end-to-end test against the cluster kubectl points
   at: `check`, the Deployment round trip, and a CRD from
   `testdata/widget-crd.yaml` round-tripped by `testdata/widget.wand.in` in a
@@ -36,7 +40,7 @@ Obey them here.
 Check by exit code.
 
 ```sh
-wand t _gen.wand _drift.wand cli.wand plimsoll.wand test_*.wand examples/*.wand tools/*.wand   # no findings
+wand t app.wand _gen.wand _drift.wand cli.wand plimsoll.wand test_*.wand examples/*.wand tools/*.wand   # no findings
 wand s                                                  # all tests pass
 wand t k8s/*/*.wand                                     # generated modules
 for f in k8s/*/*.wand; do cp $f /tmp/x.wand; wand f /tmp/x.wand; cmp $f /tmp/x.wand; done

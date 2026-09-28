@@ -6,14 +6,16 @@ uses {Clock, FS.Read, FS.Write, IO, Proc, Shell(kubectl, sh, wand)}
 --   wand tools/e2e.wand
 --   wand tools/e2e.wand --no-example
 --
--- `--no-example` leaves out step 2. examples/deployment.wand is written for
--- the Kubernetes version k8s/ was generated from, and another version's
--- types can differ: Deployment.spec is required in v1.37 and optional in
--- v1.36. The weekly run on other versions uses it.
+-- `--no-example` leaves out step 2. examples/deployment.wand and
+-- examples/app.wand are written for the Kubernetes version k8s/ was
+-- generated from, and another version's types can differ: Deployment.spec
+-- is required in v1.37 and optional in v1.36. The weekly run on other
+-- versions uses it.
 --
 -- 1. k8s/ matches the cluster's schema (`check`).
 -- 2. A Deployment built from k8s/ round-trips through the API server
---    (examples/deployment.wand).
+--    (examples/deployment.wand), and the API server accepts the
+--    Deployment and the Service of an App (examples/app.wand).
 -- 3. A CRD gets a module, and a Widget built from it round-trips:
 --    testdata/widget-crd.yaml is installed, `gen` writes its module in a
 --    copy of this package, testdata/widget.wand.in runs there, and the CRD is
@@ -41,18 +43,17 @@ let copy_into! dir name target =
 let wait_for_schema! tries =
   if String.contains? "apis/example.com/v1alpha1" $(kubectl get --raw /openapi/v3) then ()
   else if tries <= 0 then Result.get! (Error "the CRD's schema was not published in time")
-  else (
-    Clock.sleep 1s;
-    wait_for_schema! (tries - 1)
-  )
+  else (Clock.sleep 1s; wait_for_schema! (tries - 1))
 
 let widget! dir = (
   IO.println $(kubectl apply -f testdata/widget-crd.yaml);
-  IO.println $(kubectl wait --for=condition=Established crd/widgets.example.com --timeout=60s);
+  IO.println
+    $(kubectl wait --for=condition=Established crd/widgets.example.com --timeout=60s);
   wait_for_schema! 60;
   List.each (fn f -> copy_into! dir f f) sources;
   copy_into! dir "testdata/widget.wand.in" "widget.wand";
-  IO.println $(sh -c 'cd "$1" && wand cli.wand gen apis/example.com/v1alpha1 && wand widget.wand' e2e %{Path.to_string dir})
+  IO.println
+    $(sh -c 'cd "$1" && wand cli.wand gen apis/example.com/v1alpha1 && wand widget.wand' e2e %{Path.to_string dir})
 )
 
 let main! () = (
@@ -61,7 +62,9 @@ let main! () = (
   if Proc.args () == ["--no-example"] then ()
   else (
     IO.println "== a Deployment round-trips";
-    IO.println $(wand examples/deployment.wand)
+    IO.println $(wand examples/deployment.wand);
+    IO.println "== an App's Deployment and Service pass the server's checks";
+    IO.println $(wand examples/app.wand)
   );
   IO.println "== a CRD gets a module, and a Widget round-trips";
   let outcome = with FS.temp_dir "plimsoll-e2e-" as dir -> try widget! dir;

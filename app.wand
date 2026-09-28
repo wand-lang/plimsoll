@@ -1,0 +1,111 @@
+uses {Shell}
+
+-- An application in a few fields, made into a Deployment and a Service.
+--
+-- The objects come from plimsoll's own `k8s/` types, so they are the same
+-- records that a script builds by hand. Change one with a record update
+-- before you apply it:
+--
+--   let d = app.deployment web
+--   let d2 = apps.Deployment(d, metadata = Some meta.ObjectMeta(name = Some "web2"))
+--
+-- The functions that build the objects are pure. Only `apply!` reaches the
+-- cluster.
+
+import JSON
+import List
+import Map
+import Option
+
+let apps = import ./k8s/apps/v1
+let core = import ./k8s/core/v1
+let meta = import ./k8s/meta/v1
+let plimsoll = import ./plimsoll
+
+-- One application: a container image that listens on one port.
+--
+-- `env` is the container's environment, in the order it is written: a
+-- value can name an earlier variable as `$(NAME)`. `cpu` and `memory` are
+-- the requests, as Kubernetes writes a quantity ("250m", "128Mi"). A
+-- request that is `None` is not sent.
+type App(
+  name: String,
+  image: String,
+  port: Int,
+  replicas: Int = 1,
+  env: Map String = {},
+  cpu: Option plimsoll.Quantity = None,
+  memory: Option plimsoll.Quantity = None
+)
+
+-- The labels on the pods, which the Deployment's selector and the Service's
+-- selector also use. They are one value, so the three cannot disagree.
+--
+-- >> labels (App(name = "web", image = "nginx", port = 80))
+-- {app = "web"} : Map String
+let labels (a: App) = Map.from_list [("app", a.name)]
+
+-- The requests that are given, or `None` when neither is.
+let requests (a: App) =
+  let given =
+    List.filter_map (fn (key, q) -> Option.map (fn v -> (key, v)) q) [
+      ("cpu", a.cpu),
+      ("memory", a.memory)
+    ];
+  if given == [] then None else Some (Map.from_list given)
+
+-- The environment as the container writes it, or `None` when it is empty.
+let env_vars (a: App) =
+  match Map.to_list a.env with
+  | [] -> None
+  | pairs -> Some (List.map (fn (key, v) -> core.EnvVar(name = key, value = Some v)) pairs)
+
+-- The container that runs `a.image`.
+let container (a: App) =
+  core.Container(
+    name = a.name,
+    image = Some a.image,
+    ports = Some [core.ContainerPort(containerPort = a.port)],
+    env = env_vars a,
+    resources = Option.map
+      (fn r -> core.ResourceRequirements(requests = Some r))
+      (requests a)
+  )
+
+-- The Deployment that runs `a.replicas` pods of `a`.
+let deployment (a: App) =
+  apps.Deployment(
+    metadata = Some meta.ObjectMeta(name = Some a.name, labels = Some (labels a)),
+    spec = apps.DeploymentSpec(
+      replicas = Some a.replicas,
+      selector = meta.LabelSelector(matchLabels = Some (labels a)),
+      template = core.PodTemplateSpec(
+        metadata = Some meta.ObjectMeta(labels = Some (labels a)),
+        spec = Some core.PodSpec(containers = [container a])
+      )
+    )
+  )
+
+-- The Service that sends `a.port` to the pods of `a`. It has the name of
+-- the app, so other pods reach it at `http://<name>:<port>`.
+let service (a: App) =
+  core.Service(
+    metadata = Some meta.ObjectMeta(name = Some a.name, labels = Some (labels a)),
+    spec = Some core.ServiceSpec(
+      selector = Some (labels a),
+      ports = Some [core.ServicePort(port = a.port, targetPort = Some (plimsoll.I a.port))]
+    )
+  )
+
+-- The Deployment and the Service as one JSON list, for a file or for a
+-- review. It reaches nothing.
+let manifest (a: App) =
+  JSON.stringify
+    (JSON.of_list [apps.Deployment.encoder (deployment a), core.Service.encoder (service a)])
+
+-- Server-side apply of the Deployment, then the Service. Gives kubectl's
+-- two lines.
+let apply! (a: App) = [
+  plimsoll.apply! apps.Deployment.encoder (deployment a),
+  plimsoll.apply! core.Service.encoder (service a)
+]
