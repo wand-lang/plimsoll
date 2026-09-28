@@ -194,6 +194,28 @@ withheld.
 `plimsoll.millicores` and `plimsoll.bytes` read a `Quantity`: "500m" is 500
 millicores, and "128Mi" is 134217728 bytes.
 
+#### When an object does not decode
+
+An enum in `k8s/` holds the values that your cluster had when you
+generated the types. If the cluster is upgraded later, it can return a
+value that the enum does not have, or leave out a field that is now
+required. Then `get!` and `list!` stop with an error that names the field
+and the value, and says what to do:
+
+```
+.spec.sessionAffinity: expected one of ClientIP, None, got "Sticky"
+The cluster may be newer than the types in k8s/. Run `wand github.com/wand-lang/plimsoll/cli check` to see what changed, and `upgrade` to generate the types again.
+```
+
+This is on purpose. A script does not continue with a value that it does
+not know. To fix it, generate the types again with `upgrade` (see step 6),
+then fix each script that it reports. Run `check` in CI against each
+cluster, and you see a new value before a script does.
+
+If your scripts use clusters of different versions, `upgrade` takes the
+types from the oldest one. A value that only the newer clusters have stays
+unknown until the oldest cluster is upgraded too.
+
 ### 5. Or start from an App
 
 For a usual web service, `app` makes the Deployment and the Service from a

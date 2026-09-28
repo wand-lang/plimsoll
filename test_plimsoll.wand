@@ -105,6 +105,28 @@ group "the cluster" (fn () -> [
       | Shell!run _ k -> k `{"kind":"Deployment"}`
     in
     t.ok (Result.error? r)),
+  -- A value the types do not have usually means the cluster is newer than
+  -- k8s/, so the error says how to find out.
+  test "and the error says to check the types against the cluster" (fn t ->
+    let r =
+      handle plimsoll.get dec "deployment" "web" with
+      | Shell!run _ k -> k `{"kind":"Deployment"}`
+    in
+    t.ok
+      (match r with
+      | Error e -> String.contains? "The cluster may be newer than the types in k8s/" e
+      | Ok _ -> false
+      )),
+  test "list says the same" (fn t ->
+    let r =
+      handle plimsoll.list dec "deployment" with
+      | Shell!run _ k -> k `{"items":[{"kind":"Deployment"}]}`
+    in
+    t.ok
+      (match r with
+      | Error e -> String.contains? "cli check" e
+      | Ok _ -> false
+      )),
   test "delete" (fn t ->
     t.eq
       "kubectl delete 'deployment' 'web'"

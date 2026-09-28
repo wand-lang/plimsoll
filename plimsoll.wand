@@ -115,20 +115,34 @@ let check! enc obj =
 -- `check!`, giving an `Error` where it raises.
 let check enc obj = try check! enc obj
 
+-- What a failed decode says after its own message. The usual cause is a
+-- cluster that is newer than the types: a value an enum does not have, or
+-- a field that is now required.
+let stale_hint =
+  "\nThe cluster may be newer than the types in k8s/. Run `wand github.com/wand-lang/plimsoll/cli check` to see what changed, and `upgrade` to generate the types again."
+
+-- `doc` decoded with `dec`. A failure raises, with `stale_hint` after the
+-- decoder's message.
+let decoded! dec doc =
+  Result.get! (Result.map_error (fn e -> e ++ stale_hint) (JSON.decode dec doc))
+
 -- One object, read from the cluster and decoded: `get! apps.Deployment.decoder
--- "deployment" "web"`. It only reads, so a rehearsal runs it.
+-- "deployment" "web"`. It only reads, so a rehearsal runs it. An object that
+-- does not decode raises, and the message says how to check the types
+-- against the cluster.
 let get! dec kind name =
   let doc = JSON.parse! (Shell.inspect! $*(kubectl get %{kind} %{name} -o json));
-  Result.get! (JSON.decode dec doc)
+  decoded! dec doc
 
 -- `get!`, giving an `Error` where it raises.
 let get dec kind name = try get! dec kind name
 
 -- Every object of a kind in the current namespace, decoded. It only reads,
--- so a rehearsal runs it. The `_in` forms below take the namespace.
+-- so a rehearsal runs it. The `_in` forms below take the namespace. An
+-- object that does not decode raises, as in `get!`.
 let list! dec kind =
   let doc = JSON.parse! (Shell.inspect! $*(kubectl get %{kind} -o json));
-  Result.get! (JSON.decode (Decode.list dec) (JSON.field! "items" doc))
+  decoded! (Decode.list dec) (JSON.field! "items" doc)
 
 -- `list!`, giving an `Error` where it raises.
 let list dec kind = try list! dec kind
@@ -136,7 +150,7 @@ let list dec kind = try list! dec kind
 -- `get!` in the namespace `ns`, not the current one.
 let get_in! dec ns kind name =
   let doc = JSON.parse! (Shell.inspect! $*(kubectl get -n %{ns} %{kind} %{name} -o json));
-  Result.get! (JSON.decode dec doc)
+  decoded! dec doc
 
 -- `get_in!`, giving an `Error` where it raises.
 let get_in dec ns kind name = try get_in! dec ns kind name
@@ -144,7 +158,7 @@ let get_in dec ns kind name = try get_in! dec ns kind name
 -- `list!` in the namespace `ns`, not the current one.
 let list_in! dec ns kind =
   let doc = JSON.parse! (Shell.inspect! $*(kubectl get -n %{ns} %{kind} -o json));
-  Result.get! (JSON.decode (Decode.list dec) (JSON.field! "items" doc))
+  decoded! (Decode.list dec) (JSON.field! "items" doc)
 
 -- `list_in!`, giving an `Error` where it raises.
 let list_in dec ns kind = try list_in! dec ns kind

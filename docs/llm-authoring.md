@@ -764,3 +764,31 @@ writes no "stays String" note now. `wand.pkg` needs 0.91.0.
 |---|---|---|---|
 | `_gen.wand` | 2 | 0 | 1 (order) |
 | `test_gen.wand` | 3 | 0 | 2 (name, `!` names) |
+
+## 2026-09-28 — A decode error says the types may be old
+
+**Task.** `get!`, `list!`, `get_in!` and `list_in!` add a hint to a decode
+error: the cluster may be newer than the types in `k8s/`, run `check`,
+then `upgrade`. Enums stay closed, on purpose. README has a section on the
+error and its limit with clusters of different versions. 2 tests added.
+
+### Easy
+
+- **The change was one helper.** `Result.map_error` put the hint after the
+  decoder's message, and `Result.get!` raised it, as before.
+- **The real message was easy to get for the README.** A handler that
+  answers `Shell!run` gave the exact text with no cluster.
+
+### Hard
+
+- **The LLM wrote a fix in the README that was not true in every case.**
+  It said "run `upgrade`", but `upgrade` takes the types from the oldest
+  cluster, so a value from a newer one stays unknown. The LLM saw it on a
+  second read and wrote the limit down. Cause: the LLM's own mistake.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `plimsoll.wand` | 1 | 0 | 0 |
+| `test_plimsoll.wand` | 1 | 0 | 0 |
