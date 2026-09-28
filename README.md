@@ -92,8 +92,11 @@ wand github.com/wand-lang/plimsoll/cli gen
 ```
 
 `gen` runs `kubectl`, so it reads the cluster of your current kubectl
-context. To use another cluster, switch the context first:
-`kubectl config use-context prod`.
+context. To read another cluster, name its context:
+
+```sh
+wand github.com/wand-lang/plimsoll/cli gen --context prod
+```
 
 This writes one module for each API group and version your cluster
 serves, CRDs included: `k8s/core/v1.wand`, `k8s/apps/v1.wand`,

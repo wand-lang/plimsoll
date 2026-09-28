@@ -111,12 +111,11 @@ let remove_stale! (files: List gen.File) =
 let sources_in modules =
   let found =
     List.map (fn (_, text) -> gen.sources_of text) modules |> List.flatten |> List.unique;
-  if List.empty? found then
-    (
-      IO.println_err
-        "no module under k8s/ names the group-versions it came from; run gen first";
-      Proc.exit 2
-    )
+  if List.empty? found then (
+    IO.println_err
+      "no module under k8s/ names the group-versions it came from; run gen first";
+    Proc.exit 2
+  )
   else found
 
 let generate! ctx sources =
@@ -124,8 +123,8 @@ let generate! ctx sources =
 
 -- ── Commands ──────────────────────────────────────────────────────────────
 
-let run_gen! group_versions = (
-  let out = generate! None group_versions;
+let run_gen! ctx group_versions = (
+  let out = generate! ctx group_versions;
   List.each write! out.files;
   remove_stale! out.files;
   -- "generated", not "wrote": in a rehearsal nothing is written, and
@@ -221,8 +220,17 @@ let contexts_of args =
   | [] -> Ok [None]
   | _ -> Error "expected --contexts a,b,c"
 
+-- The arguments of `gen`: the context, when `--context name` comes first,
+-- and the group-versions after it.
+let gen_args args =
+  match args with
+  | ["--context" :: c :: rest] -> if String.empty? (String.trim c) then Error "expected --context name"
+    else Ok (Some c, rest)
+  | ["--context"] -> Error "expected --context name"
+  | rest -> Ok (None, rest)
+
 let usage = String.join "\n" [
-  "usage: wand github.com/wand-lang/plimsoll/cli gen [group-version ...]",
+  "usage: wand github.com/wand-lang/plimsoll/cli gen [--context name] [group-version ...]",
   "       wand github.com/wand-lang/plimsoll/cli check [--contexts a,b,c]",
   "       wand github.com/wand-lang/plimsoll/cli upgrade [--contexts a,b,c]"
 ]
@@ -230,4 +238,12 @@ let usage = String.join "\n" [
 let with_contexts args k =
   match contexts_of args with
   | Ok cs -> k cs
+  | Error e -> (IO.println_err "%{e}\n%{usage}"; Proc.exit 2)
+
+-- `gen` with its arguments: every group-version the context serves, or the
+-- ones named.
+let gen! args =
+  match gen_args args with
+  | Ok(ctx, []) -> run_gen! ctx (group_versions! ctx)
+  | Ok(ctx, gvs) -> run_gen! ctx gvs
   | Error e -> (IO.println_err "%{e}\n%{usage}"; Proc.exit 2)

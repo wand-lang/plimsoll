@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **`gen --context name` reads the cluster of a kubectl context.** Before,
+  `gen` read only the current context, and you had to switch contexts
+  first. `check` and `upgrade` already take `--contexts`.
+
+  ```sh
+  wand github.com/wand-lang/plimsoll/cli gen --context prod
+  ```
+
 ## [0.2.0] - 2026-09-28
 
 This release needs wand 0.91.1 or later.

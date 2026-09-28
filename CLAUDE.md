@@ -19,7 +19,7 @@ Obey them here.
   texts and notes out.
 - `_lib/drift.wand` — what changed between the modules on disk and the ones
   `gen` would write now. It is pure. `check` and `upgrade` print it.
-- `cli.wand` — the command: `gen [group-version ...]`, `check [--contexts
+- `cli.wand` — the command: `gen [--context name] [group-version ...]`, `check [--contexts
   a,b,c]` and `upgrade [--contexts a,b,c]`. Run it here as
   `wand cli.wand gen`. It holds only `main!`; the work is in `_lib/cli.wand`.
 - `_lib/` — the code that is not API: the generator and drift above, and

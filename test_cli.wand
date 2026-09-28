@@ -1,0 +1,36 @@
+uses {Shell}
+
+-- Tests for the command's arguments. No cluster is needed: a handler
+-- answers each kubectl command, and a `Shell!command` case that does not
+-- resume gives the command line itself.
+
+let {test, group} = import Test
+let cli = import ./_lib/cli
+
+group "gen's arguments" (fn () -> [
+  test "none: the current context and every group-version" (fn t ->
+    t.eq (Ok (None, [])) (cli.gen_args [])),
+  test "group-versions" (fn t ->
+    t.eq (Ok (None, ["apis/apps/v1", "api/v1"])) (cli.gen_args ["apis/apps/v1", "api/v1"])),
+  test "a context" (fn t ->
+    t.eq (Ok (Some "prod", [])) (cli.gen_args ["--context", "prod"])),
+  test "a context and group-versions" (fn t ->
+    t.eq (Ok (Some "prod", ["api/v1"])) (cli.gen_args ["--context", "prod", "api/v1"])),
+  test "a context with no name" (fn t ->
+    t.eq (Error "expected --context name") (cli.gen_args ["--context"]))
+])
+
+group "the context reaches kubectl" (fn () -> [
+  test "with a context" (fn t ->
+    t.eq
+      ["kubectl --context 'prod' get --raw '/openapi/v3'"]
+      (handle cli.group_versions! (Some "prod") with
+      | Shell!command c _ -> [c]
+      )),
+  test "with none" (fn t ->
+    t.eq
+      ["kubectl get --raw '/openapi/v3'"]
+      (handle cli.group_versions! None with
+      | Shell!command c _ -> [c]
+      ))
+])

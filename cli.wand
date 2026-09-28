@@ -2,12 +2,13 @@ uses {FS.Read, FS.Write, IO, Proc, Shell}
 
 -- The plimsoll command.
 --
---   wand github.com/wand-lang/plimsoll/cli gen [group-version ...]
+--   wand github.com/wand-lang/plimsoll/cli gen [--context name] [group-version ...]
 --   wand github.com/wand-lang/plimsoll/cli check [--contexts a,b,c]
 --   wand github.com/wand-lang/plimsoll/cli upgrade [--contexts a,b,c]
 --
 -- `gen` reads the OpenAPI v3 schema of each group-version from the cluster
--- that kubectl points at, and writes one wand module per group-version
+-- that kubectl points at, or from the kubectl context that --context
+-- names, and writes one wand module per group-version
 -- under k8s/. With no group-version, it reads every one the server lists,
 -- CRDs included. Each module's first line names the group-versions it came
 -- from, and `check` and `upgrade` read those again.
@@ -28,8 +29,7 @@ let cli = import ./_lib/cli
 
 let main! () =
   match Proc.args () with
-  | ["gen"] -> cli.run_gen! (cli.group_versions! None)
-  | ["gen" :: gvs] -> cli.run_gen! gvs
+  | ["gen" :: rest] -> cli.gen! rest
   | ["check" :: rest] -> cli.with_contexts rest cli.run_check!
   | ["upgrade" :: rest] -> cli.with_contexts rest cli.run_upgrade!
   | _ -> (IO.println_err cli.usage; Proc.exit 2)
