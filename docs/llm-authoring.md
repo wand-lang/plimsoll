@@ -385,3 +385,49 @@ lists at `/openapi/v3`, CRDs included. `k8s/` now holds 25 modules
 | File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
 |---|---|---|---|
 | `cli.wand` | 2 | 2 (imports) | 0 |
+
+## 2026-09-27 — CRDs: nested objects become records
+
+**Task.** Installed a test CRD (`widgets.example.com`) in the kind cluster
+and ran `gen`. The first run made `spec: Option JSON`, since a CRD writes
+its nested objects in place and the generator read an object with no
+`$ref` as JSON. Added `lift` to `_gen.wand`: each inline object becomes a
+record named for its place (`WidgetSpec`, `WidgetSpecOwner`), in arrays
+and maps too; an object that keeps unknown fields stays JSON. Then a
+Widget round-tripped through the API server with `check!`, `apply!`,
+`get_in!`, `list!` and `delete!`, with the same spec back. 7 tests. The
+built-in modules did not change. wand 0.89.0.
+
+### Easy
+
+- **`lift` typechecked on the first attempt.** One recursive function that
+  gives the schema to use and the new definitions, and `JSON.of_map` with
+  `Map.set` to rebuild a schema.
+- **Everything else came free.** The lifted definitions went through the
+  same code as built-in ones: the enum became `WidgetSpecMode = Fast |
+  Slow`, `max-replicas` got its key, `port` became `IntOrString`, and the
+  derived decoder read the server's object back.
+- **Qualified constructors read well in a CRD.**
+  `ex.WidgetSpecMode.Fast` in the script needed no thought.
+
+### Hard
+
+1. **A pipe in a test argument.** `t.eq [..] (x).files |> List.map f` read
+   as `(t.eq [..] x.files) |> List.map f`. E-TYPE: "expected String, got
+   File". Fixed with brackets. Cause: the LLM's own mistake. The message
+   named the types, not the precedence.
+2. **A test expected the multi-line layout** for a record the generator
+   writes on one line. Cause: the LLM's own mistake.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| `_gen.wand` | 1 | 0 | 0 |
+| `test_gen.wand` | 2, then 2 runs of `wand s` | 0 | 2 |
+
+### Diagnostics
+
+| Item | Code | Did it say what to do? |
+|---|---|---|
+| 1 pipe in an argument | E-TYPE | no: types only |

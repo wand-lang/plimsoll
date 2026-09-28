@@ -162,3 +162,34 @@ group "keys a field name cannot be" (fn () -> [
     t.ok (String.contains? "  ref: Option String = None" odd_text)),
   test "and nothing is left out" (fn t -> t.eq [] odd_out.notes)
 ])
+
+-- A CRD writes its nested objects in place. Each becomes a record of its
+-- own, named for where it stands; one that keeps unknown fields stays JSON.
+let crd =
+  JSON.parse!
+    `{"components": {"schemas": {"com.example.v1.Widget": {"type": "object", "x-kubernetes-group-version-kind": [{"group": "example.com", "version": "v1", "kind": "Widget"}], "properties": {"spec": {"type": "object", "required": ["size"], "properties": {"size": {"type": "integer"}, "owner": {"type": "object", "properties": {"team": {"type": "string"}}}, "parts": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}}}}, "byZone": {"type": "object", "additionalProperties": {"type": "object", "properties": {"count": {"type": "integer"}}}}, "extra": {"type": "object", "x-kubernetes-preserve-unknown-fields": true, "properties": {"a": {"type": "string"}}}}}}}}}}`
+
+let crd_text =
+  gen.generate "../../plimsoll" ["apis/example.com/v1"] [crd]
+  |> (fn (o: gen.Output) -> List.head o.files)
+  |> Option.map (fn (f: gen.File) -> f.text)
+  |> Option.default ""
+
+group "inline objects" (fn () -> [
+  test "a nested object is a record named for its place" (fn t ->
+    t.ok (String.contains? "spec: Option WidgetSpec = None" crd_text)),
+  test "and its own fields keep what they require" (fn t -> t.ok (String.contains? "  size: Int" crd_text)),
+  test "an object in an object" (fn t ->
+    t.ok (String.contains? "type WidgetSpecOwner(team: Option String = None)" crd_text)),
+  test "an array of objects" (fn t ->
+    t.ok (String.contains? "  parts: Option (List WidgetSpecParts) = None" crd_text)),
+  test "a map of objects" (fn t ->
+    t.ok (String.contains? "  byZone: Option (Map WidgetSpecByZone) = None" crd_text)),
+  test "an object that keeps unknown fields stays JSON" (fn t ->
+    t.ok (String.contains? "  extra: Option JSON = None" crd_text)),
+  test "and goes in the CRD's own module" (fn t ->
+    t.eq
+      ["k8s/example.com/v1.wand"]
+      ((gen.generate "../../plimsoll" ["apis/example.com/v1"] [crd]).files
+      |> List.map (fn (f: gen.File) -> f.path)))
+])

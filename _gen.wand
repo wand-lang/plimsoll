@@ -184,6 +184,70 @@ let builtin_types = [
   "YAML"
 ]
 
+-- ── Inline objects ────────────────────────────────────────────────────────
+
+-- An object schema written in place, with properties of its own, as a CRD
+-- writes its nested objects. The built-in schemas name each one and refer
+-- to it with `$ref`; a CRD does not. One that keeps unknown fields stays
+-- JSON, since a record would drop the keys it does not name.
+let inline_object? j =
+  Option.none? (ref_of j)
+  && Map.size (obj "properties" j) > 0
+  && !(flag? "x-kubernetes-preserve-unknown-fields" j)
+
+let ref_to name =
+  JSON.of_map (Map.from_list [("$ref", JSON.of_string ("#/components/schemas/" ++ name))])
+
+-- `j`, an object schema, with `key` set to `v`.
+let with_field key v j =
+  JSON.of_map (Map.set key v (Result.default Map.empty (JSON.get_object j)))
+
+-- Lift the inline objects of a schema into definitions of their own, so
+-- each becomes a record: property `owner` of `...WidgetSpec` becomes
+-- `...WidgetSpecOwner`. Gives the schema as it is to be used -- itself for
+-- a definition (`top`), a `$ref` for an inline object -- and the new
+-- definitions. An array or a map of inline objects has its items or its
+-- values lifted under the property's name.
+let lift top name s =
+  let props = obj "properties" s;
+  let own = top || inline_object? s;
+  let lifted =
+    if own then
+      Map.keys props
+      |> List.sort
+      |> List.map (fn p -> (p, lift false (name ++ capital p) (Map.get p props |> Option.default JSON.null)))
+    else [];
+  let extra = List.map (fn (_, (_, e)) -> e) lifted |> List.flatten;
+  let rebuilt =
+    if List.empty? extra then s
+    else with_field "properties" (JSON.of_map (Map.from_list (List.map (fn (p, (r, _)) -> (p, r)) lifted))) s;
+  if top then (rebuilt, extra)
+  else if own then (ref_to name, (name, rebuilt) :: extra)
+  else
+    match field "items" s with
+    | Some items when inline_object? items -> (
+      let (r, e) = lift false name items;
+      (with_field "items" r s, e)
+    )
+    | _ ->
+      match field "additionalProperties" s with
+      | Some ap when inline_object? ap -> (
+        let (r, e) = lift false name ap;
+        (with_field "additionalProperties" r s, e)
+      )
+      | _ -> (s, [])
+
+-- Every definition with its inline objects lifted, and the lifted ones
+-- beside them. A lifted name that a definition already has is left inline.
+let lift_all (schemas: Map JSON) =
+  Map.keys schemas
+  |> List.sort
+  |> List.map (fn name ->
+    let (s, extra) = lift true name (Map.get name schemas |> Option.default JSON.null);
+    (name, s) :: List.filter (fn (n, _) -> Option.none? (Map.get n schemas)) extra)
+  |> List.flatten
+  |> Map.from_list
+
 -- ── Types ─────────────────────────────────────────────────────────────────
 
 -- Definitions that are not records. Each is a type that wand or plimsoll
@@ -518,7 +582,8 @@ let cycle_notes (edges: List (String, List String)) =
 -- "github.com/wand-lang/plimsoll" anywhere else. `sources` names the
 -- group-versions the documents came from, for each module's first line.
 let generate plim_target (sources: List String) (docs: List JSON) =
-  let schemas = List.fold_left (fn acc d -> Map.merge acc (schemas_of d)) Map.empty docs;
+  let schemas =
+    List.fold_left (fn acc d -> Map.merge acc (schemas_of d)) Map.empty docs |> lift_all;
   let records = Map.keys schemas |> List.sort |> List.filter (record? schemas);
   let mods = List.map module_of records |> List.unique |> List.sort;
   let cands = candidates schemas records;
