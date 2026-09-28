@@ -691,3 +691,30 @@ fixed points, formatted with wand 0.90.1. `wand.pkg` needs 0.90.1.
 | File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
 |---|---|---|---|
 | `plimsoll.wand` | 1 | 0 | 0 |
+
+## 2026-09-28 — Every source a wand f fixed point
+
+**Task.** All hand-written files are formatted with wand 0.90.2, and CI
+and the checks in CLAUDE.md now hold them to `wand f`, as they held
+`k8s/`. `wand.pkg` needs 0.90.2. 10 files changed.
+
+### Hard
+
+- **Layouts that `wand f` wrote worse.** Formatting the six remaining
+  files with 0.90.1 showed four wand formatter faults: a `&&` chain joined
+  onto one line of 115 columns, a value after `else`, `name =` or `->`
+  that broke with its second line at the indent of the head, a
+  construction through a module measured from the wrong column, and a
+  one-armed `if` whose block opened below `then`. The LLM found them by
+  reading the diff and measuring each new line past the margin of 92, not
+  from a check. Cause: formatter faults, fixed in wand 0.90.2.
+- **A layout that is not a fault.** `(fn acc p -> if ...` with `else`
+  below at the lambda's indent looked like the same fault. The comment in
+  the formatter says it is the rule, so the LLM left it. Cause: none; the
+  formatter's comments answered it.
+
+### Cost
+
+| File | Attempts until `wand t` was clean | By `wand t --fix` | By hand |
+|---|---|---|---|
+| all 10 | 1 | 0 | 0 |

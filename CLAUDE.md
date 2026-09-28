@@ -44,10 +44,12 @@ wand t app.wand _gen.wand _drift.wand cli.wand plimsoll.wand test_*.wand example
 wand s                                                  # all tests pass
 wand t k8s/*/*.wand                                     # generated modules
 for f in k8s/*/*.wand; do cp $f /tmp/x.wand; wand f /tmp/x.wand; cmp $f /tmp/x.wand; done
+for f in *.wand examples/*.wand tools/*.wand; do cp $f /tmp/x.wand; wand f /tmp/x.wand; cmp $f /tmp/x.wand; done
 ```
 
 The generated modules must be `wand f` fixed points. If `wand f` changes
-one, change the generator, not the file.
+one, change the generator, not the file. The hand-written files must be fixed points too:
+run `wand f` on each file that you change.
 
 `gen` needs a cluster. `wand --dry-run cli.wand gen` rehearses it: the
 schema is read with `Shell.inspect!`, which a rehearsal runs, and the files

@@ -67,9 +67,8 @@ let container (a: App) =
     image = Some a.image,
     ports = Some [core.ContainerPort(containerPort = a.port)],
     env = env_vars a,
-    resources = Option.map
-      (fn r -> core.ResourceRequirements(requests = Some r))
-      (requests a)
+    resources =
+      Option.map (fn r -> core.ResourceRequirements(requests = Some r)) (requests a)
   )
 
 -- The Deployment that runs `a.replicas` pods of `a`.

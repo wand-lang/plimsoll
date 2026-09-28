@@ -27,7 +27,9 @@ let web =
       selector = meta.LabelSelector(matchLabels = Some labels),
       strategy = Some apps.DeploymentStrategy(
         type = Some apps.DeploymentStrategyType.RollingUpdate,
-        rollingUpdate = Some apps.RollingUpdateDeployment(maxSurge = Some (plimsoll.S "25%"))
+        rollingUpdate = Some apps.RollingUpdateDeployment(
+          maxSurge = Some (plimsoll.S "25%")
+        )
       ),
       template = core.PodTemplateSpec(
         metadata = Some meta.ObjectMeta(labels = Some labels),

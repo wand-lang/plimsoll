@@ -81,7 +81,8 @@ let version! ctx =
   let out =
     match ctx with
     | Some c -> Shell.inspect! $*(kubectl --context %{c} version -o json)
-    | None -> Shell.inspect! $*(kubectl version -o json);
+    | None -> Shell.inspect! $*(kubectl version -o json)
+  in
   let git =
     JSON.parse! out
     |> JSON.field! "serverVersion"
@@ -106,8 +107,7 @@ let on_disk! () =
     if String.starts_with? here s then String.slice (String.length here) (String.length s) s
     else if String.starts_with? "./" s then String.slice 2 (String.length s) s
     else s;
-  FS.glob ./k8s/*/*.wand
-  |> List.map (fn p -> (local (Path.to_string p), FS.read_file! p))
+  FS.glob ./k8s/*/*.wand |> List.map (fn p -> (local (Path.to_string p), FS.read_file! p))
 
 -- Remove each generated module this run did not write. Modules name each
 -- other's types, so they have to come from one run: a module left from an
@@ -127,11 +127,14 @@ let remove_stale! (files: List gen.File) =
 
 -- The group-versions the modules on disk came from.
 let sources_in modules =
-  let found = List.map (fn (_, text) -> gen.sources_of text) modules |> List.flatten |> List.unique;
-  if List.empty? found then (
-    IO.println_err "no module under k8s/ names the group-versions it came from; run gen first";
-    Proc.exit 2
-  )
+  let found =
+    List.map (fn (_, text) -> gen.sources_of text) modules |> List.flatten |> List.unique;
+  if List.empty? found then
+    (
+      IO.println_err
+        "no module under k8s/ names the group-versions it came from; run gen first";
+      Proc.exit 2
+    )
   else found
 
 let generate! ctx sources =
@@ -152,10 +155,7 @@ let run_gen! group_versions = (
 -- Whether k8s/ matches the schema of one context, printed.
 let check_one! modules sources ctx =
   let changes = drift.compare modules (generate! ctx sources).files;
-  if List.empty? changes then (
-    IO.println "%{label ctx}: k8s/ matches";
-    true
-  )
+  if List.empty? changes then (IO.println "%{label ctx}: k8s/ matches"; true)
   else (
     let n = List.length changes;
     IO.println "%{label ctx}: %{n} %{if n == 1 then "change" else "changes"}";
@@ -185,7 +185,9 @@ let broken_scripts! () =
 let bullet (d: Diagnostic) =
   match String.lines d.message with
   | [first :: rest] ->
-    String.join "\n" ("- %{d.file}:%{d.line}:%{d.col}: %{first}" :: List.map (fn l -> "  " ++ l) rest)
+    String.join
+      "\n"
+      ("- %{d.file}:%{d.line}:%{d.col}: %{first}" :: List.map (fn l -> "  " ++ l) rest)
   | [] -> "- %{d.file}:%{d.line}:%{d.col}"
 
 let report ref_ctx ref_version versions changes broken =
@@ -211,7 +213,9 @@ let run_upgrade! contexts = (
   let sources = sources_in modules;
   let versions = List.map (fn ctx -> (ctx, version! ctx)) contexts;
   let (ref_ctx, ref_version) =
-    List.sort_by (fn (_, v) -> v) versions |> List.head |> Option.default (None, version! None);
+    List.sort_by (fn (_, v) -> v) versions
+    |> List.head
+    |> Option.default (None, version! None);
   let out = generate! ref_ctx sources;
   let changes = drift.compare modules out.files;
   List.each write! out.files;
@@ -227,18 +231,19 @@ let run_upgrade! contexts = (
 let contexts_of args =
   match args with
   | ["--contexts", list] ->
-    Ok (String.split "," list |> List.map String.trim |> List.filter (fn c -> !(String.empty? c)) |> List.map Some)
+    Ok
+      (String.split "," list
+      |> List.map String.trim
+      |> List.filter (fn c -> !(String.empty? c))
+      |> List.map Some)
   | [] -> Ok [None]
   | _ -> Error "expected --contexts a,b,c"
 
-let usage =
-  String.join
-    "\n"
-    [
-      "usage: wand github.com/wand-lang/plimsoll/cli gen [group-version ...]",
-      "       wand github.com/wand-lang/plimsoll/cli check [--contexts a,b,c]",
-      "       wand github.com/wand-lang/plimsoll/cli upgrade [--contexts a,b,c]"
-    ]
+let usage = String.join "\n" [
+  "usage: wand github.com/wand-lang/plimsoll/cli gen [group-version ...]",
+  "       wand github.com/wand-lang/plimsoll/cli check [--contexts a,b,c]",
+  "       wand github.com/wand-lang/plimsoll/cli upgrade [--contexts a,b,c]"
+]
 
 let with_contexts args k =
   match contexts_of args with

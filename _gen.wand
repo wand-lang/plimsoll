@@ -126,7 +126,8 @@ let field_name_of key =
     if String.starts_with? "$" key || String.starts_with? "@" key then
       String.slice 1 (String.length key) key
     else key;
-  let lowered = String.lower (String.slice 0 1 bare) ++ String.slice 1 (String.length bare) bare;
+  let lowered =
+    String.lower (String.slice 0 1 bare) ++ String.slice 1 (String.length bare) bare;
   lowered |> String.replace "-" "_" |> String.replace "." "_"
 
 -- The field name for each property, in order, with the key the document
@@ -135,10 +136,10 @@ let field_name_of key =
 -- left out.
 let field_names props =
   List.fold_left
-    (fn acc p ->
-      if spellable? p then List.append acc [(p, p, None)]
+    (fn acc p -> if spellable? p then List.append acc [(p, p, None)]
       else (
-        let taken n = List.any? (fn (_, x, _) -> x == n) acc || List.any? (fn q -> q == n) props;
+        let taken n =
+          List.any? (fn (_, x, _) -> x == n) acc || List.any? (fn q -> q == n) props;
         let base = field_name_of p;
         let name = if taken base then base ++ "_" else base;
         if spellable? name then List.append acc [(p, name, Some p)] else acc
@@ -148,7 +149,8 @@ let field_names props =
 
 -- A value that can be a constructor.
 let constructor? v =
-  Regex.match? r/^[A-Z][A-Za-z0-9_]*$/ v && !(List.any? (fn r -> r == v) ["None", "Some", "Ok", "Error"])
+  Regex.match? r/^[A-Z][A-Za-z0-9_]*$/ v
+  && !(List.any? (fn r -> r == v) ["None", "Some", "Ok", "Error"])
 
 let capital s = String.upper (String.slice 0 1 s) ++ String.slice 1 (String.length s) s
 
@@ -208,34 +210,42 @@ let with_field key v j =
 -- a definition (`top`), a `$ref` for an inline object -- and the new
 -- definitions. An array or a map of inline objects has its items or its
 -- values lifted under the property's name.
-let lift top name s =
+let lift top name s = (
   let props = obj "properties" s;
   let own = top || inline_object? s;
   let lifted =
     if own then
       Map.keys props
       |> List.sort
-      |> List.map (fn p -> (p, lift false (name ++ capital p) (Map.get p props |> Option.default JSON.null)))
+      |> List.map (fn p -> (
+        p,
+        lift false (name ++ capital p) (Map.get p props |> Option.default JSON.null)
+      ))
     else [];
   let extra = List.map (fn (_, (_, e)) -> e) lifted |> List.flatten;
   let rebuilt =
     if List.empty? extra then s
-    else with_field "properties" (JSON.of_map (Map.from_list (List.map (fn (p, (r, _)) -> (p, r)) lifted))) s;
+    else
+      with_field
+        "properties"
+        (JSON.of_map (Map.from_list (List.map (fn (p, (r, _)) -> (p, r)) lifted)))
+        s;
   if top then (rebuilt, extra)
   else if own then (ref_to name, (name, rebuilt) :: extra)
-  else
-    match field "items" s with
+  else match field "items" s with
     | Some items when inline_object? items -> (
       let (r, e) = lift false name items;
       (with_field "items" r s, e)
     )
-    | _ ->
+    | _ -> (
       match field "additionalProperties" s with
       | Some ap when inline_object? ap -> (
         let (r, e) = lift false name ap;
         (with_field "additionalProperties" r s, e)
       )
       | _ -> (s, [])
+    )
+)
 
 -- Every definition with its inline objects lifted, and the lifted ones
 -- beside them. A lifted name that a definition already has is left inline.
@@ -262,7 +272,8 @@ let special name =
 
 -- A definition that becomes a record: an object with properties.
 let record? schemas name =
-  Option.none? (special name) && (Map.get name schemas
+  Option.none? (special name)
+  && (Map.get name schemas
   |> Option.map (fn s -> Map.size (obj "properties" s) > 0)
   |> Option.default false)
 
@@ -299,15 +310,15 @@ let ty_of (ctx: Ctx) owner prop j =
     | None -> (
       match str "type" j with
       | Some "string" -> if str "format" j == Some "date-time" then plain "DateTime"
-        else Map.get "%{owner}/%{prop}" ctx.enums
-        |> Option.map plain
-        |> Option.default (plain "String")
+        else
+          Map.get "%{owner}/%{prop}" ctx.enums
+          |> Option.map plain
+          |> Option.default (plain "String")
       | Some "integer" -> plain "Int"
       | Some "number" -> plain "Float"
       | Some "boolean" -> plain "Bool"
-      | Some "array" -> wrap
-        "List"
-        (ty_of ctx owner prop (field "items" j |> Option.default JSON.null))
+      | Some "array" ->
+        wrap "List" (ty_of ctx owner prop (field "items" j |> Option.default JSON.null))
       | Some "object" -> (
         match field "additionalProperties" j with
         | Some ap -> wrap "Map" (ty_of ctx owner prop ap)
@@ -441,7 +452,11 @@ let build_rec (ctx: Ctx) name =
 -- one that still makes no name is left out.
 let unspellable schemas name =
   let props =
-    Map.get name schemas |> Option.default JSON.null |> obj "properties" |> Map.keys |> List.sort;
+    Map.get name schemas
+    |> Option.default JSON.null
+    |> obj "properties"
+    |> Map.keys
+    |> List.sort;
   let kept = field_names props |> List.map (fn (p, _, _) -> p);
   props
   |> List.filter (fn p -> !(List.any? (fn k -> k == p) kept))
@@ -461,20 +476,19 @@ let topo done (left: List Rec) acc = (
   let ready (r: Rec) = List.all? (fn d -> List.any? (fn x -> x == d) done) (local_deps r);
   match List.find ready left |> Option.or_else (fn () -> List.head left) with
   | None -> List.reverse acc
-  | Some r -> topo
-    (r.full :: done)
-    (List.filter (fn (x: Rec) -> x.full != r.full) left)
-    (r :: acc)
+  | Some r ->
+    topo (r.full :: done) (List.filter (fn (x: Rec) -> x.full != r.full) left) (r :: acc)
 )
 
 -- ── Rendering ─────────────────────────────────────────────────────────────
 
 let doc_lines indent doc =
   if String.empty? (String.trim doc) then []
-  else String.lines (String.trim_right doc)
-  |> List.map (fn l ->
-    let t = String.trim_right l;
-    if String.empty? t then indent ++ "--" else "%{indent}-- %{t}")
+  else
+    String.lines (String.trim_right doc)
+    |> List.map (fn l ->
+      let t = String.trim_right l;
+      if String.empty? t then indent ++ "--" else "%{indent}-- %{t}")
 
 -- The widest line `wand f` keeps a declaration on. A wider enum gets one
 -- constructor on each line, with the `=` at the end of the first line; a
@@ -501,9 +515,12 @@ let render_field (r: Rec) last (f: Field) =
   in
   let key =
     match f.key with
-    | Some k -> " \"" ++ (String.replace "\\" "\\\\" k |> String.replace "\"" "\\\"") ++ "\""
-    | None -> "";
-  List.append (doc_lines "  " f.doc) ["  %{f.name}%{key}: %{ty}" ++ (if last then "" else ",")]
+    | Some k -> ` "` ++ (String.replace "\\" "\\\\" k |> String.replace `"` `\"`) ++ `"`
+    | None -> ""
+  in
+  List.append (doc_lines "  " f.doc) [
+    "  %{f.name}%{key}: %{ty}" ++ (if last then "" else ",")
+  ]
 
 -- A record whose fields have no doc comments goes on one line when the line
 -- fits the width `wand f` keeps, as `wand f` writes it. A comment on a field
@@ -521,7 +538,8 @@ let render_rec (r: Rec) =
 
 -- The first line of a generated module. It names the group-versions `gen`
 -- read, so `check` and `upgrade` can read them again with no argument.
-let header sources = "-- DO NOT EDIT: written by plimsoll gen from " ++ String.join ", " sources
+let header sources =
+  "-- DO NOT EDIT: written by plimsoll gen from " ++ String.join ", " sources
 
 -- The group-versions a module was generated from, read from its first
 -- line.

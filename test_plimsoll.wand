@@ -68,7 +68,8 @@ group "the cluster" (fn () -> [
   test "and sends the object as JSON" (fn t ->
     let sent =
       handle plimsoll.apply! enc web with
-      | Shell!run (_, input) _ -> input;
+      | Shell!run (_, input) _ -> input
+    in
     t.eq (JSON.stringify (enc web)) sent),
   test "check asks the server and changes nothing" (fn t ->
     t.eq
@@ -77,12 +78,16 @@ group "the cluster" (fn () -> [
   test "and gives the object the server would store" (fn t ->
     let doc =
       handle plimsoll.check! enc web with
-      | Shell!run _ k -> k stored;
-    t.eq (Ok (Some 1)) (JSON.decode dec doc |> Result.map (fn (d: apps.Deployment) -> d.spec.replicas))),
+      | Shell!run _ k -> k stored
+    in
+    t.eq
+      (Ok (Some 1))
+      (JSON.decode dec doc |> Result.map (fn (d: apps.Deployment) -> d.spec.replicas))),
   test "get reads one object and decodes it" (fn t ->
     let d =
       handle plimsoll.get! dec "deployment" "web" with
-      | Shell!run _ k -> k stored;
+      | Shell!run _ k -> k stored
+    in
     t.eq (Some "web") (d.metadata |> Option.and_then (fn (m: meta.ObjectMeta) -> m.name))),
   test "with kubectl get" (fn t ->
     t.eq
@@ -91,12 +96,14 @@ group "the cluster" (fn () -> [
   test "list reads the items" (fn t ->
     let ds =
       handle plimsoll.list! dec "deployment" with
-      | Shell!run _ k -> k "{\"items\":[%{stored},%{stored}]}";
+      | Shell!run _ k -> k `{"items":[%{stored},%{stored}]}`
+    in
     t.eq 2 (List.length ds)),
   test "a document that is not the type is an Error" (fn t ->
     let r =
       handle plimsoll.get dec "deployment" "web" with
-      | Shell!run _ k -> k `{"kind":"Deployment"}`;
+      | Shell!run _ k -> k `{"kind":"Deployment"}`
+    in
     t.ok (Result.error? r)),
   test "delete" (fn t ->
     t.eq

@@ -49,12 +49,15 @@ group "files" (fn () -> [
       ["k8s/apps/v1.wand", "k8s/meta/v1.wand"]
       (List.map (fn (f: gen.File) -> f.path) out.files)),
   test "the header names the group-versions read" (fn t ->
-    t.ok (String.starts_with? "-- DO NOT EDIT: written by plimsoll gen from apis/apps/v1\n" apps)),
+    t.ok
+      (String.starts_with? "-- DO NOT EDIT: written by plimsoll gen from apis/apps/v1\n" apps)),
   test "and can be read back" (fn t -> t.eq ["apis/apps/v1"] (gen.sources_of apps)),
   test "the same input gives the same output" (fn t ->
     t.eq
       (List.map (fn (f: gen.File) -> f.text) out.files)
-      (List.map (fn (f: gen.File) -> f.text) (gen.generate "../../plimsoll" ["apis/apps/v1"] [doc]).files))
+      (List.map
+        (fn (f: gen.File) -> f.text)
+        (gen.generate "../../plimsoll" ["apis/apps/v1"] [doc]).files))
 ])
 
 group "fields" (fn () -> [
@@ -154,10 +157,15 @@ let odd_text =
   List.head odd_out.files |> Option.map (fn (f: gen.File) -> f.text) |> Option.default ""
 
 group "keys a field name cannot be" (fn () -> [
-  test "a capitalised key" (fn t -> t.ok (String.contains? "  port \"Port\": Option Int = None" odd_text)),
-  test "a key with $" (fn t -> t.ok (String.contains? "  ref_ \"$ref\": Option String = None" odd_text)),
+  test "a capitalised key" (fn t ->
+    t.ok (String.contains? `  port "Port": Option Int = None` odd_text)),
+  test "a key with $" (fn t ->
+    t.ok (String.contains? `  ref_ "$ref": Option String = None` odd_text)),
   test "a key with -" (fn t ->
-    t.ok (String.contains? "  x_kubernetes_list_type \"x-kubernetes-list-type\": Option String = None" odd_text)),
+    t.ok
+      (String.contains?
+        `  x_kubernetes_list_type "x-kubernetes-list-type": Option String = None`
+        odd_text)),
   test "a key that is a field name has no key written" (fn t ->
     t.ok (String.contains? "  ref: Option String = None" odd_text)),
   test "and nothing is left out" (fn t -> t.eq [] odd_out.notes)
@@ -178,7 +186,8 @@ let crd_text =
 group "inline objects" (fn () -> [
   test "a nested object is a record named for its place" (fn t ->
     t.ok (String.contains? "spec: Option WidgetSpec = None" crd_text)),
-  test "and its own fields keep what they require" (fn t -> t.ok (String.contains? "  size: Int" crd_text)),
+  test "and its own fields keep what they require" (fn t ->
+    t.ok (String.contains? "  size: Int" crd_text)),
   test "an object in an object" (fn t ->
     t.ok (String.contains? "type WidgetSpecOwner(team: Option String = None)" crd_text)),
   test "an array of objects" (fn t ->

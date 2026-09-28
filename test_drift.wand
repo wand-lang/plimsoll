@@ -8,8 +8,8 @@ let {test, group} = import Test
 let drift = import ./_drift
 let gen = import ./_gen
 
-let before =
-  `-- DO NOT EDIT: written by plimsoll gen from apis/apps/v1
+let before = `
+-- DO NOT EDIT: written by plimsoll gen from apis/apps/v1
 
 -- The values of DeploymentStrategy.type.
 type DeploymentStrategyType = Recreate | RollingUpdate
@@ -27,8 +27,8 @@ type Old(
 )
 `
 
-let after =
-  `-- DO NOT EDIT: written by plimsoll gen from apis/apps/v1
+let after = `
+-- DO NOT EDIT: written by plimsoll gen from apis/apps/v1
 
 -- The values of DeploymentStrategy.type.
 type DeploymentStrategyType =
@@ -50,7 +50,7 @@ type New(
 )
 `
 
-let file path text = gen.File(path = path, text = text)
+let file path text = gen.File(path, text)
 
 group "declarations" (fn () -> [
   test "a record, its fields and which are required" (fn t ->
@@ -93,7 +93,9 @@ group "changes" (fn () -> [
   test "only the doc comments changed" (fn t ->
     t.eq
       ["k8s/apps/v1.wand: doc comments changed"]
-      (drift.compare
-        [("k8s/apps/v1.wand", before)]
-        [file "k8s/apps/v1.wand" (String.replace "-- A Deployment." "-- A Deployment, changed." before)]))
+      (drift.compare [("k8s/apps/v1.wand", before)] [
+        file
+          "k8s/apps/v1.wand"
+          (String.replace "-- A Deployment." "-- A Deployment, changed." before)
+      ]))
 ])
