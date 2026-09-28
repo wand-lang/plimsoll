@@ -1,5 +1,62 @@
 # Changelog
 
+## [0.2.0] - 2026-09-28
+
+This release needs wand 0.91.1 or later.
+
+### Changed
+
+- **Every Kubernetes enum is now a type, and 23 fields changed from
+  `String` to one.** In 0.1.0, 17 sets of enum values stayed `String`
+  because some of their values cannot be wand constructor names, such as
+  `None`, `*` or `client auth`. Now each value gets a name, and the type
+  keeps the real value for documents:
+
+  ```
+  type PodSpecDnsPolicy = ClusterFirst | ClusterFirstWithHostNet | Default | None_ "None"
+  type NamedRuleWithOperationsOperations = All "*" | CONNECT | CREATE | DELETE | UPDATE
+  ```
+
+  A value that is a wand name or the name of a type gets a trailing `_`:
+  `None_`, `IPv4_`. Any other value gets a name made from its parts:
+  `"client auth"` is `ClientAuth`, `"SIGRTMAX-1"` is `SIGRTMAX1`, `"*"` is
+  `All` and `""` is `Empty`.
+
+  **This breaks scripts that set these fields as strings.** Write the
+  constructor instead:
+
+  ```
+  dnsPolicy = Some "None"                        -- 0.1.0
+  dnsPolicy = Some core.PodSpecDnsPolicy.None_   -- 0.2.0
+  ```
+
+  Run `wand t` over your scripts to find each place. The fields are:
+
+  | Module | Fields |
+  |---|---|
+  | `admissionregistration/v1` | `MutatingWebhook.sideEffects`, `ValidatingWebhook.sideEffects`, `Mutation.patchType`, `NamedRuleWithOperations.operations` and `.scope`, `RuleWithOperations.operations` and `.scope` |
+  | `certificates/v1` | `CertificateSigningRequestSpec.usages` |
+  | `core/v1` | `AzureDiskVolumeSource.cachingMode` and `.kind`, `ContainerStatus.stopSignal`, `Lifecycle.stopSignal`, `HostPathVolumeSource.type`, `PodSpec.dnsPolicy`, `ServiceSpec.ipFamilies` and `.sessionAffinity`, `VolumeMount.mountPropagation` |
+  | `discovery/v1` | `EndpointSlice.addressType` |
+  | `networking/v1` | `NetworkPolicySpec.policyTypes` |
+  | `resource/v1` | `DeviceRequestAllocationResult.skipNodeOperations`, `ResourceSliceSpec.skipNodeOperations`, `DeviceTaint.effect`, `DeviceToleration.effect` |
+
+  If you generate your own types with `gen`, generate them again with
+  plimsoll 0.2.0 to get the same change.
+
+- **A decode error from `get!` or `list!` says what to do.** When the
+  cluster returns a value that your types do not have, the error now says
+  that the cluster may be newer than the types in `k8s/`, and tells you to
+  run `check` and `upgrade`:
+
+  ```
+  .spec.sessionAffinity: expected one of ClientIP, None, got "Sticky"
+  The cluster may be newer than the types in k8s/. Run `wand github.com/wand-lang/plimsoll/cli check` to see what changed, and `upgrade` to generate the types again.
+  ```
+
+  The error itself stays: a script does not go on with a value that it
+  does not know.
+
 ## [0.1.0] - 2026-09-28
 
 The first release. plimsoll makes Kubernetes objects typed wand values,

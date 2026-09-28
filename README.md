@@ -76,7 +76,7 @@ typed too.
 
 ## How to use it
 
-You need wand 0.91.0 or later, and `kubectl` with a context for your
+You need wand 0.91.1 or later, and `kubectl` with a context for your
 cluster.
 
 ### 1. Add plimsoll to your package
