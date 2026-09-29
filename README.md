@@ -58,12 +58,13 @@ typed too.
   the cluster, and a reviewer sees that on line one:
 
   ```
-  uses {Shell}
+  uses {Shell(kubectl)}
   ```
 
   A file with no `Shell` on its first line cannot reach the cluster at all.
-  plimsoll's own first line is `uses {Shell(kubectl)}`, so the commands it
-  runs for a script are `kubectl` and nothing else.
+  The line names each command that the file can run, and the functions it
+  calls count. plimsoll runs `kubectl` and nothing else, so `Shell(kubectl)`
+  is sufficient, and wand checks that the list is correct.
 
 - **A rehearsal before a real run.** `wand --dry-run deploy.wand` withholds
   every change and reports it. `Plimsoll.check` asks the API server to
@@ -167,7 +168,7 @@ made from its parts: `"client auth"` is `ClientAuth`.
 ### 4. Check and apply them
 
 ```ocaml
-uses {Shell}
+uses {Shell(kubectl)}
 
 import github.com/wand-lang/plimsoll
 
@@ -234,7 +235,7 @@ For a usual web service, `app` makes the Deployment and the Service from a
 few fields:
 
 ```ocaml
-uses {Shell}
+uses {Shell(kubectl)}
 
 import Map
 

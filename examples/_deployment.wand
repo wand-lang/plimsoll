@@ -1,4 +1,4 @@
-uses {IO, Shell}
+uses {IO, Shell(kubectl)}
 
 -- A Deployment built from the generated types, and checked by the API
 -- server of the cluster that kubectl points at.

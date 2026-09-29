@@ -1,5 +1,29 @@
 # Changelog
 
+## [Unreleased]
+
+This release needs wand 0.93.1 or later.
+
+### Changed
+
+- **A script that uses plimsoll can say `uses {Shell(kubectl)}`.** Before,
+  it had to say `uses {Shell}`, which lets it run any command. Now wand
+  sees that plimsoll runs only `kubectl`, and checks the list for you.
+
+  ```ocaml
+  uses {Shell(kubectl)}
+
+  import github.com/wand-lang/plimsoll
+  ```
+
+- **`upgrade` checks your scripts with the wand that runs it.** Before, it
+  ran the `wand` on your `PATH`, which could be a different version.
+  `upgrade --dry-run` now reports a broken script too.
+
+- **`gen` lays out each module with wand's own formatter.** The modules
+  are the same text as before. When a new wand changes its layout, `gen`
+  follows it.
+
 ## [0.3.0] - 2026-09-28
 
 This release needs wand 0.92.0 or later.

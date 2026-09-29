@@ -11,6 +11,7 @@ import Option
 import Regex
 import Result
 import String
+import Wand
 
 -- A generated file: where it goes, and what it holds.
 type File(path: String, text: String)
@@ -527,21 +528,12 @@ let doc_lines indent doc =
       let t = String.trim_right l;
       if String.empty? t then indent ++ "--" else "%{indent}-- %{t}")
 
--- The widest line `wand f` keeps a declaration on. A wider enum gets one
--- constructor on each line, with the `=` at the end of the first line; a
--- wider record gets one field on each line.
-let enum_width = 92
-
-let render_enum (e: Enum) =
-  let one = "type %{e.name} = " ++ String.join " | " e.values;
-  let head = "-- The values of %{e.of_field}.";
-  if String.length one <= enum_width then [head, one]
-  else (
-    let rest = List.drop 1 e.values |> List.map (fn v -> "  | %{v}");
-    List.append
-      [head, "type %{e.name} =", "  %{List.head e.values |> Option.default ""}"]
-      rest
-  )
+-- Each declaration is written in one simple form, and `Wand.format` lays
+-- the module out as `wand f` does.
+let render_enum (e: Enum) = [
+  "-- The values of %{e.of_field}.",
+  "type %{e.name} = " ++ String.join " | " e.values
+]
 
 let render_field (r: Rec) last (f: Field) =
   let ty =
@@ -559,19 +551,13 @@ let render_field (r: Rec) last (f: Field) =
     "  %{f.name}%{key}: %{ty}" ++ (if last then "" else ",")
   ]
 
--- A record whose fields have no doc comments goes on one line when the line
--- fits the width `wand f` keeps, as `wand f` writes it. A comment on a field
--- keeps the fields one to a line.
 let render_rec (r: Rec) =
   let n = List.length r.fields;
   let lines =
     List.indexed r.fields
     |> List.map (fn (i, f) -> render_field r (i == n - 1) f)
     |> List.flatten;
-  let bare = List.all? (fn (f: Field) -> String.empty? (String.trim f.doc)) r.fields;
-  let one = "type %{r.name}(" ++ (List.map String.trim lines |> String.join " ") ++ ")";
-  if bare && String.length one <= enum_width then List.append (doc_lines "" r.doc) [one]
-  else List.flatten [doc_lines "" r.doc, ["type %{r.name}("], lines, [")"]]
+  List.flatten [doc_lines "" r.doc, ["type %{r.name}("], lines, [")"]]
 
 -- The first line of a generated module. It names the group-versions `gen`
 -- read, so `check` and `upgrade` can read them again with no argument.
@@ -613,6 +599,16 @@ let render_module plim_target sources mod (enums: List Enum) (recs: List Rec) =
     if List.empty? imports then [head, body] else [head, String.join "\n" imports, body];
   String.join "\n\n" parts ++ "\n"
 
+-- A module's text as `wand f` writes it. Text that does not parse is a bug
+-- in gen: the note says so, and the text stays as gen wrote it.
+let format mod text =
+  match Wand.format text with
+  | Ok formatted -> (formatted, [])
+  | Error e -> (
+    text,
+    ["%{mod}: gen wrote text that does not parse (%{e}); report this bug"]
+  )
+
 -- ── Generating ────────────────────────────────────────────────────────────
 
 -- The modules each module imports, and a note for each module that can
@@ -650,13 +646,13 @@ let generate plim_target (sources: List String) (docs: List JSON) =
     let ctx = Ctx(schemas = schemas, mod = m, enums = enum_keys);
     List.filter (fn r -> module_of r == m) records |> List.map (build_rec ctx);
   let built = List.map (fn m -> (m, module_recs m)) mods;
-  let files =
+  let formatted =
     List.zip built decisions
     |> List.map (fn ((m, recs), d) ->
-      File(
-        path = m ++ ".wand",
-        text = render_module plim_target sources m d.enums (topo [] recs [])
-      ));
+      let (text, notes) =
+        format m (render_module plim_target sources m d.enums (topo [] recs []));
+      (File(path = m ++ ".wand", text = text), notes));
+  let files = List.map (fn (f, _) -> f) formatted;
   let edges =
     List.map
       (fn (m, recs) ->
@@ -681,6 +677,7 @@ let generate plim_target (sources: List String) (docs: List JSON) =
       List.map (fn (d: Decision) -> d.notes) decisions |> List.flatten,
       List.map (unspellable schemas) records |> List.flatten,
       cycle_notes edges,
-      clash_notes
+      clash_notes,
+      List.map (fn (_, n) -> n) formatted |> List.flatten
     ];
   Output(files, notes)

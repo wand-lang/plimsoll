@@ -1,4 +1,4 @@
-uses {Clock, FS.Read, FS.Write, IO, Proc, Shell(kubectl, sh, wand)}
+uses {Clock, FS.Read, FS.Write, IO, Proc, Shell(kubectl, wand)}
 
 -- The end-to-end test against a real cluster: the one kubectl points at.
 -- CI runs it on a kind cluster, and it runs the same on a laptop.
@@ -30,6 +30,7 @@ import List
 import Path
 import Proc
 import Result
+import Shell
 import String
 
 -- What the copy needs to generate a module and run a script against it.
@@ -62,8 +63,8 @@ let widget! dir = (
   FS.mkdir! (Path.join dir ./_lib);
   List.each (fn f -> copy_into! dir f f) sources;
   copy_into! dir "testdata/widget.wand.in" "widget.wand";
-  IO.println
-    $(sh -c 'cd "$1" && wand cli.wand gen apis/example.com/v1alpha1 && wand widget.wand' e2e %{Path.to_string dir})
+  IO.println (Shell.run! (Shell.in_dir dir $*(wand cli.wand gen apis/example.com/v1alpha1)));
+  IO.println (Shell.run! (Shell.in_dir dir $*(wand widget.wand)))
 )
 
 let main! () = (

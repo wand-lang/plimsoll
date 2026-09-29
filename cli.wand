@@ -1,4 +1,4 @@
-uses {FS.Read, FS.Write, IO, Proc, Shell}
+uses {FS.Read, FS.Write, IO, Proc, Shell(kubectl)}
 
 -- The plimsoll command.
 --
@@ -18,7 +18,7 @@ uses {FS.Read, FS.Write, IO, Proc, Shell}
 -- does. With no --contexts it uses the current context.
 --
 -- `upgrade` finds the oldest cluster of the contexts, generates k8s/ from
--- it, typechecks the scripts here with `wand t --json .`, and prints a
+-- it, typechecks the scripts here with `Wand.check_file!`, and prints a
 -- report: what changed in the schema, and each script that no longer
 -- typechecks. It exits 1 when a script broke.
 

@@ -1,4 +1,4 @@
-uses {Shell}
+uses {Shell(kubectl)}
 
 -- An application in a few fields, made into a Deployment and a Service.
 --

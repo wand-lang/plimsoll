@@ -1,4 +1,4 @@
-uses {IO, Shell}
+uses {IO, Shell(kubectl)}
 
 -- An application in a few fields, checked by the API server of the cluster
 -- that kubectl points at.

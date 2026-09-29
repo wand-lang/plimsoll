@@ -1,9 +1,8 @@
-uses {FS.Read, FS.Write, IO, Proc, Shell(kubectl, wand)}
+uses {FS.Read, FS.Write, IO, Proc, Shell(kubectl)}
 
 -- The work behind the plimsoll command in cli.wand: reading the schema,
 -- writing k8s/, and the check and upgrade reports. Private to the package.
 
-import Decode
 import FS
 import IO
 import JSON
@@ -17,6 +16,7 @@ import Result
 import Shell
 import String
 import Version
+import Wand
 
 let gen = import ./gen
 let drift = import ./drift
@@ -80,16 +80,17 @@ let write! (f: gen.File) = (
   FS.write_file! (Path.of_string f.path) f.text
 )
 
--- The generated modules on disk, as (path, text), with each path written
--- from here, as `gen` writes it: "k8s/apps/v1.wand". `FS.glob` gives
--- whole paths.
-let on_disk! () =
+-- A path written from here, as `gen` writes it: "k8s/apps/v1.wand".
+-- `FS.glob` gives whole paths.
+let local p =
   let here = Path.to_string (FS.cwd ()) ++ "/";
-  let local s =
-    if String.starts_with? here s then String.slice (String.length here) (String.length s) s
-    else if String.starts_with? "./" s then String.slice 2 (String.length s) s
-    else s;
-  FS.glob ./k8s/*/*.wand |> List.map (fn p -> (local (Path.to_string p), FS.read_file! p))
+  let s = Path.to_string p;
+  if String.starts_with? here s then String.slice (String.length here) (String.length s) s
+  else if String.starts_with? "./" s then String.slice 2 (String.length s) s
+  else s
+
+-- The generated modules on disk, as (path, text).
+let on_disk! () = FS.glob ./k8s/*/*.wand |> List.map (fn p -> (local p, FS.read_file! p))
 
 -- Remove each generated module this run did not write. Modules name each
 -- other's types, so they have to come from one run: a module left from an
@@ -150,20 +151,22 @@ let run_check! contexts =
   let results = List.map (check_one! modules sources) contexts;
   if List.all? (fn ok -> ok) results then () else Proc.exit 1
 
--- One diagnostic of `wand t --json`.
-type Diagnostic(severity: String, file: String, line: Int, col: Int, message: String)
+-- The scripts here that `upgrade` checks: every wand file, and not the
+-- generated modules under k8s/.
+let scripts () =
+  FS.glob **.wand |> List.filter (fn p -> !(String.starts_with? "k8s/" (local p)))
 
--- The errors `wand t` finds in the scripts here. In a rehearsal the
--- command is withheld, so there are none to read.
+-- The errors a check finds in the scripts here. The check reads the files
+-- and runs nothing, so a rehearsal finds them too.
 let broken_scripts! () =
-  let r = $?(wand t --json .);
-  if String.empty? (String.trim r.stdout) then []
-  else
-    JSON.decode (Decode.list Diagnostic.decoder) (JSON.parse! r.stdout)
-    |> Result.get!
-    |> List.filter (fn (d: Diagnostic) -> d.severity == "error")
+  scripts ()
+  |> List.map (fn p -> (Wand.check_file! p).diagnostics)
+  |> List.flatten
+  |> List.filter (fn (d: Wand.Diagnostic) -> d.severity == "error")
+  |> List.map (fn (d: Wand.Diagnostic) ->
+    Wand.Diagnostic(d, file = local (Path.of_string d.file)))
 
-let bullet (d: Diagnostic) =
+let bullet (d: Wand.Diagnostic) =
   match String.lines d.message with
   | [first :: rest] ->
     String.join
