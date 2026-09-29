@@ -67,7 +67,7 @@ typed too.
   is sufficient, and wand checks that the list is correct.
 
 - **A rehearsal before a real run.** `wand --dry-run deploy.wand` withholds
-  every change and reports it. `Plimsoll.check` asks the API server to
+  every change and reports it. `plimsoll.check!` asks the API server to
   validate an object without storing it.
 - **Tests need no cluster.** Building and checking objects is pure, so a
   test runs anywhere. The calls to `kubectl` can be mocked with a handler.
