@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.4.0] - 2026-09-29
 
 This release needs wand 0.93.1 or later.
 
@@ -16,9 +16,9 @@ This release needs wand 0.93.1 or later.
   import github.com/wand-lang/plimsoll
   ```
 
-- **`upgrade` checks your scripts with the wand that runs it.** Before, it
-  ran the `wand` on your `PATH`, which could be a different version.
-  `upgrade --dry-run` now reports a broken script too.
+- **`upgrade` checks your scripts with `Wand.check_file!`.** This function
+  is new in wand 0.93. Before, `upgrade` ran the `wand` command to check
+  the scripts.
 
 - **`gen` lays out each module with wand's own formatter.** The modules
   are the same text as before. When a new wand changes its layout, `gen`
