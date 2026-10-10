@@ -1,6 +1,6 @@
 -- DO NOT EDIT: written by plimsoll gen from api/v1, apis/admissionregistration.k8s.io/v1, apis/apiextensions.k8s.io/v1, apis/apiregistration.k8s.io/v1, apis/apps/v1, apis/authentication.k8s.io/v1, apis/authorization.k8s.io/v1, apis/autoscaling/v1, apis/autoscaling/v2, apis/batch/v1, apis/certificates.k8s.io/v1, apis/coordination.k8s.io/v1, apis/discovery.k8s.io/v1, apis/events.k8s.io/v1, apis/flowcontrol.apiserver.k8s.io/v1, apis/networking.k8s.io/v1, apis/node.k8s.io/v1, apis/policy/v1, apis/rbac.authorization.k8s.io/v1, apis/resource.k8s.io/v1, apis/scheduling.k8s.io/v1, apis/storage.k8s.io/v1, apis/storagemigration.k8s.io/v1
 
-let meta_v1 = import ../meta/v1
+let MetaV1 = import ../meta/v1
 
 -- ExemptPriorityLevelConfiguration describes the configurable aspects of the handling of exempt requests. In the mandatory exempt configuration object the values in the fields here can be modified by authorized users, unlike the rest of the `spec`.
 type ExemptPriorityLevelConfiguration(
@@ -151,7 +151,7 @@ type PriorityLevelConfiguration(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "PriorityLevelConfiguration",
   -- `metadata` is the standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- `spec` is the specification of the desired behavior of a "request-priority". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
   spec: PriorityLevelConfigurationSpec,
   -- `status` is the current status of a "request-priority". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
@@ -167,7 +167,7 @@ type PriorityLevelConfigurationList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "PriorityLevelConfigurationList",
   -- `metadata` is the standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )
 
 -- ResourcePolicyRule is a predicate that matches some resource requests, testing the request's verb and the target resource. A ResourcePolicyRule matches a resource request if and only if: (a) at least one member of verbs matches the request, (b) at least one member of apiGroups matches the request, (c) at least one member of resources matches the request, and (d) either (d1) the request does not specify a namespace (i.e., `Namespace==""`) and clusterScope is true or (d2) the request specifies a namespace and least one member of namespaces matches the request's namespace.
@@ -239,7 +239,7 @@ type FlowSchema(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "FlowSchema",
   -- `metadata` is the standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- `spec` is the specification of the desired behavior of a FlowSchema. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
   spec: FlowSchemaSpec,
   -- `status` is the current status of a FlowSchema. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
@@ -255,5 +255,5 @@ type FlowSchemaList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "FlowSchemaList",
   -- `metadata` is the standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )

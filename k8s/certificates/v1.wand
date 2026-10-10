@@ -1,6 +1,6 @@
 -- DO NOT EDIT: written by plimsoll gen from api/v1, apis/admissionregistration.k8s.io/v1, apis/apiextensions.k8s.io/v1, apis/apiregistration.k8s.io/v1, apis/apps/v1, apis/authentication.k8s.io/v1, apis/authorization.k8s.io/v1, apis/autoscaling/v1, apis/autoscaling/v2, apis/batch/v1, apis/certificates.k8s.io/v1, apis/coordination.k8s.io/v1, apis/discovery.k8s.io/v1, apis/events.k8s.io/v1, apis/flowcontrol.apiserver.k8s.io/v1, apis/networking.k8s.io/v1, apis/node.k8s.io/v1, apis/policy/v1, apis/rbac.authorization.k8s.io/v1, apis/resource.k8s.io/v1, apis/scheduling.k8s.io/v1, apis/storage.k8s.io/v1, apis/storagemigration.k8s.io/v1
 
-let meta_v1 = import ../meta/v1
+let MetaV1 = import ../meta/v1
 
 -- The values of CertificateSigningRequestSpec.usages.
 type CertificateSigningRequestSpecUsages =
@@ -159,7 +159,7 @@ type CertificateSigningRequest(
   apiVersion: String = "certificates.k8s.io/v1",
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "CertificateSigningRequest",
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- spec contains the certificate request, and is immutable after creation. Only the request, signerName, expirationSeconds, and usages fields can be set on creation. Other fields are derived by Kubernetes and cannot be modified by users.
   spec: CertificateSigningRequestSpec,
   -- status contains information about whether the request is approved or denied, and the certificate issued by the signer, or the failure condition indicating signer failure.
@@ -174,7 +174,7 @@ type CertificateSigningRequestList(
   items: List CertificateSigningRequest,
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "CertificateSigningRequestList",
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )
 
 -- ClusterTrustBundleSpec contains the signer and trust anchors.
@@ -208,7 +208,7 @@ type ClusterTrustBundle(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ClusterTrustBundle",
   -- metadata contains the object metadata.
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- spec contains the signer (if any) and trust anchors.
   spec: ClusterTrustBundleSpec
 )
@@ -222,7 +222,7 @@ type ClusterTrustBundleList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ClusterTrustBundleList",
   -- metadata contains the list metadata.
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )
 
 -- PodCertificateRequestSpec describes the certificate request.  All fields are immutable after creation.
@@ -287,7 +287,7 @@ type PodCertificateRequestStatus(
   -- The types "Issued", "Denied", and "Failed" have special handling.  At most one of these conditions may be present, and they must have status "True".
   --
   -- If the request is denied with `Reason=UnsupportedKeyType`, the signer may suggest a key type that will work in the message field.
-  conditions: Option (List meta_v1.Condition) = None,
+  conditions: Option (List MetaV1.Condition) = None,
   -- notAfter is the time at which the certificate expires.  The value must be the same as the notAfter value in the leaf certificate in certificateChain.  This field is set via the /status subresource.  Once populated, it is immutable.  The signer must set this field at the same time it sets certificateChain.
   notAfter: Option DateTime = None,
   -- notBefore is the time at which the certificate becomes valid.  The value must be the same as the notBefore value in the leaf certificate in certificateChain.  This field is set via the /status subresource.  Once populated, it is immutable. The signer must set this field at the same time it sets certificateChain.
@@ -303,7 +303,7 @@ type PodCertificateRequest(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "PodCertificateRequest",
   -- metadata contains the object metadata.
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- spec contains the details about the certificate being requested.
   spec: PodCertificateRequestSpec,
   -- status contains the issued certificate, and a standard set of conditions.
@@ -319,5 +319,5 @@ type PodCertificateRequestList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "PodCertificateRequestList",
   -- metadata contains the list metadata.
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )

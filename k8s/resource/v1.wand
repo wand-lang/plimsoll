@@ -1,8 +1,8 @@
 -- DO NOT EDIT: written by plimsoll gen from api/v1, apis/admissionregistration.k8s.io/v1, apis/apiextensions.k8s.io/v1, apis/apiregistration.k8s.io/v1, apis/apps/v1, apis/authentication.k8s.io/v1, apis/authorization.k8s.io/v1, apis/autoscaling/v1, apis/autoscaling/v2, apis/batch/v1, apis/certificates.k8s.io/v1, apis/coordination.k8s.io/v1, apis/discovery.k8s.io/v1, apis/events.k8s.io/v1, apis/flowcontrol.apiserver.k8s.io/v1, apis/networking.k8s.io/v1, apis/node.k8s.io/v1, apis/policy/v1, apis/rbac.authorization.k8s.io/v1, apis/resource.k8s.io/v1, apis/scheduling.k8s.io/v1, apis/storage.k8s.io/v1, apis/storagemigration.k8s.io/v1
 
-let core_v1 = import ../core/v1
-let meta_v1 = import ../meta/v1
-let plimsoll = import ../../plimsoll
+let CoreV1 = import ../core/v1
+let MetaV1 = import ../meta/v1
+let Plimsoll = import ../../plimsoll
 
 -- The values of DeviceAllocationConfiguration.source.
 type DeviceAllocationConfigurationSource = FromClaim | FromClass
@@ -83,15 +83,15 @@ type CapacityRequestPolicyRange(
   -- Max defines the upper limit for capacity that can be requested.
   --
   -- Max must be less than or equal to the capacity value. Min and requestPolicy.default must be less than or equal to the maximum.
-  max: Option plimsoll.Quantity = None,
+  max: Option Plimsoll.Quantity = None,
   -- Min specifies the minimum capacity allowed for a consumption request.
   --
   -- Min must be greater than or equal to zero, and less than or equal to the capacity value. requestPolicy.default must be more than or equal to the minimum.
-  min: plimsoll.Quantity,
+  min: Plimsoll.Quantity,
   -- Step defines the step size between valid capacity amounts within the range.
   --
   -- Max (if set) and requestPolicy.default must be a multiple of Step. Min + Step must be less than or equal to the capacity value.
-  step: Option plimsoll.Quantity = None
+  step: Option Plimsoll.Quantity = None
 )
 
 -- CapacityRequestPolicy defines how requests consume device capacity.
@@ -99,7 +99,7 @@ type CapacityRequestPolicyRange(
 -- Must not set more than one ValidRequestValues.
 type CapacityRequestPolicy(
   -- Default specifies how much of this capacity is consumed by a request that does not contain an entry for it in DeviceRequest's Capacity.
-  default: Option plimsoll.Quantity = None,
+  default: Option Plimsoll.Quantity = None,
   -- ValidRange defines an acceptable quantity value range in consuming requests.
   --
   -- If this field is set, Default must be defined and it must fall within the defined ValidRange.
@@ -117,7 +117,7 @@ type CapacityRequestPolicy(
   -- If the requested amount does not match any valid value but smaller than some valid values, the scheduler calculates the smallest valid value that is greater than or equal to the request. That is: min(ceil(requestedValue) ∈ validValues), where requestedValue ≤ max(validValues).
   --
   -- If the requested amount exceeds all valid values, the request violates the policy, and this device cannot be allocated.
-  validValues: Option (List plimsoll.Quantity) = None
+  validValues: Option (List Plimsoll.Quantity) = None
 )
 
 -- CapacityRequirements defines the capacity requirements for a specific device request.
@@ -133,13 +133,13 @@ type CapacityRequirements(
   -- - If a requestPolicy is set, the default consumed capacity is determined according to that policy.
   --
   -- If the device allows multiple allocation, the aggregated amount across all requests must not exceed the capacity value. The consumed capacity, which may be adjusted based on the requestPolicy if defined, is recorded in the resource claim’s status.devices[*].consumedCapacity field.
-  requests: Option (Map plimsoll.Quantity) = None
+  requests: Option (Map Plimsoll.Quantity) = None
 )
 
 -- Counter describes a quantity associated with a device.
 type Counter(
   -- Value defines how much of a certain device counter is available.
-  value: plimsoll.Quantity
+  value: Plimsoll.Quantity
 )
 
 -- CounterSet defines a named set of counters that are available to be used by devices defined in the ResourcePool.
@@ -191,7 +191,7 @@ type DeviceCapacity(
   -- Value defines how much of a certain capacity that device has.
   --
   -- This field reflects the fixed total capacity and does not change. The consumed amount is tracked separately by scheduler and does not affect this value.
-  value: plimsoll.Quantity
+  value: Plimsoll.Quantity
 )
 
 -- DeviceConstraint must have exactly one field set besides Requests.
@@ -302,7 +302,7 @@ type DeviceTaintRuleStatus(
   -- For `effect: None`, the condition above gets set once for each change to the spec, with the message containing information about what would happen if the effect was `NoExecute`. This feedback can be used to decide whether changing the effect to `NoExecute` will work as intended. It only gets set once to avoid having to constantly update the status.
   --
   -- Must have 8 or fewer entries.
-  conditions: Option (List meta_v1.Condition) = None
+  conditions: Option (List MetaV1.Condition) = None
 )
 
 -- DeviceTaintSelector defines which device(s) a DeviceTaintRule applies to. The empty selector matches all devices. Without a selector, no devices are matched.
@@ -334,7 +334,7 @@ type DeviceTaintRule(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "DeviceTaintRule",
   -- Standard object metadata
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- Spec specifies the selector and one taint.
   --
   -- Changing the spec automatically increments the metadata.generation number.
@@ -352,7 +352,7 @@ type DeviceTaintRuleList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "DeviceTaintRuleList",
   -- Standard list metadata
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )
 
 -- The ResourceClaim this DeviceToleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.
@@ -399,7 +399,7 @@ type DeviceRequestAllocationResult(
   -- The total consumed capacity for each device must not exceed the DeviceCapacity's Value.
   --
   -- This field is populated only for devices that allow multiple allocations. All capacity entries are included, even if the consumed amount is zero.
-  consumedCapacity: Option (Map plimsoll.Quantity) = None,
+  consumedCapacity: Option (Map Plimsoll.Quantity) = None,
   -- Device references one device instance via its name in the driver's resource pool. It must be a DNS label.
   device: String,
   -- Driver specifies the name of the DRA driver whose kubelet plugin should be invoked to process the allocation once the claim is needed on a node.
@@ -594,7 +594,7 @@ type AllocatedDeviceStatus(
   -- Conditions contains the latest observation of the device's state. If the device has been configured according to the class and claim config references, the `Ready` condition should be True.
   --
   -- Must not contain more than 8 entries.
-  conditions: Option (List meta_v1.Condition) = None,
+  conditions: Option (List MetaV1.Condition) = None,
   -- Data contains arbitrary driver-specific data.
   --
   -- The length of the raw data must be smaller or equal to 10 Ki.
@@ -620,17 +620,17 @@ type NodeAllocatableMapping(
   -- CapacityKey references a capacity name defined as a key in the `spec.devices[*].capacity` map. When this field is set, the value associated with this key in the `status.allocation.devices.results[*].consumedCapacity` map (for a specific claim allocation) determines the base quantity for the node allocatable resource. `capacityMultiplier` must also be set and is multiplied with the base quantity. For example, if `spec.devices[*].capacity` has an entry "dra.example.com/memory": "128Gi", and this field is set to "dra.example.com/memory", then for a claim allocation that consumes { "dra.example.com/memory": "4Gi" } the base quantity for the node allocatable resource mapping will be "4Gi". The final node allocatable resource amount is `consumedCapacity[capacityKey]` * `capacityMultiplier`.
   capacityKey: Option String = None,
   -- CapacityMultiplier is used as a multiplier for the allocated capacity consumed. It is only valid if `capacityKey` is set. The final node allocatable resource amount is `consumedCapacity[capacityKey]` * `capacityMultiplier`. For example, if a Device's capacity "dra.example.com/cores" is consumed, and each "core" provides 2 "cpu"s, the mapping would be: {ResourceName: "cpu", capacityKey: "dra.example.com/cores", capacityMultiplier: "2"}. If a claim consumes 8 "dra.example.com/cores", the CPU footprint is 8 * 2 = 16.
-  capacityMultiplier: Option plimsoll.Quantity = None,
+  capacityMultiplier: Option Plimsoll.Quantity = None,
   -- DeviceMultiplier is used as a multiplier for the allocated device count in the claim. The final node allocatable resource amount is `deviceCount` * `deviceMultiplier`. For example, a DRA driver representing each cache complex (CCX) as a device would have {ResourceName: "cpu", deviceMultiplier: "8"} in its `nodeAllocatableResources`. If 2 devices (CCX) are allocated to the claim, 2 * 8 = 16 CPUs would be considered as allocated. It is only valid when `capacityKey` and `capacityMultiplier` are not set.
-  deviceMultiplier: Option plimsoll.Quantity = None
+  deviceMultiplier: Option Plimsoll.Quantity = None
 )
 
 -- NodeAllocatableOverhead defines auxiliary resource overheads incurred when allocating a device. Overheads can be specified as a fixed cost per pod referencing the claim, a variable cost per container reference, or both. Kubelet accounts for this overhead by adding it to both the pod-level and container-level cgroups of referencing containers.
 type NodeAllocatableOverhead(
   -- PerContainer is applied per container reference to the claim. This models overhead scaling linearly with the number of containers actively using the device. When both PerPod and PerContainer are specified, the total overhead allocated for each pod referencing the claim is computed as: Quantity = PerPod + (PerContainer * NumReferences) Kubelet accounts for this overhead in cgroups: - Pod-level cgroup (requests and limits): Kubelet adds PerPod + (PerContainer * NumReferences). - Container-level cgroup (limits only): Kubelet adds PerPod + PerContainer for each referencing container. This allows any single container to access the pod-level overhead, while the parent cgroup caps the total usage to account for PerPod exactly once.
-  perContainer: Option plimsoll.Quantity = None,
+  perContainer: Option Plimsoll.Quantity = None,
   -- PerPod is overhead applied once per pod referencing the claim on this node. This is a flat overhead incurred for every pod referencing the claim.
-  perPod: Option plimsoll.Quantity = None
+  perPod: Option Plimsoll.Quantity = None
 )
 
 -- NodeAllocatableResource defines the translation between the DRA device/capacity units requested to the corresponding quantity of the node allocatable resource. At least one of Mapping or Overhead must be specified. Not specifying either is an invalid configuration.
@@ -698,7 +698,7 @@ type Device(
   -- Must use exactly one term.
   --
   -- Must only be set if Spec.PerDeviceNodeSelection is set to true. At most one of NodeName, NodeSelector and AllNodes can be set.
-  nodeSelector: Option core_v1.NodeSelector = None,
+  nodeSelector: Option CoreV1.NodeSelector = None,
   -- If specified, these are the driver-defined taints.
   --
   -- The maximum number of taints is 16. If taints are set for any device in a ResourceSlice, then the maximum number of allowed devices per ResourceSlice is 64 instead of 128.
@@ -757,7 +757,7 @@ type AllocationResult(
   -- Devices is the result of allocating devices.
   devices: Option DeviceAllocationResult = None,
   -- NodeSelector defines where the allocated resources are available. If unset, they are available everywhere.
-  nodeSelector: Option core_v1.NodeSelector = None
+  nodeSelector: Option CoreV1.NodeSelector = None
 )
 
 -- DeviceClaimConfiguration is used for configuration parameters in DeviceClaim.
@@ -805,7 +805,7 @@ type DeviceClass(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "DeviceClass",
   -- Standard object metadata
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- Spec defines what can be allocated and how to configure it.
   --
   -- This is mutable. Consumers have to be prepared for classes changing at any time, either because they get updated or replaced. Claim allocations are done once based on whatever was set in classes at the time of allocation.
@@ -823,7 +823,7 @@ type DeviceClassList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "DeviceClassList",
   -- Standard list metadata
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )
 
 -- ResourceClaimConsumerReference contains enough information to let you locate the consumer of a ResourceClaim. The user must be a resource in the same namespace as the ResourceClaim.
@@ -867,7 +867,7 @@ type ResourceClaim(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ResourceClaim",
   -- Standard object metadata
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- Spec describes what is being requested and how to configure it. The spec is immutable.
   spec: Option ResourceClaimSpec = None,
   -- Status describes whether the claim is ready to use and what has been allocated.
@@ -883,13 +883,13 @@ type ResourceClaimList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ResourceClaimList",
   -- Standard list metadata
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )
 
 -- ResourceClaimTemplateSpec contains the metadata and fields for a ResourceClaim.
 type ResourceClaimTemplateSpec(
   -- ObjectMeta may contain labels and annotations that will be copied into the ResourceClaim when creating it. No other fields are allowed and will be rejected during validation.
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- Spec for the ResourceClaim. The entire content is copied unchanged into the ResourceClaim that gets created from this template. The same fields as in a ResourceClaim are also valid here.
   spec: Option ResourceClaimSpec = None
 )
@@ -901,7 +901,7 @@ type ResourceClaimTemplate(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ResourceClaimTemplate",
   -- Standard object metadata
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- Describes the ResourceClaim that is to be generated.
   --
   -- This field is immutable. A ResourceClaim will get created by the control plane for a Pod when needed and then not get updated anymore.
@@ -917,7 +917,7 @@ type ResourceClaimTemplateList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ResourceClaimTemplateList",
   -- Standard list metadata
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )
 
 -- ResourcePool describes the pool that ResourceSlices belong to.
@@ -963,7 +963,7 @@ type ResourceSliceSpec(
   -- Must use exactly one term.
   --
   -- Exactly one of NodeName, NodeSelector, AllNodes, and PerDeviceNodeSelection must be set.
-  nodeSelector: Option core_v1.NodeSelector = None,
+  nodeSelector: Option CoreV1.NodeSelector = None,
   -- PartitionTypeAttribute names a string device attribute (by fully qualified name, e.g. "gpu.example.com/profile") whose value labels each device with its partition type, such as "Full" or "Half" for a MIG-style GPU.
   --
   -- When set, every partitionable device in the slice must carry the attribute and devices sharing a value must share the same ConsumesCounters cost.
@@ -1008,7 +1008,7 @@ type ResourceSlice(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ResourceSlice",
   -- Standard object metadata
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- Contains the information published by the driver.
   --
   -- Changing the spec automatically increments the metadata.generation number.
@@ -1024,5 +1024,5 @@ type ResourceSliceList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ResourceSliceList",
   -- Standard list metadata
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )

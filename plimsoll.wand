@@ -15,8 +15,8 @@ import Result
 import Shell
 import YAML
 
-let decode = import ./_lib/decode
-let quantity = import ./_lib/quantity
+let Kubectl = import ./_lib/decode
+let Fraction = import ./_lib/quantity
 
 -- A value that Kubernetes writes as a number or as a string: `maxSurge` is
 -- `1` or `"25%"`.
@@ -33,7 +33,7 @@ type Quantity = String
 -- >> millicores "250m"
 -- Ok(250) : Result String Int
 let millicores (q: Quantity) =
-  quantity.amount q |> Result.and_then (fn (n, d) -> try quantity.ceil_div (n * 1000) d)
+  Fraction.amount q |> Result.and_then (fn (n, d) -> try Fraction.ceil_div (n * 1000) d)
 
 -- A memory or storage quantity in bytes: "128Mi" is 134217728, "1G" is
 -- 1000000000.
@@ -41,7 +41,7 @@ let millicores (q: Quantity) =
 -- >> bytes "1Ki"
 -- Ok(1024) : Result String Int
 let bytes (q: Quantity) =
-  quantity.amount q |> Result.and_then (fn (n, d) -> try quantity.ceil_div n d)
+  Fraction.amount q |> Result.and_then (fn (n, d) -> try Fraction.ceil_div n d)
 
 -- ── The cluster ───────────────────────────────────────────────────────────
 
@@ -77,7 +77,7 @@ let check enc obj = try check! enc obj
 -- against the cluster.
 let get! dec kind name =
   let doc = JSON.parse! (Shell.inspect! $*(kubectl get %{kind} %{name} -o json));
-  decode.decoded! dec doc
+  Kubectl.decoded! dec doc
 
 -- `get!`, giving an `Error` where it raises.
 let get dec kind name = try get! dec kind name
@@ -87,7 +87,7 @@ let get dec kind name = try get! dec kind name
 -- object that does not decode raises, as in `get!`.
 let list! dec kind =
   let doc = JSON.parse! (Shell.inspect! $*(kubectl get %{kind} -o json));
-  decode.decoded! (Decode.list dec) (JSON.field! "items" doc)
+  Kubectl.decoded! (Decode.list dec) (JSON.field! "items" doc)
 
 -- `list!`, giving an `Error` where it raises.
 let list dec kind = try list! dec kind
@@ -95,7 +95,7 @@ let list dec kind = try list! dec kind
 -- `get!` in the namespace `ns`, not the current one.
 let get_in! dec ns kind name =
   let doc = JSON.parse! (Shell.inspect! $*(kubectl get -n %{ns} %{kind} %{name} -o json));
-  decode.decoded! dec doc
+  Kubectl.decoded! dec doc
 
 -- `get_in!`, giving an `Error` where it raises.
 let get_in dec ns kind name = try get_in! dec ns kind name
@@ -103,7 +103,7 @@ let get_in dec ns kind name = try get_in! dec ns kind name
 -- `list!` in the namespace `ns`, not the current one.
 let list_in! dec ns kind =
   let doc = JSON.parse! (Shell.inspect! $*(kubectl get -n %{ns} %{kind} -o json));
-  decode.decoded! (Decode.list dec) (JSON.field! "items" doc)
+  Kubectl.decoded! (Decode.list dec) (JSON.field! "items" doc)
 
 -- `list_in!`, giving an `Error` where it raises.
 let list_in dec ns kind = try list_in! dec ns kind

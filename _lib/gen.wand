@@ -104,13 +104,14 @@ let module_of name = (
     )
 )
 
--- The name a module is imported under: "k8s/meta/v1" is meta_v1.
+-- The name a module is imported under: "k8s/meta/v1" is MetaV1. A module
+-- is named in upper case, as wand's own modules are.
 let alias_of path =
-  String.split "/" path
+  Regex.split r/[\/._-]/ path
   |> List.drop 1
-  |> String.join "_"
-  |> String.replace "." "_"
-  |> String.replace "-" "_"
+  |> List.filter (fn s -> !(String.empty? s))
+  |> List.map (fn s -> String.upper (String.slice 0 1 s) ++ String.slice 1 (String.length s) s)
+  |> String.join ""
 
 -- The import of one generated module from another. Both are k8s/<g>/<v>.
 let import_path path = "../" ++ (String.split "/" path |> List.drop 1 |> String.join "/")
@@ -302,8 +303,8 @@ let lift_all (schemas: Map JSON) =
 -- already has.
 let special name =
   match name with
-  | "io.k8s.apimachinery.pkg.util.intstr.IntOrString" -> Some "plimsoll.IntOrString"
-  | "io.k8s.apimachinery.pkg.api.resource.Quantity" -> Some "plimsoll.Quantity"
+  | "io.k8s.apimachinery.pkg.util.intstr.IntOrString" -> Some "Plimsoll.IntOrString"
+  | "io.k8s.apimachinery.pkg.api.resource.Quantity" -> Some "Plimsoll.Quantity"
   | "io.k8s.apimachinery.pkg.apis.meta.v1.Time" -> Some "DateTime"
   | "io.k8s.apimachinery.pkg.apis.meta.v1.MicroTime" -> Some "DateTime"
   | _ -> None
@@ -336,12 +337,12 @@ let enum_values j =
 -- A property's type. `owner` and `prop` find the enum the property declares.
 let ty_of (ctx: Ctx) owner prop j =
   if flag? "x-kubernetes-int-or-string" j then
-    Ty(text = "plimsoll.IntOrString", refs = [], plim = true)
+    Ty(text = "Plimsoll.IntOrString", refs = [], plim = true)
   else if flag? "x-kubernetes-preserve-unknown-fields" j then plain "JSON"
   else match ref_of j with
     | Some r -> (
       match special r with
-      | Some t -> Ty(text = t, refs = [], plim = String.starts_with? "plimsoll." t)
+      | Some t -> Ty(text = t, refs = [], plim = String.starts_with? "Plimsoll." t)
       | None -> if record? ctx.schemas r then Ty(text = qualify ctx.mod r, refs = [r], plim = false)
         else ty_of ctx owner prop (Map.get r ctx.schemas |> Option.default JSON.null)
     )
@@ -588,7 +589,7 @@ let render_module plim_target sources mod (enums: List Enum) (recs: List Rec) =
   let imports =
     List.concat
       (List.map (fn m -> "let %{alias_of m} = import %{import_path m}") others)
-      (if plim then ["let plimsoll = import %{plim_target}"] else []);
+      (if plim then ["let Plimsoll = import %{plim_target}"] else []);
   let blocks =
     List.concat
       (List.map render_enum (List.sort_by (fn (e: Enum) -> e.name) enums))

@@ -1,13 +1,13 @@
 -- DO NOT EDIT: written by plimsoll gen from api/v1, apis/admissionregistration.k8s.io/v1, apis/apiextensions.k8s.io/v1, apis/apiregistration.k8s.io/v1, apis/apps/v1, apis/authentication.k8s.io/v1, apis/authorization.k8s.io/v1, apis/autoscaling/v1, apis/autoscaling/v2, apis/batch/v1, apis/certificates.k8s.io/v1, apis/coordination.k8s.io/v1, apis/discovery.k8s.io/v1, apis/events.k8s.io/v1, apis/flowcontrol.apiserver.k8s.io/v1, apis/networking.k8s.io/v1, apis/node.k8s.io/v1, apis/policy/v1, apis/rbac.authorization.k8s.io/v1, apis/resource.k8s.io/v1, apis/scheduling.k8s.io/v1, apis/storage.k8s.io/v1, apis/storagemigration.k8s.io/v1
 
-let core_v1 = import ../core/v1
-let meta_v1 = import ../meta/v1
-let plimsoll = import ../../plimsoll
+let CoreV1 = import ../core/v1
+let MetaV1 = import ../meta/v1
+let Plimsoll = import ../../plimsoll
 
 -- Overhead structure represents the resource overhead associated with running a pod.
 type Overhead(
   -- podFixed represents the fixed resource overhead associated with running a pod.
-  podFixed: Option (Map plimsoll.Quantity) = None
+  podFixed: Option (Map Plimsoll.Quantity) = None
 )
 
 -- Scheduling specifies the scheduling constraints for nodes supporting a RuntimeClass.
@@ -15,7 +15,7 @@ type Scheduling(
   -- nodeSelector lists labels that must be present on nodes that support this RuntimeClass. Pods using this RuntimeClass can only be scheduled to a node matched by this selector. The RuntimeClass nodeSelector is merged with a pod's existing nodeSelector. Any conflicts will cause the pod to be rejected in admission.
   nodeSelector: Option (Map String) = None,
   -- tolerations are appended (excluding duplicates) to pods running with this RuntimeClass during admission, effectively unioning the set of nodes tolerated by the pod and the RuntimeClass.
-  tolerations: Option (List core_v1.Toleration) = None
+  tolerations: Option (List CoreV1.Toleration) = None
 )
 
 -- RuntimeClass defines a class of container runtime supported in the cluster. The RuntimeClass is used to determine which container runtime is used to run all containers in a pod. RuntimeClasses are manually defined by a user or cluster provisioner, and referenced in the PodSpec. The Kubelet is responsible for resolving the RuntimeClassName reference before running the pod.  For more details, see https://kubernetes.io/docs/concepts/containers/runtime-class/
@@ -27,7 +27,7 @@ type RuntimeClass(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "RuntimeClass",
   -- metadata is the standard object metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- overhead represents the resource overhead associated with running a pod for a given RuntimeClass. For more details, see
   --  https://kubernetes.io/docs/concepts/scheduling-eviction/pod-overhead/
   overhead: Option Overhead = None,
@@ -44,5 +44,5 @@ type RuntimeClassList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "RuntimeClassList",
   -- Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )

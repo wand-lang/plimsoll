@@ -6,7 +6,7 @@ import List
 import Map
 import Option
 
-let core = import ../k8s/core/v1
+let Core = import ../k8s/core/v1
 
 -- The requests that are given, or `None` when neither is.
 let requests cpu memory =
@@ -21,17 +21,17 @@ let requests cpu memory =
 let env_vars env =
   match Map.to_list env with
   | [] -> None
-  | pairs -> Some (List.map (fn (key, v) -> core.EnvVar(name = key, value = Some v)) pairs)
+  | pairs -> Some (List.map (fn (key, v) -> Core.EnvVar(name = key, value = Some v)) pairs)
 
 -- The container that runs `image` and listens on `port`.
 let container name image port env cpu memory =
-  core.Container(
+  Core.Container(
     name = name,
     image = Some image,
-    ports = Some [core.ContainerPort(containerPort = port)],
+    ports = Some [Core.ContainerPort(containerPort = port)],
     env = env_vars env,
     resources =
       Option.map
-        (fn r -> core.ResourceRequirements(requests = Some r))
+        (fn r -> Core.ResourceRequirements(requests = Some r))
         (requests cpu memory)
   )

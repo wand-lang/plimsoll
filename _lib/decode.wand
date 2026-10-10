@@ -1,4 +1,4 @@
--- Decoding what kubectl gives back, for `plimsoll.get!` and `plimsoll.list!`.
+-- Decoding what kubectl gives back, for `Plimsoll.get!` and `Plimsoll.list!`.
 -- Private to the package.
 
 import JSON

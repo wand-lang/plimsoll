@@ -5,32 +5,32 @@ uses {Shell}
 -- resume gives the command line itself.
 
 let {test, group} = import Test
-let cli = import ./_lib/cli
+let Cli = import ./_lib/cli
 
 group "gen's arguments" (fn () -> [
   test "none: the current context and every group-version" (fn t ->
-    t.eq (Ok (None, [])) (cli.gen_args [])),
+    t.eq (Ok (None, [])) (Cli.gen_args [])),
   test "group-versions" (fn t ->
-    t.eq (Ok (None, ["apis/apps/v1", "api/v1"])) (cli.gen_args ["apis/apps/v1", "api/v1"])),
+    t.eq (Ok (None, ["apis/apps/v1", "api/v1"])) (Cli.gen_args ["apis/apps/v1", "api/v1"])),
   test "a context" (fn t ->
-    t.eq (Ok (Some "prod", [])) (cli.gen_args ["--context", "prod"])),
+    t.eq (Ok (Some "prod", [])) (Cli.gen_args ["--context", "prod"])),
   test "a context and group-versions" (fn t ->
-    t.eq (Ok (Some "prod", ["api/v1"])) (cli.gen_args ["--context", "prod", "api/v1"])),
+    t.eq (Ok (Some "prod", ["api/v1"])) (Cli.gen_args ["--context", "prod", "api/v1"])),
   test "a context with no name" (fn t ->
-    t.eq (Error "expected --context name") (cli.gen_args ["--context"]))
+    t.eq (Error "expected --context name") (Cli.gen_args ["--context"]))
 ])
 
 group "the context reaches kubectl" (fn () -> [
   test "with a context" (fn t ->
     t.eq
       ["kubectl --context 'prod' get --raw '/openapi/v3'"]
-      (handle cli.group_versions! (Some "prod") with
+      (handle Cli.group_versions! (Some "prod") with
       | Shell!command c _ -> [c]
       )),
   test "with none" (fn t ->
     t.eq
       ["kubectl get --raw '/openapi/v3'"]
-      (handle cli.group_versions! None with
+      (handle Cli.group_versions! None with
       | Shell!command c _ -> [c]
       ))
 ])

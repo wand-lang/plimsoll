@@ -1,6 +1,6 @@
 -- DO NOT EDIT: written by plimsoll gen from api/v1, apis/admissionregistration.k8s.io/v1, apis/apiextensions.k8s.io/v1, apis/apiregistration.k8s.io/v1, apis/apps/v1, apis/authentication.k8s.io/v1, apis/authorization.k8s.io/v1, apis/autoscaling/v1, apis/autoscaling/v2, apis/batch/v1, apis/certificates.k8s.io/v1, apis/coordination.k8s.io/v1, apis/discovery.k8s.io/v1, apis/events.k8s.io/v1, apis/flowcontrol.apiserver.k8s.io/v1, apis/networking.k8s.io/v1, apis/node.k8s.io/v1, apis/policy/v1, apis/rbac.authorization.k8s.io/v1, apis/resource.k8s.io/v1, apis/scheduling.k8s.io/v1, apis/storage.k8s.io/v1, apis/storagemigration.k8s.io/v1
 
-let meta_v1 = import ../meta/v1
+let MetaV1 = import ../meta/v1
 
 -- The values of MatchResources.matchPolicy.
 type MatchResourcesMatchPolicy = Equivalent | Exact
@@ -252,9 +252,9 @@ type MatchResources(
   -- See https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/ for more examples of label selectors.
   --
   -- Default to the empty LabelSelector, which matches everything.
-  namespaceSelector: Option meta_v1.LabelSelector = None,
+  namespaceSelector: Option MetaV1.LabelSelector = None,
   -- objectSelector decides whether to run the validation based on if the object has matching labels. objectSelector is evaluated against both the oldObject and newObject that would be sent to the cel validation, and is considered to match if either object matches the selector. A null object (oldObject in the case of create, or newObject in the case of delete) or an object that cannot have labels (like a DeploymentRollback or a PodProxyOptions object) is not considered to match. Use the object selector only if the webhook is opt-in, because end users may skip the admission webhook by setting the labels. Default to the empty LabelSelector, which matches everything.
-  objectSelector: Option meta_v1.LabelSelector = None,
+  objectSelector: Option MetaV1.LabelSelector = None,
   -- resourceRules describes what operations on what resources/subresources the ValidatingAdmissionPolicy matches. The policy cares about an operation if it matches _any_ Rule.
   resourceRules: Option (List NamedRuleWithOperations) = None
 )
@@ -294,7 +294,7 @@ type ParamRef(
   -- If multiple params are found, they are all evaluated with the policy expressions and the results are ANDed together.
   --
   -- One of `name` or `selector` must be set, but `name` and `selector` are mutually exclusive properties. If one is set, the other must be unset.
-  selector: Option meta_v1.LabelSelector = None
+  selector: Option MetaV1.LabelSelector = None
 )
 
 -- MutatingAdmissionPolicyBindingSpec defines the specification of the MutatingAdmissionPolicyBinding.
@@ -318,7 +318,7 @@ type MutatingAdmissionPolicyBinding(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "MutatingAdmissionPolicyBinding",
   -- metadata is the standard object metadata; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- spec defines the desired behavior of the MutatingAdmissionPolicyBinding.
   spec: Option MutatingAdmissionPolicyBindingSpec = None
 )
@@ -332,7 +332,7 @@ type MutatingAdmissionPolicyBindingList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "MutatingAdmissionPolicyBindingList",
   -- metadata is the standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )
 
 -- RuleWithOperations is a tuple of Operations and Resources. It is recommended to make sure that all the tuple expansions are valid.
@@ -420,7 +420,7 @@ type ValidatingAdmissionPolicyBinding(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ValidatingAdmissionPolicyBinding",
   -- metadata is the standard object metadata; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- spec defines the desired behavior of the ValidatingAdmissionPolicyBinding.
   spec: ValidatingAdmissionPolicyBindingSpec
 )
@@ -434,13 +434,13 @@ type ValidatingAdmissionPolicyBindingList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ValidatingAdmissionPolicyBindingList",
   -- metadata is the standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )
 
 -- ValidatingAdmissionPolicyStatus represents the status of an admission validation policy.
 type ValidatingAdmissionPolicyStatus(
   -- conditions represent the latest available observations of a policy's current state.
-  conditions: Option (List meta_v1.Condition) = None,
+  conditions: Option (List MetaV1.Condition) = None,
   -- observedGeneration is the generation observed by the controller.
   observedGeneration: Option Int = None,
   -- typeChecking contains the results of type checking for each expression. Presence of this field indicates the completion of the type checking.
@@ -546,7 +546,7 @@ type MutatingAdmissionPolicy(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "MutatingAdmissionPolicy",
   -- metadata is the standard object metadata; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- spec defines the desired behavior of the MutatingAdmissionPolicy.
   spec: Option MutatingAdmissionPolicySpec = None
 )
@@ -560,7 +560,7 @@ type MutatingAdmissionPolicyList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "MutatingAdmissionPolicyList",
   -- metadata is the standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )
 
 -- ValidatingAdmissionPolicySpec is the specification of the desired behavior of the AdmissionPolicy.
@@ -611,7 +611,7 @@ type ValidatingAdmissionPolicy(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ValidatingAdmissionPolicy",
   -- metadata is the standard object metadata; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- spec defines the desired behavior of the ValidatingAdmissionPolicy.
   spec: Option ValidatingAdmissionPolicySpec = None,
   -- status represents the current status of the ValidatingAdmissionPolicy, including warnings that are useful to determine if the policy behaves in the expected way. Populated by the system. Read-only.
@@ -627,7 +627,7 @@ type ValidatingAdmissionPolicyList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ValidatingAdmissionPolicyList",
   -- metadata is the standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )
 
 -- WebhookClientConfig contains the information to make a TLS connection with the webhook
@@ -718,9 +718,9 @@ type MutatingWebhook(
   -- See https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/ for more examples of label selectors.
   --
   -- Default to the empty LabelSelector, which matches everything.
-  namespaceSelector: Option meta_v1.LabelSelector = None,
+  namespaceSelector: Option MetaV1.LabelSelector = None,
   -- objectSelector decides whether to run the webhook based on if the object has matching labels. objectSelector is evaluated against both the oldObject and newObject that would be sent to the webhook, and is considered to match if either object matches the selector. A null object (oldObject in the case of create, or newObject in the case of delete) or an object that cannot have labels (like a DeploymentRollback or a PodProxyOptions object) is not considered to match. Use the object selector only if the webhook is opt-in, because end users may skip the admission webhook by setting the labels. Default to the empty LabelSelector, which matches everything.
-  objectSelector: Option meta_v1.LabelSelector = None,
+  objectSelector: Option MetaV1.LabelSelector = None,
   -- reinvocationPolicy indicates whether this webhook should be called multiple times as part of a single admission evaluation. Allowed values are "Never" and "IfNeeded".
   --
   -- Never: the webhook will not be called more than once in a single admission evaluation.
@@ -754,7 +754,7 @@ type MutatingWebhookConfiguration(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "MutatingWebhookConfiguration",
   -- metadata is the standard object metadata; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- webhooks is a list of webhooks and the affected resources and operations.
   webhooks: Option (List MutatingWebhook) = None
 )
@@ -768,7 +768,7 @@ type MutatingWebhookConfigurationList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "MutatingWebhookConfigurationList",
   -- metadata is the standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )
 
 -- ValidatingWebhook describes an admission webhook and the resources and operations it applies to.
@@ -837,9 +837,9 @@ type ValidatingWebhook(
   -- See https://kubernetes.io/docs/concepts/overview/working-with-objects/labels for more examples of label selectors.
   --
   -- Default to the empty LabelSelector, which matches everything.
-  namespaceSelector: Option meta_v1.LabelSelector = None,
+  namespaceSelector: Option MetaV1.LabelSelector = None,
   -- objectSelector decides whether to run the webhook based on if the object has matching labels. objectSelector is evaluated against both the oldObject and newObject that would be sent to the webhook, and is considered to match if either object matches the selector. A null object (oldObject in the case of create, or newObject in the case of delete) or an object that cannot have labels (like a DeploymentRollback or a PodProxyOptions object) is not considered to match. Use the object selector only if the webhook is opt-in, because end users may skip the admission webhook by setting the labels. Default to the empty LabelSelector, which matches everything.
-  objectSelector: Option meta_v1.LabelSelector = None,
+  objectSelector: Option MetaV1.LabelSelector = None,
   -- rules describes what operations on what resources/subresources the webhook cares about. The webhook cares about an operation if it matches _any_ Rule. However, in order to prevent ValidatingAdmissionWebhooks and MutatingAdmissionWebhooks from putting the cluster in a state which cannot be recovered from without completely disabling the plugin, ValidatingAdmissionWebhooks and MutatingAdmissionWebhooks are never called on admission requests for ValidatingWebhookConfiguration and MutatingWebhookConfiguration objects.
   rules: Option (List RuleWithOperations) = None,
   -- sideEffects states whether this webhook has side effects. Acceptable values are: None, NoneOnDryRun (webhooks created via v1beta1 may also specify Some or Unknown). Webhooks with side effects MUST implement a reconciliation system, since a request may be rejected by a future step in the admission chain and the side effects therefore need to be undone. Requests with the dryRun attribute will be auto-rejected if they match a webhook with sideEffects == Unknown or Some.
@@ -861,7 +861,7 @@ type ValidatingWebhookConfiguration(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ValidatingWebhookConfiguration",
   -- metadata is the standard object metadata; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- webhooks is a list of webhooks and the affected resources and operations.
   webhooks: Option (List ValidatingWebhook) = None
 )
@@ -875,5 +875,5 @@ type ValidatingWebhookConfigurationList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "ValidatingWebhookConfigurationList",
   -- metadata is the standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )

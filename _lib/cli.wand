@@ -18,8 +18,8 @@ import String
 import Version
 import Wand
 
-let gen = import ./gen
-let drift = import ./drift
+let Gen = import ./gen
+let Drift = import ./drift
 
 -- How a generated module imports plimsoll. Inside this package it is a
 -- path; anywhere else it is the package URL, which wand.pkg requires.
@@ -75,7 +75,7 @@ let version! ctx =
 
 -- ── Modules ───────────────────────────────────────────────────────────────
 
-let write! (f: gen.File) = (
+let write! (f: Gen.File) = (
   FS.mkdir! (Path.parent (Path.of_string f.path));
   FS.write_file! (Path.of_string f.path) f.text
 )
@@ -98,11 +98,11 @@ let on_disk! () = FS.glob ./k8s/*/*.wand |> List.map (fn p -> (local p, FS.read_
 -- storagemigration/v1 from Kubernetes v1.37 named meta's GroupResource,
 -- which meta/v1 from v1.36 does not hold. A file gen did not write is left
 -- alone.
-let remove_stale! (files: List gen.File) =
+let remove_stale! (files: List Gen.File) =
   on_disk! ()
   |> List.filter (fn (path, text) ->
     String.starts_with? "-- DO NOT EDIT: written by plimsoll gen" text
-    && !(List.any? (fn (f: gen.File) -> f.path == path) files))
+    && !(List.any? (fn (f: Gen.File) -> f.path == path) files))
   |> List.each (fn (path, _) -> (
     FS.delete! (Path.of_string path);
     IO.println "removed %{path}"
@@ -111,7 +111,7 @@ let remove_stale! (files: List gen.File) =
 -- The group-versions the modules on disk came from.
 let sources_in modules =
   let found =
-    List.map (fn (_, text) -> gen.sources_of text) modules |> List.flatten |> List.unique;
+    List.map (fn (_, text) -> Gen.sources_of text) modules |> List.flatten |> List.unique;
   if List.empty? found then (
     IO.println_err
       "no module under k8s/ names the group-versions it came from; run gen first";
@@ -120,7 +120,7 @@ let sources_in modules =
   else found
 
 let generate! ctx sources =
-  gen.generate (plimsoll_target ()) sources (List.map (fetch! ctx) sources)
+  Gen.generate (plimsoll_target ()) sources (List.map (fetch! ctx) sources)
 
 -- ── Commands ──────────────────────────────────────────────────────────────
 
@@ -130,13 +130,13 @@ let run_gen! ctx group_versions = (
   remove_stale! out.files;
   -- "generated", not "wrote": in a rehearsal nothing is written, and
   -- wand's own `would write` line says so.
-  List.each (fn (f: gen.File) -> IO.println "generated %{f.path}") out.files;
+  List.each (fn (f: Gen.File) -> IO.println "generated %{f.path}") out.files;
   List.each (fn n -> IO.println_err "note: %{n}") out.notes
 )
 
 -- Whether k8s/ matches the schema of one context, printed.
 let check_one! modules sources ctx =
-  let changes = drift.compare modules (generate! ctx sources).files;
+  let changes = Drift.compare modules (generate! ctx sources).files;
   if List.empty? changes then (IO.println "%{label ctx}: k8s/ matches"; true)
   else (
     let n = List.length changes;
@@ -201,7 +201,7 @@ let run_upgrade! contexts = (
     |> List.head
     |> Option.default (None, version! None);
   let out = generate! ref_ctx sources;
-  let changes = drift.compare modules out.files;
+  let changes = Drift.compare modules out.files;
   List.each write! out.files;
   remove_stale! out.files;
   let broken = broken_scripts! ();

@@ -9,7 +9,7 @@ import List
 import Option
 import String
 
-let gen = import ./gen
+let Gen = import ./gen
 
 -- One declaration of a generated module: a record and its fields, or a sum
 -- and its values. A field is its name and whether it is required; a value
@@ -132,13 +132,13 @@ let module_changes path old_text new_text =
 
 -- What changed from the modules on disk, as (path, text), to the modules
 -- `gen` would write now. Empty when they are the same.
-let compare (old: List (String, String)) (new: List gen.File) =
+let compare (old: List (String, String)) (new: List Gen.File) =
   let old_text p = List.find (fn (q, _) -> q == p) old |> Option.map (fn (_, t) -> t);
   let new_text p =
-    List.find (fn (f: gen.File) -> f.path == p) new
-    |> Option.map (fn (f: gen.File) -> f.text);
+    List.find (fn (f: Gen.File) -> f.path == p) new
+    |> Option.map (fn (f: Gen.File) -> f.text);
   let paths =
-    List.concat (names old) (List.map (fn (f: gen.File) -> f.path) new)
+    List.concat (names old) (List.map (fn (f: Gen.File) -> f.path) new)
     |> List.unique
     |> List.sort;
   List.map

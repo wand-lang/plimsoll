@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.2] - 2026-10-10
+
+### Changed
+
+- **Modules are named in upper case.** The README and examples write
+  `let Plimsoll = import github.com/wand-lang/plimsoll`, and `gen` writes
+  `MetaV1` where it wrote `meta_v1`. wand reports a module bound in lower
+  case (`V-MOD1`). The types do not change.
+
 ## [0.4.1] - 2026-10-10
 
 This release needs wand 0.104.0 or later.

@@ -1,4 +1,4 @@
--- The arithmetic behind `plimsoll.millicores` and `plimsoll.bytes`: a
+-- The arithmetic behind `Plimsoll.millicores` and `Plimsoll.bytes`: a
 -- quantity read as an exact fraction. Private to the package.
 
 import Int

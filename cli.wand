@@ -25,13 +25,13 @@ uses {FS.Read, FS.Write, IO, Proc, Shell(kubectl)}
 import IO
 import Proc
 
-let cli = import ./_lib/cli
+let Cli = import ./_lib/cli
 
 let main! () =
   match Proc.args () with
-  | ["gen" :: rest] -> cli.gen! rest
-  | ["check" :: rest] -> cli.with_contexts rest cli.run_check!
-  | ["upgrade" :: rest] -> cli.with_contexts rest cli.run_upgrade!
-  | _ -> (IO.println_err cli.usage; Proc.exit 2)
+  | ["gen" :: rest] -> Cli.gen! rest
+  | ["check" :: rest] -> Cli.with_contexts rest Cli.run_check!
+  | ["upgrade" :: rest] -> Cli.with_contexts rest Cli.run_upgrade!
+  | _ -> (IO.println_err Cli.usage; Proc.exit 2)
 
 main! ()

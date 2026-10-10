@@ -10,14 +10,14 @@ import Option
 import String
 
 let {test, group} = import Test
-let gen = import ./_lib/gen
+let Gen = import ./_lib/gen
 
 let doc = JSON.read_file! ./testdata/apps_v1_cut.json
-let out = gen.generate "../../plimsoll" ["apis/apps/v1"] [doc]
+let out = Gen.generate "../../plimsoll" ["apis/apps/v1"] [doc]
 
 let text_of path =
-  List.find (fn (f: gen.File) -> f.path == path) out.files
-  |> Option.map (fn (f: gen.File) -> f.text)
+  List.find (fn (f: Gen.File) -> f.path == path) out.files
+  |> Option.map (fn (f: Gen.File) -> f.text)
   |> Option.default ""
 
 let apps = text_of "k8s/apps/v1.wand"
@@ -31,33 +31,33 @@ let index_of part whole =
 
 group "module paths" (fn () -> [
   test "a built-in group" (fn t ->
-    t.eq "k8s/apps/v1" (gen.module_of "io.k8s.api.apps.v1.Deployment")),
+    t.eq "k8s/apps/v1" (Gen.module_of "io.k8s.api.apps.v1.Deployment")),
   test "the core group" (fn t ->
-    t.eq "k8s/core/v1" (gen.module_of "io.k8s.api.core.v1.Pod")),
+    t.eq "k8s/core/v1" (Gen.module_of "io.k8s.api.core.v1.Pod")),
   test "meta" (fn t ->
-    t.eq "k8s/meta/v1" (gen.module_of "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta")),
+    t.eq "k8s/meta/v1" (Gen.module_of "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta")),
   test "a CRD" (fn t ->
-    t.eq "k8s/example.com/v1alpha1" (gen.module_of "com.example.v1alpha1.Widget")),
-  test "an import alias" (fn t -> t.eq "meta_v1" (gen.alias_of "k8s/meta/v1")),
+    t.eq "k8s/example.com/v1alpha1" (Gen.module_of "com.example.v1alpha1.Widget")),
+  test "an import alias" (fn t -> t.eq "MetaV1" (Gen.alias_of "k8s/meta/v1")),
   test "a dotted group" (fn t ->
-    t.eq "example_com_v1alpha1" (gen.alias_of "k8s/example.com/v1alpha1"))
+    t.eq "ExampleComV1alpha1" (Gen.alias_of "k8s/example.com/v1alpha1"))
 ])
 
 group "files" (fn () -> [
   test "one module per group-version, in path order" (fn t ->
     t.eq
       ["k8s/apps/v1.wand", "k8s/meta/v1.wand"]
-      (List.map (fn (f: gen.File) -> f.path) out.files)),
+      (List.map (fn (f: Gen.File) -> f.path) out.files)),
   test "the header names the group-versions read" (fn t ->
     t.ok
       (String.starts_with? "-- DO NOT EDIT: written by plimsoll gen from apis/apps/v1\n" apps)),
-  test "and can be read back" (fn t -> t.eq ["apis/apps/v1"] (gen.sources_of apps)),
+  test "and can be read back" (fn t -> t.eq ["apis/apps/v1"] (Gen.sources_of apps)),
   test "the same input gives the same output" (fn t ->
     t.eq
-      (List.map (fn (f: gen.File) -> f.text) out.files)
+      (List.map (fn (f: Gen.File) -> f.text) out.files)
       (List.map
-        (fn (f: gen.File) -> f.text)
-        (gen.generate "../../plimsoll" ["apis/apps/v1"] [doc]).files))
+        (fn (f: Gen.File) -> f.text)
+        (Gen.generate "../../plimsoll" ["apis/apps/v1"] [doc]).files))
 ])
 
 group "fields" (fn () -> [
@@ -70,13 +70,13 @@ group "fields" (fn () -> [
   test "and its kind" (fn t ->
     t.ok (String.contains? "  kind: String = \"Deployment\",\n" apps)),
   test "a record in another module is qualified" (fn t ->
-    t.ok (String.contains? "  metadata: Option meta_v1.ObjectMeta = None" apps)),
+    t.ok (String.contains? "  metadata: Option MetaV1.ObjectMeta = None" apps)),
   test "and its module is imported" (fn t ->
-    t.ok (String.contains? "let meta_v1 = import ../meta/v1\n" apps)),
+    t.ok (String.contains? "let MetaV1 = import ../meta/v1\n" apps)),
   test "IntOrString is plimsoll's" (fn t ->
-    t.ok (String.contains? "  maxSurge: Option plimsoll.IntOrString = None" apps)),
+    t.ok (String.contains? "  maxSurge: Option Plimsoll.IntOrString = None" apps)),
   test "and plimsoll is imported" (fn t ->
-    t.ok (String.contains? "let plimsoll = import ../../plimsoll\n" apps)),
+    t.ok (String.contains? "let Plimsoll = import ../../plimsoll\n" apps)),
   test "Time is a DateTime" (fn t ->
     t.ok (String.contains? "  creationTimestamp: Option DateTime = None" meta)),
   test "FieldsV1 is JSON" (fn t ->
@@ -130,10 +130,10 @@ let clash =
   JSON.parse!
     `{"components": {"schemas": {"io.k8s.api.core.v1.Widget": {"type": "object", "properties": {"size": {"type": "integer"}}}, "io.k8s.api.core.v1.Holder": {"type": "object", "properties": {"kind": {"type": "string", "enum": ["Widget", "Gadget"]}}}}}}`
 
-let clash_out = gen.generate "../../plimsoll" ["api/v1"] [clash]
+let clash_out = Gen.generate "../../plimsoll" ["api/v1"] [clash]
 
 let clash_text =
-  List.head clash_out.files |> Option.map (fn (f: gen.File) -> f.text) |> Option.default ""
+  List.head clash_out.files |> Option.map (fn (f: Gen.File) -> f.text) |> Option.default ""
 
 group "an enum value with a record's name" (fn () -> [
   test "is renamed, with its word" (fn t ->
@@ -149,9 +149,9 @@ let schema_with! values =
     `{"components": {"schemas": {"io.k8s.api.core.v1.Holder": {"type": "object", "properties": {"mode": {"type": "string", "enum": %{JSON.stringify (JSON.of_list (List.map JSON.of_string values))}}}}}}}`
 
 let spelled_text! values =
-  gen.generate "../../plimsoll" ["api/v1"] [schema_with! values]
-  |> (fn (o: gen.Output) -> List.head o.files)
-  |> Option.map (fn (f: gen.File) -> f.text)
+  Gen.generate "../../plimsoll" ["api/v1"] [schema_with! values]
+  |> (fn (o: Gen.Output) -> List.head o.files)
+  |> Option.map (fn (f: Gen.File) -> f.text)
   |> Option.default ""
 
 group "a value that is not a constructor name" (fn () -> [
@@ -166,7 +166,7 @@ group "a value that is not a constructor name" (fn () -> [
         "type HolderMode = ClusterFirst | None_ \"None\" | Some_ \"Some\"\n"
         (spelled_text! ["ClusterFirst", "None", "Some"]))),
   test "two values with one name stay String" (fn t ->
-    let o = gen.generate "../../plimsoll" ["api/v1"] [schema_with! ["a b", "a-b"]];
+    let o = Gen.generate "../../plimsoll" ["api/v1"] [schema_with! ["a b", "a-b"]];
     t.eq
       [
         "k8s/core/v1: io.k8s.api.core.v1.Holder/mode stays String (no constructor name can be made for each value)"
@@ -181,10 +181,10 @@ let odd =
   JSON.parse!
     `{"components": {"schemas": {"io.k8s.api.core.v1.DaemonEndpoint": {"type": "object", "properties": {"Port": {"type": "integer"}, "host": {"type": "string"}, "$ref": {"type": "string"}, "ref": {"type": "string"}, "x-kubernetes-list-type": {"type": "string"}}}}}}`
 
-let odd_out = gen.generate "../../plimsoll" ["api/v1"] [odd]
+let odd_out = Gen.generate "../../plimsoll" ["api/v1"] [odd]
 
 let odd_text =
-  List.head odd_out.files |> Option.map (fn (f: gen.File) -> f.text) |> Option.default ""
+  List.head odd_out.files |> Option.map (fn (f: Gen.File) -> f.text) |> Option.default ""
 
 group "keys a field name cannot be" (fn () -> [
   test "a capitalised key" (fn t ->
@@ -208,9 +208,9 @@ let crd =
     `{"components": {"schemas": {"com.example.v1.Widget": {"type": "object", "x-kubernetes-group-version-kind": [{"group": "example.com", "version": "v1", "kind": "Widget"}], "properties": {"spec": {"type": "object", "required": ["size"], "properties": {"size": {"type": "integer"}, "owner": {"type": "object", "properties": {"team": {"type": "string"}}}, "parts": {"type": "array", "items": {"type": "object", "properties": {"name": {"type": "string"}}}}, "byZone": {"type": "object", "additionalProperties": {"type": "object", "properties": {"count": {"type": "integer"}}}}, "extra": {"type": "object", "x-kubernetes-preserve-unknown-fields": true, "properties": {"a": {"type": "string"}}}}}}}}}}`
 
 let crd_text =
-  gen.generate "../../plimsoll" ["apis/example.com/v1"] [crd]
-  |> (fn (o: gen.Output) -> List.head o.files)
-  |> Option.map (fn (f: gen.File) -> f.text)
+  Gen.generate "../../plimsoll" ["apis/example.com/v1"] [crd]
+  |> (fn (o: Gen.Output) -> List.head o.files)
+  |> Option.map (fn (f: Gen.File) -> f.text)
   |> Option.default ""
 
 group "inline objects" (fn () -> [
@@ -229,6 +229,6 @@ group "inline objects" (fn () -> [
   test "and goes in the CRD's own module" (fn t ->
     t.eq
       ["k8s/example.com/v1.wand"]
-      ((gen.generate "../../plimsoll" ["apis/example.com/v1"] [crd]).files
-      |> List.map (fn (f: gen.File) -> f.path)))
+      ((Gen.generate "../../plimsoll" ["apis/example.com/v1"] [crd]).files
+      |> List.map (fn (f: Gen.File) -> f.path)))
 ])

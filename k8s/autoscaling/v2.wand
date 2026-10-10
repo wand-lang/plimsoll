@@ -1,7 +1,7 @@
 -- DO NOT EDIT: written by plimsoll gen from api/v1, apis/admissionregistration.k8s.io/v1, apis/apiextensions.k8s.io/v1, apis/apiregistration.k8s.io/v1, apis/apps/v1, apis/authentication.k8s.io/v1, apis/authorization.k8s.io/v1, apis/autoscaling/v1, apis/autoscaling/v2, apis/batch/v1, apis/certificates.k8s.io/v1, apis/coordination.k8s.io/v1, apis/discovery.k8s.io/v1, apis/events.k8s.io/v1, apis/flowcontrol.apiserver.k8s.io/v1, apis/networking.k8s.io/v1, apis/node.k8s.io/v1, apis/policy/v1, apis/rbac.authorization.k8s.io/v1, apis/resource.k8s.io/v1, apis/scheduling.k8s.io/v1, apis/storage.k8s.io/v1, apis/storagemigration.k8s.io/v1
 
-let meta_v1 = import ../meta/v1
-let plimsoll = import ../../plimsoll
+let MetaV1 = import ../meta/v1
+let Plimsoll = import ../../plimsoll
 
 -- CrossVersionObjectReference contains enough information to let you identify the referred resource.
 type CrossVersionObjectReference(
@@ -38,7 +38,7 @@ type HPAScalingRules(
   -- tolerance is the tolerance on the ratio between the current and desired metric value under which no updates are made to the desired number of replicas (e.g. 0.01 for 1%). Must be greater than or equal to zero. If not set, the default cluster-wide tolerance is applied (by default 10%).
   --
   -- For example, if autoscaling is configured with a memory consumption target of 100Mi, and scale-down and scale-up tolerances of 5% and 1% respectively, scaling will be triggered when the actual consumption falls below 95Mi or exceeds 101Mi.
-  tolerance: Option plimsoll.Quantity = None
+  tolerance: Option Plimsoll.Quantity = None
 )
 
 -- HorizontalPodAutoscalerBehavior configures the scaling behavior of the target in both Up and Down directions (scaleUp and scaleDown fields respectively).
@@ -73,7 +73,7 @@ type MetricIdentifier(
   -- name is the name of the given metric
   name: String,
   -- selector is the string-encoded form of a standard kubernetes label selector for the given metric When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping. When unset, just the metricName will be used to gather metrics.
-  selector: Option meta_v1.LabelSelector = None
+  selector: Option MetaV1.LabelSelector = None
 )
 
 -- MetricTarget defines the target value, average value, or average utilization of a specific metric
@@ -81,11 +81,11 @@ type MetricTarget(
   -- averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type
   averageUtilization: Option Int = None,
   -- averageValue is the target value of the average of the metric across all relevant pods (as a quantity)
-  averageValue: Option plimsoll.Quantity = None,
+  averageValue: Option Plimsoll.Quantity = None,
   -- type represents whether the metric type is Utilization, Value, or AverageValue
   type: String,
   -- value is the target value of the metric (as a quantity).
-  value: Option plimsoll.Quantity = None
+  value: Option Plimsoll.Quantity = None
 )
 
 -- ContainerResourceMetricSource indicates how to scale on a resource metric known to Kubernetes, as specified in requests and limits, describing each pod in the current scale target (e.g. CPU or memory).  The values will be averaged together before being compared to the target.  Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.  Only one "target" type should be set.
@@ -111,9 +111,9 @@ type MetricValueStatus(
   -- averageUtilization is the current value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods.
   averageUtilization: Option Int = None,
   -- averageValue is the current value of the average of the metric across all relevant pods (as a quantity)
-  averageValue: Option plimsoll.Quantity = None,
+  averageValue: Option Plimsoll.Quantity = None,
   -- value is the current value of the metric (as a quantity).
-  value: Option plimsoll.Quantity = None
+  value: Option Plimsoll.Quantity = None
 )
 
 -- ContainerResourceMetricStatus indicates the current value of a resource metric known to Kubernetes, as specified in requests and limits, describing a single container in each pod in the current scale target (e.g. CPU or memory).  Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the "pods" source.
@@ -255,7 +255,7 @@ type HorizontalPodAutoscaler(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "HorizontalPodAutoscaler",
   -- metadata is the standard object metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-  metadata: Option meta_v1.ObjectMeta = None,
+  metadata: Option MetaV1.ObjectMeta = None,
   -- spec is the specification for the behaviour of the autoscaler. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status.
   spec: HorizontalPodAutoscalerSpec,
   -- status is the current information about the autoscaler.
@@ -271,5 +271,5 @@ type HorizontalPodAutoscalerList(
   -- Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   kind: String = "HorizontalPodAutoscalerList",
   -- metadata is the standard list metadata.
-  metadata: Option meta_v1.ListMeta = None
+  metadata: Option MetaV1.ListMeta = None
 )

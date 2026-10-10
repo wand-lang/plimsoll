@@ -67,7 +67,7 @@ typed too.
   is sufficient, and wand checks that the list is correct.
 
 - **A rehearsal before a real run.** `wand --dry-run deploy.wand` withholds
-  every change and reports it. `plimsoll.check!` asks the API server to
+  every change and reports it. `Plimsoll.check!` asks the API server to
   validate an object without storing it.
 - **Tests need no cluster.** Building and checking objects is pure, so a
   test runs anywhere. The calls to `kubectl` can be mocked with a handler.
@@ -125,27 +125,27 @@ them.
 ```ocaml
 import Map
 
-let apps = import ./k8s/apps/v1
-let core = import ./k8s/core/v1
-let meta = import ./k8s/meta/v1
+let Apps = import ./k8s/apps/v1
+let Core = import ./k8s/core/v1
+let Meta = import ./k8s/meta/v1
 
 let labels = Map.from_list [("app", "web")]
 
 let web =
-  apps.Deployment(
-    metadata = Some meta.ObjectMeta(name = Some "web", labels = Some labels),
-    spec = apps.DeploymentSpec(
+  Apps.Deployment(
+    metadata = Some Meta.ObjectMeta(name = Some "web", labels = Some labels),
+    spec = Apps.DeploymentSpec(
       replicas = Some 3,
-      selector = meta.LabelSelector(matchLabels = Some labels),
-      template = core.PodTemplateSpec(
-        metadata = Some meta.ObjectMeta(labels = Some labels),
-        spec = Some core.PodSpec(
+      selector = Meta.LabelSelector(matchLabels = Some labels),
+      template = Core.PodTemplateSpec(
+        metadata = Some Meta.ObjectMeta(labels = Some labels),
+        spec = Some Core.PodSpec(
           containers = [
-            core.Container(
+            Core.Container(
               name = "web",
               image = Some "nginx:1.27",
-              imagePullPolicy = Some core.ContainerImagePullPolicy.IfNotPresent,
-              ports = Some [core.ContainerPort(containerPort = 8080)]
+              imagePullPolicy = Some Core.ContainerImagePullPolicy.IfNotPresent,
+              ports = Some [Core.ContainerPort(containerPort = 8080)]
             )
           ]
         )
@@ -155,12 +155,12 @@ let web =
 ```
 
 `labels` is one value, used in the selector and in the template. An enum is
-written with its type, as in `core.ContainerImagePullPolicy.IfNotPresent`,
+written with its type, as in `Core.ContainerImagePullPolicy.IfNotPresent`,
 because two Kubernetes enums can have the same value names.
 
 Some Kubernetes values cannot be wand constructor names. Such a value gets a
 name, and the generated type keeps the value as the constructor's word in
-the document: `core.PodSpecDnsPolicy.None_` is written as `"None"`, and
+the document: `Core.PodSpecDnsPolicy.None_` is written as `"None"`, and
 `NamedRuleWithOperationsOperations.All` as `"*"`. A value that is a wand
 name or the name of a type gets a trailing `_`. Another value gets a name
 made from its parts: `"client auth"` is `ClientAuth`.
@@ -170,14 +170,14 @@ made from its parts: `"client auth"` is `ClientAuth`.
 ```ocaml
 uses {Shell(kubectl)}
 
-import github.com/wand-lang/plimsoll
+let Plimsoll = import github.com/wand-lang/plimsoll
 
 -- The API server validates the object and stores nothing. It gives the
 -- object the server would store.
-let stored = plimsoll.check! apps.Deployment.encoder web
+let stored = Plimsoll.check! Apps.Deployment.encoder web
 
 -- Server-side apply.
-plimsoll.apply! apps.Deployment.encoder web
+Plimsoll.apply! Apps.Deployment.encoder web
 ```
 
 Each function takes the encoder or the decoder of the type it works on, so
@@ -186,14 +186,14 @@ that raises, and a plain form that gives a `Result`:
 
 | Function | What it does |
 |---|---|
-| `plimsoll.apply! enc obj` | Server-side apply of `obj` |
-| `plimsoll.check! enc obj` | The same as a server-side dry run: the server validates `obj`, stores nothing, and gives the object it would store |
-| `plimsoll.get! dec kind name` | Reads one object and decodes it |
-| `plimsoll.list! dec kind` | Reads every object of a kind and decodes them |
-| `plimsoll.delete! kind name` | Deletes one object |
-| `plimsoll.get_in! dec ns kind name`, `list_in!`, `delete_in!` | The same, in the namespace `ns` |
-| `plimsoll.manifest enc objs` | Writes objects as one JSON list, for a file or a review |
-| `plimsoll.manifest_yaml enc objs` | Writes objects as YAML, one document for each, for a file that `kubectl apply -f` reads |
+| `Plimsoll.apply! enc obj` | Server-side apply of `obj` |
+| `Plimsoll.check! enc obj` | The same as a server-side dry run: the server validates `obj`, stores nothing, and gives the object it would store |
+| `Plimsoll.get! dec kind name` | Reads one object and decodes it |
+| `Plimsoll.list! dec kind` | Reads every object of a kind and decodes them |
+| `Plimsoll.delete! kind name` | Deletes one object |
+| `Plimsoll.get_in! dec ns kind name`, `list_in!`, `delete_in!` | The same, in the namespace `ns` |
+| `Plimsoll.manifest enc objs` | Writes objects as one JSON list, for a file or a review |
+| `Plimsoll.manifest_yaml enc objs` | Writes objects as YAML, one document for each, for a file that `kubectl apply -f` reads |
 
 `get!`, `list!` and `delete!` work in the current namespace, which the
 kubectl context sets. The `_in` forms name the namespace at the call.
@@ -204,7 +204,7 @@ kubectl context sets. The `_in` forms name the namespace at the call.
 the cluster rehearses the path a real run takes. `apply!` and `delete!` are
 withheld.
 
-`plimsoll.millicores` and `plimsoll.bytes` read a `Quantity`: "500m" is 500
+`Plimsoll.millicores` and `Plimsoll.bytes` read a `Quantity`: "500m" is 500
 millicores, and "128Mi" is 134217728 bytes.
 
 #### When an object does not decode
@@ -239,10 +239,10 @@ uses {Shell(kubectl)}
 
 import Map
 
-let app = import github.com/wand-lang/plimsoll/app
+let App = import github.com/wand-lang/plimsoll/app
 
 let web =
-  app.App(
+  App.App(
     name = "web",
     image = "nginx:1.27",
     port = 8080,
@@ -252,17 +252,17 @@ let web =
     memory = Some "128Mi"
   )
 
-app.apply! web
+App.apply! web
 ```
 
 | Function | What it gives |
 |---|---|
-| `app.deployment a` | The Deployment: `a.replicas` pods that run `a.image` and listen on `a.port` |
-| `app.service a` | The Service, with the app's name, that sends `a.port` to the pods |
-| `app.labels a` | `{app = <name>}`: the labels of the pods, and of both selectors |
-| `app.manifest a` | The two objects as one JSON list. It reaches nothing |
-| `app.manifest_yaml a` | The two objects as YAML. It reaches nothing |
-| `app.apply! a` | Server-side apply of the Deployment, then the Service |
+| `App.deployment a` | The Deployment: `a.replicas` pods that run `a.image` and listen on `a.port` |
+| `App.service a` | The Service, with the app's name, that sends `a.port` to the pods |
+| `App.labels a` | `{app = <name>}`: the labels of the pods, and of both selectors |
+| `App.manifest a` | The two objects as one JSON list. It reaches nothing |
+| `App.manifest_yaml a` | The two objects as YAML. It reaches nothing |
+| `App.apply! a` | Server-side apply of the Deployment, then the Service |
 
 Only `replicas` (1), `env`, `cpu` and `memory` can be left out. The labels
 are one value, so the selectors and the pods cannot disagree.
@@ -272,12 +272,12 @@ Kubernetes v1.37. To set a field that `App` does not have, use a record
 update, and apply the object with its encoder:
 
 ```ocaml
-let apps = import github.com/wand-lang/plimsoll/k8s/apps/v1
+let Apps = import github.com/wand-lang/plimsoll/k8s/apps/v1
 
-let d = app.deployment web
-let slow = apps.Deployment(d, spec = apps.DeploymentSpec(d.spec, minReadySeconds = Some 30))
+let d = App.deployment web
+let slow = Apps.Deployment(d, spec = Apps.DeploymentSpec(d.spec, minReadySeconds = Some 30))
 
-plimsoll.apply! apps.Deployment.encoder slow
+Plimsoll.apply! Apps.Deployment.encoder slow
 ```
 
 ### 6. Stop using plimsoll at any time
@@ -290,9 +290,9 @@ uses {FS.Write}
 
 import FS
 
-let app = import github.com/wand-lang/plimsoll/app
+let App = import github.com/wand-lang/plimsoll/app
 
-FS.write_file! ./web.yaml (app.manifest_yaml web)
+FS.write_file! ./web.yaml (App.manifest_yaml web)
 ```
 
 ```sh
@@ -300,7 +300,7 @@ kubectl apply -f web.yaml
 ```
 
 For objects that you built from the types in `k8s/`, use
-`plimsoll.manifest_yaml` with each type's encoder. The YAML quotes every
+`Plimsoll.manifest_yaml` with each type's encoder. The YAML quotes every
 string that a YAML reader could read as something else, such as `"on"` or
 `"1.10"`, so kubectl reads the same values that plimsoll would send.
 

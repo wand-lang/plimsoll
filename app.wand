@@ -7,7 +7,7 @@ uses {Shell(kubectl)}
 -- before you apply it:
 --
 --   let d = app.deployment web
---   let d2 = apps.Deployment(d, metadata = Some meta.ObjectMeta(name = Some "web2"))
+--   let d2 = Apps.Deployment(d, metadata = Some Meta.ObjectMeta(name = Some "web2"))
 --
 -- The functions that build the objects are pure. Only `apply!` reaches the
 -- cluster.
@@ -18,11 +18,11 @@ import Map
 import Option
 import YAML
 
-let apps = import ./k8s/apps/v1
-let core = import ./k8s/core/v1
-let meta = import ./k8s/meta/v1
-let plimsoll = import ./plimsoll
-let lib = import ./_lib/app
+let Apps = import ./k8s/apps/v1
+let Core = import ./k8s/core/v1
+let Meta = import ./k8s/meta/v1
+let Plimsoll = import ./plimsoll
+let Lib = import ./_lib/app
 
 -- One application: a container image that listens on one port.
 --
@@ -36,8 +36,8 @@ type App(
   port: Int,
   replicas: Int = 1,
   env: Map String = {},
-  cpu: Option plimsoll.Quantity = None,
-  memory: Option plimsoll.Quantity = None
+  cpu: Option Plimsoll.Quantity = None,
+  memory: Option Plimsoll.Quantity = None
 )
 
 -- The labels on the pods, which the Deployment's selector and the Service's
@@ -49,15 +49,15 @@ let labels (a: App) = Map.from_list [("app", a.name)]
 
 -- The Deployment that runs `a.replicas` pods of `a`.
 let deployment (a: App) =
-  apps.Deployment(
-    metadata = Some meta.ObjectMeta(name = Some a.name, labels = Some (labels a)),
-    spec = apps.DeploymentSpec(
+  Apps.Deployment(
+    metadata = Some Meta.ObjectMeta(name = Some a.name, labels = Some (labels a)),
+    spec = Apps.DeploymentSpec(
       replicas = Some a.replicas,
-      selector = meta.LabelSelector(matchLabels = Some (labels a)),
-      template = core.PodTemplateSpec(
-        metadata = Some meta.ObjectMeta(labels = Some (labels a)),
-        spec = Some core.PodSpec(
-          containers = [lib.container a.name a.image a.port a.env a.cpu a.memory]
+      selector = Meta.LabelSelector(matchLabels = Some (labels a)),
+      template = Core.PodTemplateSpec(
+        metadata = Some Meta.ObjectMeta(labels = Some (labels a)),
+        spec = Some Core.PodSpec(
+          containers = [Lib.container a.name a.image a.port a.env a.cpu a.memory]
         )
       )
     )
@@ -66,11 +66,11 @@ let deployment (a: App) =
 -- The Service that sends `a.port` to the pods of `a`. It has the name of
 -- the app, so other pods reach it at `http://<name>:<port>`.
 let service (a: App) =
-  core.Service(
-    metadata = Some meta.ObjectMeta(name = Some a.name, labels = Some (labels a)),
-    spec = Some core.ServiceSpec(
+  Core.Service(
+    metadata = Some Meta.ObjectMeta(name = Some a.name, labels = Some (labels a)),
+    spec = Some Core.ServiceSpec(
       selector = Some (labels a),
-      ports = Some [core.ServicePort(port = a.port, targetPort = Some (plimsoll.I a.port))]
+      ports = Some [Core.ServicePort(port = a.port, targetPort = Some (Plimsoll.I a.port))]
     )
   )
 
@@ -78,18 +78,18 @@ let service (a: App) =
 -- review. It reaches nothing.
 let manifest (a: App) =
   JSON.stringify
-    (JSON.of_list [apps.Deployment.encoder (deployment a), core.Service.encoder (service a)])
+    (JSON.of_list [Apps.Deployment.encoder (deployment a), Core.Service.encoder (service a)])
 
 -- The Deployment and the Service as YAML, two documents with `---` between
 -- them: a file that `kubectl apply -f` reads. It reaches nothing.
 let manifest_yaml (a: App) = YAML.stringify_all [
-  YAML.of_json (apps.Deployment.encoder (deployment a)),
-  YAML.of_json (core.Service.encoder (service a))
+  YAML.of_json (Apps.Deployment.encoder (deployment a)),
+  YAML.of_json (Core.Service.encoder (service a))
 ]
 
 -- Server-side apply of the Deployment, then the Service. Gives kubectl's
 -- two lines.
 let apply! (a: App) = [
-  plimsoll.apply! apps.Deployment.encoder (deployment a),
-  plimsoll.apply! core.Service.encoder (service a)
+  Plimsoll.apply! Apps.Deployment.encoder (deployment a),
+  Plimsoll.apply! Core.Service.encoder (service a)
 ]

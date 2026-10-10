@@ -5,8 +5,8 @@ import Option
 import String
 
 let {test, group} = import Test
-let drift = import ./_lib/drift
-let gen = import ./_lib/gen
+let Drift = import ./_lib/drift
+let Gen = import ./_lib/gen
 
 let before = `
 -- DO NOT EDIT: written by plimsoll gen from apis/apps/v1
@@ -50,32 +50,32 @@ type New(
 )
 `
 
-let file path text = gen.File(path, text)
+let file path text = Gen.File(path, text)
 
 group "declarations" (fn () -> [
   test "a record, its fields and which are required" (fn t ->
     t.eq
       [("apiVersion", false), ("paused", false), ("spec", true)]
-      (List.find (fn (d: drift.Decl) -> d.name == "Deployment") (drift.decls before)
-      |> Option.map (fn (d: drift.Decl) -> d.items)
+      (List.find (fn (d: Drift.Decl) -> d.name == "Deployment") (Drift.decls before)
+      |> Option.map (fn (d: Drift.Decl) -> d.items)
       |> Option.default [])),
   test "a sum on one line" (fn t ->
     t.eq
       ["Recreate", "RollingUpdate"]
-      (List.head (drift.decls before)
-      |> Option.map (fn (d: drift.Decl) -> List.map (fn (v, _) -> v) d.items)
+      (List.head (Drift.decls before)
+      |> Option.map (fn (d: Drift.Decl) -> List.map (fn (v, _) -> v) d.items)
       |> Option.default [])),
   test "a sum wrapped at its alternatives" (fn t ->
     t.eq
       ["Recreate", "RollingUpdate", "BlueGreen"]
-      (List.head (drift.decls after)
-      |> Option.map (fn (d: drift.Decl) -> List.map (fn (v, _) -> v) d.items)
+      (List.head (Drift.decls after)
+      |> Option.map (fn (d: Drift.Decl) -> List.map (fn (v, _) -> v) d.items)
       |> Option.default []))
 ])
 
 group "changes" (fn () -> [
   test "the same modules have none" (fn t ->
-    t.eq [] (drift.compare [("k8s/apps/v1.wand", before)] [file "k8s/apps/v1.wand" before])),
+    t.eq [] (Drift.compare [("k8s/apps/v1.wand", before)] [file "k8s/apps/v1.wand" before])),
   test "each change is one line" (fn t ->
     t.eq
       [
@@ -85,15 +85,15 @@ group "changes" (fn () -> [
         "k8s/apps/v1.wand: Deployment: field `replicas` added",
         "k8s/apps/v1.wand: Deployment: field `paused` is now required"
       ]
-      (drift.compare [("k8s/apps/v1.wand", before)] [file "k8s/apps/v1.wand" after])),
+      (Drift.compare [("k8s/apps/v1.wand", before)] [file "k8s/apps/v1.wand" after])),
   test "a module added or gone" (fn t ->
     t.eq
       ["k8s/apps/v1.wand: no longer generated", "k8s/batch/v1.wand: new module"]
-      (drift.compare [("k8s/apps/v1.wand", before)] [file "k8s/batch/v1.wand" before])),
+      (Drift.compare [("k8s/apps/v1.wand", before)] [file "k8s/batch/v1.wand" before])),
   test "only the doc comments changed" (fn t ->
     t.eq
       ["k8s/apps/v1.wand: doc comments changed"]
-      (drift.compare [("k8s/apps/v1.wand", before)] [
+      (Drift.compare [("k8s/apps/v1.wand", before)] [
         file
           "k8s/apps/v1.wand"
           (String.replace "-- A Deployment." "-- A Deployment, changed." before)
