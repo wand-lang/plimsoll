@@ -68,13 +68,13 @@ let step (p: Parse) line =
         -- A wrapped sum goes on with "  A" and "  | B" lines.
         if String.starts_with? "  " line && !(String.empty? t) && !(String.starts_with? "--" t) then (
           let v = if String.starts_with? "| " t then String.slice 2 (String.length t) t else t;
-          Parse(cur = Some Decl(d, items = List.append d.items [(v, true)]), done = p.done)
+          Parse(cur = Some Decl(d, items = List.concat d.items [(v, true)]), done = p.done)
         )
         else Parse(cur = None, done = close p)
       else if t == ")" then Parse(cur = None, done = close p)
       else
         match field_of line with
-        | Some f -> Parse(cur = Some Decl(d, items = List.append d.items [f]), done = p.done)
+        | Some f -> Parse(cur = Some Decl(d, items = List.concat d.items [f]), done = p.done)
         | None -> p
 
 -- The declarations of one generated module, in the order they are written.
@@ -138,7 +138,7 @@ let compare (old: List (String, String)) (new: List gen.File) =
     List.find (fn (f: gen.File) -> f.path == p) new
     |> Option.map (fn (f: gen.File) -> f.text);
   let paths =
-    List.append (names old) (List.map (fn (f: gen.File) -> f.path) new)
+    List.concat (names old) (List.map (fn (f: gen.File) -> f.path) new)
     |> List.unique
     |> List.sort;
   List.map

@@ -76,7 +76,7 @@ let version! ctx =
 -- ── Modules ───────────────────────────────────────────────────────────────
 
 let write! (f: gen.File) = (
-  FS.mkdir! (Path.dirname (Path.of_string f.path));
+  FS.mkdir! (Path.parent (Path.of_string f.path));
   FS.write_file! (Path.of_string f.path) f.text
 )
 

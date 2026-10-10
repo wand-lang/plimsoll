@@ -137,13 +137,13 @@ let field_name_of key =
 -- left out.
 let field_names props =
   List.fold_left
-    (fn acc p -> if spellable? p then List.append acc [(p, p, None)]
+    (fn acc p -> if spellable? p then List.concat acc [(p, p, None)]
       else (
         let taken n =
           List.any? (fn (_, x, _) -> x == n) acc || List.any? (fn q -> q == n) props;
         let base = field_name_of p;
         let name = if taken base then base ++ "_" else base;
-        if spellable? name then List.append acc [(p, name, Some p)] else acc
+        if spellable? name then List.concat acc [(p, name, Some p)] else acc
       ))
     []
     props
@@ -179,7 +179,7 @@ let spell_values taken values =
   let spell v =
     let base = if Regex.match? r/^[A-Z][A-Za-z0-9_]*$/ v then v else made_name v;
     let name =
-      if List.any? (fn t -> t == base) (List.append reserved taken) then base ++ "_"
+      if List.any? (fn t -> t == base) (List.concat reserved taken) then base ++ "_"
       else base;
     if !(Regex.match? r/^[A-Z][A-Za-z0-9_]*$/ name) then None
     else if name == v then Some(name, name)
@@ -406,11 +406,11 @@ let decide mod (cands: List Candidate) (records: List String) =
     |> List.map (fn k -> List.filter (fn (c: Candidate) -> set_key c.values == k) mine);
   let first g =
     List.head g |> Option.default Candidate(mod = mod, key = "", name = "", values = []);
-  let taken = List.append (List.map short_name records) builtin_types;
+  let taken = List.concat (List.map short_name records) builtin_types;
   let enum_names = List.map (fn g -> (first g).name) groups;
   -- The type names a value of `g` must not be: every type in the module,
   -- the other enums, and its own.
-  let names_for g = List.append taken enum_names;
+  let names_for g = List.concat taken enum_names;
   let spelled g = spell_values (names_for g) (first g).values;
   let shaped = List.filter (fn g -> Option.some? (spelled g)) groups;
   let clashes g =
@@ -547,7 +547,7 @@ let render_field (r: Rec) last (f: Field) =
     | Some k -> ` "` ++ (String.replace "\\" "\\\\" k |> String.replace `"` `\"`) ++ `"`
     | None -> ""
   in
-  List.append (doc_lines "  " f.doc) [
+  List.concat (doc_lines "  " f.doc) [
     "  %{f.name}%{key}: %{ty}" ++ (if last then "" else ",")
   ]
 
@@ -586,11 +586,11 @@ let render_module plim_target sources mod (enums: List Enum) (recs: List Rec) =
     |> List.sort;
   let plim = List.any? (fn (f: Field) -> f.ty.plim) fields;
   let imports =
-    List.append
+    List.concat
       (List.map (fn m -> "let %{alias_of m} = import %{import_path m}") others)
       (if plim then ["let plimsoll = import %{plim_target}"] else []);
   let blocks =
-    List.append
+    List.concat
       (List.map render_enum (List.sort_by (fn (e: Enum) -> e.name) enums))
       (List.map render_rec recs);
   let body = List.map (String.join "\n") blocks |> String.join "\n\n";
@@ -620,7 +620,7 @@ let cycle_notes (edges: List (String, List String)) =
     |> Option.default [];
   let reach m =
     List.fold_left
-      (fn seen _ -> List.unique (List.append seen (List.map next seen |> List.flatten)))
+      (fn seen _ -> List.unique (List.concat seen (List.map next seen |> List.flatten)))
       (next m)
       edges;
   edges

@@ -1,6 +1,7 @@
 -- The arithmetic behind `plimsoll.millicores` and `plimsoll.bytes`: a
 -- quantity read as an exact fraction. Private to the package.
 
+import Int
 import Regex
 import Result
 import String
@@ -28,7 +29,7 @@ let scale suffix =
   | s -> (
     match Regex.capture r/^[eE]([+-]?[0-9]+)$/ s with
     | [_, e] ->
-      String.to_int e
+      Int.of_string e
       |> Result.map (fn n -> if n >= 0 then (pow10 n, 1) else (1, pow10 (0 - n)))
     | _ -> Error "'%{s}' is not a quantity suffix"
   )
@@ -39,7 +40,7 @@ let amount (q: String) = (
   let text = String.trim q;
   match Regex.capture r/^([+-]?)([0-9]*)\.?([0-9]*)([a-zA-Z]*|[eE][+-]?[0-9]+)$/ text with
   | [_, sign, whole, frac, suffix] when !(String.empty? (whole ++ frac)) ->
-    String.to_int (whole ++ frac)
+    Int.of_string (whole ++ frac)
     |> Result.and_then (fn digits ->
       scale suffix
       |> Result.map (fn (num, den) ->

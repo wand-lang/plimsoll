@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.1] - 2026-10-10
+
+This release needs wand 0.104.0 or later.
+
+### Changed
+
+- **plimsoll runs on wand 0.104.0.** That wand removed `String.to_int`,
+  `List.append` and `Path.dirname`, which plimsoll used. Nothing changes
+  in what plimsoll does or in its interface.
+
 ## [0.4.0] - 2026-09-29
 
 This release needs wand 0.93.1 or later.
