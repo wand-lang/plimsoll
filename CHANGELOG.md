@@ -1,6 +1,10 @@
 # Changelog
 
-## [0.4.2] - 2026-10-10
+## [0.5.0] - 2026-10-10
+
+wand counts this release as a breaking change, because the interface writes
+each type with the name its module is imported under. The types are the
+same, and a script that uses 0.4.1 needs no change.
 
 ### Changed
 
