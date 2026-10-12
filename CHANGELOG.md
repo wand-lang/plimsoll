@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.1] - 2026-10-12
+
+This release needs wand 0.105.0 or later.
+
+### Changed
+
+- **Match guards are written with `if`.** wand 0.105.0 accepts `if` for a
+  guard, and `wand f` writes `when` as `if`. Nothing changes in what
+  plimsoll does or in its interface.
+
 ## [0.5.0] - 2026-10-10
 
 wand counts this release as a breaking change, because the interface writes

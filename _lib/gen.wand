@@ -272,13 +272,13 @@ let lift top name s = (
   if top then (rebuilt, extra)
   else if own then (ref_to name, (name, rebuilt) :: extra)
   else match field "items" s with
-    | Some items when inline_object? items -> (
+    | Some items if inline_object? items -> (
       let (r, e) = lift false name items;
       (with_field "items" r s, e)
     )
     | _ -> (
       match field "additionalProperties" s with
-      | Some ap when inline_object? ap -> (
+      | Some ap if inline_object? ap -> (
         let (r, e) = lift false name ap;
         (with_field "additionalProperties" r s, e)
       )

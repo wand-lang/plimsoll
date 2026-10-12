@@ -39,7 +39,7 @@ let scale suffix =
 let amount (q: String) = (
   let text = String.trim q;
   match Regex.capture r/^([+-]?)([0-9]*)\.?([0-9]*)([a-zA-Z]*|[eE][+-]?[0-9]+)$/ text with
-  | [_, sign, whole, frac, suffix] when !(String.empty? (whole ++ frac)) ->
+  | [_, sign, whole, frac, suffix] if !(String.empty? (whole ++ frac)) ->
     Int.of_string (whole ++ frac)
     |> Result.and_then (fn digits ->
       scale suffix

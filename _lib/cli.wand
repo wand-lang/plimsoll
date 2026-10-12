@@ -25,7 +25,7 @@ let Drift = import ./drift
 -- path; anywhere else it is the package URL, which wand.pkg requires.
 let plimsoll_target () =
   match FS.read_file ./wand.pkg with
-  | Ok text when String.contains? "package = github.com/wand-lang/plimsoll\n" text -> "../../plimsoll"
+  | Ok text if String.contains? "package = github.com/wand-lang/plimsoll\n" text -> "../../plimsoll"
   | _ -> "github.com/wand-lang/plimsoll"
 
 -- ── The cluster ───────────────────────────────────────────────────────────
