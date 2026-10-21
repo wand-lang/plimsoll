@@ -24,7 +24,7 @@ let w =
       port = Some (Plimsoll.S "http"),
       max_replicas = Some 5,
       owner = Some Ex.WidgetSpecOwner(team = Some "infra"),
-      labels = Some (Map.from_list [("tier", "web")]),
+      labels = Some (Map.of_list [("tier", "web")]),
       extra = Some (JSON.parse! `{"anything":[1,2]}`)
     )
   )
