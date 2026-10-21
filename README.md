@@ -129,7 +129,7 @@ let Apps = import ./k8s/apps/v1
 let Core = import ./k8s/core/v1
 let Meta = import ./k8s/meta/v1
 
-let labels = Map.from_list [("app", "web")]
+let labels = Map.of_list [("app", "web")]
 
 let web =
   Apps.Deployment(
@@ -247,7 +247,7 @@ let web =
     image = "nginx:1.27",
     port = 8080,
     replicas = 3,
-    env = Map.from_list [("MODE", "prod")],
+    env = Map.of_list [("MODE", "prod")],
     cpu = Some "250m",
     memory = Some "128Mi"
   )

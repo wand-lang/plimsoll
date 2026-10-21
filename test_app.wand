@@ -20,7 +20,7 @@ let web = App.App(name = "web", image = "nginx:1.27", port = 8080, replicas = 3)
 let full =
   App.App(
     web,
-    env = Map.from_list [("MODE", "prod"), ("LOG", "info")],
+    env = Map.of_list [("MODE", "prod"), ("LOG", "info")],
     cpu = Some "250m",
     memory = Some "128Mi"
   )
@@ -53,7 +53,7 @@ group "the Deployment" (fn () -> [
     )),
   test "one set of labels for the object, the selector and the pods" (fn t ->
     let d = App.deployment web;
-    let want = Some (Map.from_list [("app", "web")]);
+    let want = Some (Map.of_list [("app", "web")]);
     t.eq [want, want, want] [
       labels_of d.metadata,
       d.spec.selector.matchLabels,
@@ -82,10 +82,10 @@ group "the Deployment" (fn () -> [
     t.eq [
       Some
         (Some Core.ResourceRequirements(
-          requests = Some (Map.from_list [("cpu", "250m"), ("memory", "128Mi")])
+          requests = Some (Map.of_list [("cpu", "250m"), ("memory", "128Mi")])
         )),
       Some
-        (Some Core.ResourceRequirements(requests = Some (Map.from_list [("memory", "64Mi")])))
+        (Some Core.ResourceRequirements(requests = Some (Map.of_list [("memory", "64Mi")])))
     ] [
       Option.map
         (fn (c: Core.Container) -> c.resources)

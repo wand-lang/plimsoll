@@ -101,7 +101,7 @@ let decl_changes path (o: Decl) (n: Decl) =
     else
       List.filter_map
         (fn (x, now) -> match List.find (fn (y, _) -> y == x) o.items with
-          | Some(_, before) if before != now ->
+          | Some (_, before) if before != now ->
             Some
               (if now then "%{path}: %{n.name}: field `%{x}` is now required"
               else "%{path}: %{n.name}: field `%{x}` is now optional")

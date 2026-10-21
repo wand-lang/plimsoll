@@ -45,7 +45,7 @@ type App(
 --
 -- >> labels (App(name = "web", image = "nginx", port = 80))
 -- {app = "web"} : Map String
-let labels (a: App) = Map.from_list [("app", a.name)]
+let labels (a: App) = Map.of_list [("app", a.name)]
 
 -- The Deployment that runs `a.replicas` pods of `a`.
 let deployment (a: App) =

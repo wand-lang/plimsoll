@@ -23,7 +23,7 @@ let web =
     image = "nginx:1.27",
     port = 8080,
     replicas = 2,
-    env = Map.from_list [("MODE", "prod")],
+    env = Map.of_list [("MODE", "prod")],
     cpu = Some "100m",
     memory = Some "64Mi"
   )

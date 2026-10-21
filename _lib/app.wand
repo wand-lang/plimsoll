@@ -15,7 +15,7 @@ let requests cpu memory =
       ("cpu", cpu),
       ("memory", memory)
     ];
-  if given == [] then None else Some (Map.from_list given)
+  if given == [] then None else Some (Map.of_list given)
 
 -- The environment as the container writes it, or `None` when it is empty.
 let env_vars env =

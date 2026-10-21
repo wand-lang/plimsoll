@@ -2,6 +2,7 @@
 -- quantity read as an exact fraction. Private to the package.
 
 import Int
+import Option
 import Regex
 import Result
 import String
@@ -27,7 +28,7 @@ let scale suffix =
   | "Pi" -> Ok (1125899906842624, 1)
   | "Ei" -> Ok (1152921504606846976, 1)
   | s -> (
-    match Regex.capture r/^[eE]([+-]?[0-9]+)$/ s with
+    match Regex.capture r/^[eE]([+-]?[0-9]+)$/ s |> Option.default [] with
     | [_, e] ->
       Int.of_string e
       |> Result.map (fn n -> if n >= 0 then (pow10 n, 1) else (1, pow10 (0 - n)))
@@ -38,7 +39,8 @@ let scale suffix =
 -- float reads "0.1" as a little more than a tenth.
 let amount (q: String) = (
   let text = String.trim q;
-  match Regex.capture r/^([+-]?)([0-9]*)\.?([0-9]*)([a-zA-Z]*|[eE][+-]?[0-9]+)$/ text with
+  match Regex.capture r/^([+-]?)([0-9]*)\.?([0-9]*)([a-zA-Z]*|[eE][+-]?[0-9]+)$/ text
+  |> Option.default [] with
   | [_, sign, whole, frac, suffix] if !(String.empty? (whole ++ frac)) ->
     Int.of_string (whole ++ frac)
     |> Result.and_then (fn digits ->

@@ -97,7 +97,7 @@ let module_of name = (
   let apis = List.indexed segs |> List.find (fn (_, s) -> s == "apis");
   if String.starts_with? "io.k8s.api." name then "k8s/%{at 3}/%{at 4}"
   else match apis with
-    | Some(i, _) -> "k8s/%{at (i + 1)}/%{at (i + 2)}"
+    | Some (i, _) -> "k8s/%{at (i + 1)}/%{at (i + 2)}"
     | None -> (
       let group = List.take (n - 2) segs |> List.reverse |> String.join ".";
       "k8s/%{group}/%{at (n - 2)}"
@@ -183,7 +183,7 @@ let spell_values taken values =
       if List.any? (fn t -> t == base) (List.concat reserved taken) then base ++ "_"
       else base;
     if !(Regex.match? r/^[A-Z][A-Za-z0-9_]*$/ name) then None
-    else if name == v then Some(name, name)
+    else if name == v then Some (name, name)
     else if String.contains? `"` v || String.contains? "\\" v || String.contains? "|" v then None
     else Some (name, `%{name} "%{v}"`);
   let spelled = List.filter_map spell values;
@@ -237,7 +237,7 @@ let inline_object? j =
   && !(flag? "x-kubernetes-preserve-unknown-fields" j)
 
 let ref_to name =
-  JSON.of_map (Map.from_list [("$ref", JSON.of_string ("#/components/schemas/" ++ name))])
+  JSON.of_map (Map.of_list [("$ref", JSON.of_string ("#/components/schemas/" ++ name))])
 
 -- `j`, an object schema, with `key` set to `v`.
 let with_field key v j =
@@ -267,7 +267,7 @@ let lift top name s = (
     else
       with_field
         "properties"
-        (JSON.of_map (Map.from_list (List.map (fn (p, (r, _)) -> (p, r)) lifted)))
+        (JSON.of_map (Map.of_list (List.map (fn (p, (r, _)) -> (p, r)) lifted)))
         s;
   if top then (rebuilt, extra)
   else if own then (ref_to name, (name, rebuilt) :: extra)
@@ -295,7 +295,7 @@ let lift_all (schemas: Map JSON) =
     let (s, extra) = lift true name (Map.get name schemas |> Option.default JSON.null);
     (name, s) :: List.filter (fn (n, _) -> Option.none? (Map.get n schemas)) extra)
   |> List.flatten
-  |> Map.from_list
+  |> Map.of_list
 
 -- ── Types ─────────────────────────────────────────────────────────────────
 
@@ -539,8 +539,8 @@ let render_enum (e: Enum) = [
 let render_field (r: Rec) last (f: Field) =
   let ty =
     match (f.name, r.gvk) with
-    | ("apiVersion", Some(av, _)) -> `String = "%{av}"`
-    | ("kind", Some(_, k)) -> `String = "%{k}"`
+    | ("apiVersion", Some (av, _)) -> `String = "%{av}"`
+    | ("kind", Some (_, k)) -> `String = "%{k}"`
     | _ -> if f.required then f.ty.text else "Option %{paren f.ty.text} = None"
   in
   let key =
@@ -642,7 +642,7 @@ let generate plim_target (sources: List String) (docs: List JSON) =
   let decisions =
     List.map (fn m -> decide m cands (List.filter (fn r -> module_of r == m) records)) mods;
   let enum_keys =
-    List.map (fn (d: Decision) -> d.keys) decisions |> List.flatten |> Map.from_list;
+    List.map (fn (d: Decision) -> d.keys) decisions |> List.flatten |> Map.of_list;
   let module_recs m =
     let ctx = Ctx(schemas = schemas, mod = m, enums = enum_keys);
     List.filter (fn r -> module_of r == m) records |> List.map (build_rec ctx);

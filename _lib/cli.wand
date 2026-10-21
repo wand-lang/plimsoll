@@ -247,6 +247,6 @@ let with_contexts args k =
 -- ones named.
 let gen! args =
   match gen_args args with
-  | Ok(ctx, []) -> run_gen! ctx (group_versions! ctx)
-  | Ok(ctx, gvs) -> run_gen! ctx gvs
+  | Ok (ctx, []) -> run_gen! ctx (group_versions! ctx)
+  | Ok (ctx, gvs) -> run_gen! ctx gvs
   | Error e -> (IO.println_err "%{e}\n%{usage}"; Proc.exit 2)
